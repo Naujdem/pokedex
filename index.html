@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Biotaxo dex</title>
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#14241c">
+<meta name="theme-color" content="#1E1E1E">
 <link rel="apple-touch-icon" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Source+Serif+4:ital,wght@0,400;1,400;1,600&display=swap" rel="stylesheet">
@@ -197,12 +197,106 @@ button:active,.card:active,.step:active{transform:scale(.98)}
  .vchips::-webkit-scrollbar{display:none}
  .vchip{flex:0 0 auto;width:104px;scroll-snap-align:start}
 }
+/* ================= Biotaxo dex v3 · Modo oscuro (estilo WhatsApp / Instagram) ================= */
+:root:root:root{--bg:#121212;--panel:#1E1E1E;--ink:#fff;--mut:#A0A0A0;--line:#2C2C2E;--soft:#2A2A2C;--acc:#00A884;--acc-ink:#fff;--dng:#FF453A;--lnk:#4fd6b4;--wm:#3a3d3f;--pad:16px;color-scheme:dark}
+@media (min-width:901px){:root:root:root{--pad:32px}}
+button.primary{font-weight:700}
+button.danger.solid{background:#d93025;border-color:#d93025;color:#fff}
+#m-i.on{background:#d9453a;border-color:#d9453a}
+
+/* Header fijo */
+header{position:sticky;top:0;z-index:30;background:#1E1E1E;padding:10px var(--pad)}
+#top{display:flex;align-items:center;gap:8px}
+#add{border-radius:999px;padding:9px 16px;white-space:nowrap}
+.mwrap{position:relative}
+#mnu{width:40px;height:40px;padding:0;border-radius:50%;font-size:1.4rem;line-height:1;background:transparent;border-color:transparent}
+@media (hover:hover){#mnu:hover{background:var(--line)}}
+#menu{position:absolute;right:0;top:calc(100% + 8px);z-index:40;min-width:260px;max-width:calc(100vw - 24px);display:grid;gap:2px;padding:8px;background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 36px rgba(0,0,0,.6)}
+#menu button{width:100%;text-align:left;border:0;background:transparent;padding:12px 14px;border-radius:10px;font-size:.95rem}
+@media (hover:hover){#menu button:hover{background:var(--soft)}}
+#menu hr{border:0;border-top:1px solid var(--line);margin:4px 0;width:100%}
+#menu #gdb.off{color:var(--dng)}
+#menu .mout{color:var(--dng)}
+.mhead{padding:8px 10px 10px;display:flex}
+.mhead #who{display:flex;align-items:center;gap:10px;min-width:0}
+.wem{font-size:.85rem;color:var(--mut);overflow-wrap:anywhere}
+.mfoot{padding:6px 14px 2px;font-size:.72rem;color:var(--mut)}
+@media (max-width:480px){.dk{display:none}}
+
+/* Estructura: barra lateral (PC) / chips bajo el buscador (móvil), sin duplicar marcado */
+.app{grid-template-columns:230px minmax(0,1fr);align-content:start;min-height:calc(100vh - 62px)}
+main{display:contents}
+.steps{grid-column:1;grid-row:1/span 6;background:#0A0A0A}
+.tools,.crumb,.grid,#detail{grid-column:2;padding-left:var(--pad);padding-right:var(--pad)}
+.tools{padding-top:18px;margin:0}
+.tools input{background:#2C2C2E;border-color:#2C2C2E;color:#fff;border-radius:12px}
+.tools input::placeholder{color:var(--mut)}
+.tools button{border-radius:12px}
+.crumb{margin:0 0 14px}
+.grid{padding-bottom:40px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
+#detail{padding-bottom:0}
+@media (min-width:901px){.steps{top:61px;max-height:calc(100vh - 61px)}.step.on{background:rgba(0,168,132,.16)}}
+@media (max-width:900px){
+ .app{grid-template-columns:minmax(0,1fr)}
+ .tools,.crumb,.grid,#detail,.steps{grid-column:1}
+ .tools{order:1}.steps{order:2}.crumb{order:3}.grid{order:4}#detail{order:5}
+ .steps{grid-row:auto;background:transparent;border:0;flex-direction:row;gap:8px;padding:12px var(--pad);overflow-x:auto;scrollbar-width:none}
+ .steps::-webkit-scrollbar{display:none}
+ .step{flex:0 0 auto;min-width:92px;align-items:flex-start;text-align:left;padding:7px 14px;background:#2C2C2E;border:1px solid var(--line);border-left:4px solid var(--c);border-radius:14px}
+ .step.on{background:rgba(0,168,132,.2);border-color:var(--acc);border-left-color:var(--c)}
+}
+@media (max-width:560px){.grid{grid-template-columns:1fr}}
+
+/* Tarjetas de especie */
+.card{background:var(--panel);border-radius:16px}
+.card .ph{aspect-ratio:4/3;position:relative;font-size:3rem}
+.cap{padding:12px 14px 14px}
+.cap i{color:var(--lnk)}
+.cardw{position:relative}
+.rtag,.ktag{display:inline-block;font:700 .7rem/1 "Bricolage Grotesque",system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#7ee8cb;background:rgba(2,48,38,.78);padding:6px 10px;border-radius:999px}
+.rtag{position:absolute;left:10px;top:10px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.cact{position:absolute;right:10px;top:10px;display:flex;gap:8px}
+.cact button{width:38px;height:38px;padding:0;border:0;border-radius:50%;background:rgba(30,30,30,.7);color:#fff;font-size:1rem;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+@media (hover:hover){.cact button:hover{background:rgba(60,60,60,.9)}}
+
+/* Ficha */
+#back{margin-top:16px;border-radius:999px}
+.ficha{gap:20px 32px}
+@media (min-width:901px){.ficha{grid-template-columns:minmax(280px,440px) minmax(0,1fr)}}
+.ficha .galw{border-radius:18px}
+.gcount{top:10px;bottom:auto;right:10px}
+.gnav{top:42%}
+.gov{position:absolute;left:0;right:0;bottom:0;padding:90px 18px 16px;text-align:left;pointer-events:none;background:linear-gradient(to top,rgba(0,0,0,.92),rgba(0,0,0,.6) 55%,transparent)}
+.ficha .gov h2{margin:10px 0 0;font-size:1.7rem;color:#fff}
+.gov p{margin:2px 0 0;font-style:italic;font-weight:600;font-size:1.1rem;color:#7ee8cb}
+@media (max-width:700px){.slide{aspect-ratio:4/3}}
+#detail .btns{position:sticky;bottom:0;z-index:20;display:flex;flex-wrap:nowrap;gap:8px;margin:24px calc(var(--pad)*-1) 0;padding:12px var(--pad) calc(12px + env(safe-area-inset-bottom,0px));background:rgba(30,30,30,.96);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-top:1px solid var(--line)}
+#detail .btns button{flex:1 1 0;min-width:0;padding:12px 6px;font-size:.9rem;white-space:nowrap;border-radius:12px}
+#detail .btns .danger{color:var(--dng);border-color:var(--dng)}
 </style>
 </head>
 <body>
 <header>
- <h1><span class="lens" aria-hidden="true"></span>Biotaxo dex <small class="sans" style="font-size:.65rem;color:var(--mut);font-weight:500">v2.2</small></h1>
- <div id="top" hidden style="display:flex;align-items:center;gap:10px"><span class="sans cl" id="net" hidden></span><button id="gdb" hidden title="Conexión con tu Google Drive (donde se guardan las fotos)">☁ Drive</button><button id="sync" title="Descargar fichas y fotos para usar sin conexión">⬇ Sincronizar</button><span class="sans cl on" id="who"></span><button id="out">Salir</button><button class="primary" id="add">+ Añadir especie</button></div>
+ <h1><span class="lens" aria-hidden="true"></span>Biotaxo dex</h1>
+ <div id="top" hidden>
+  <span class="sans cl" id="net" hidden></span>
+  <button class="primary" id="add">+ Añadir<span class="dk"> especie</span></button>
+  <div class="mwrap">
+   <button type="button" id="mnu" aria-haspopup="true" aria-expanded="false" aria-label="Ajustes">⋮</button>
+   <div id="menu" hidden role="menu" aria-label="Ajustes">
+    <div class="mhead"><span class="sans cl on" id="who"></span></div>
+    <button id="gdb" hidden title="Conexión con tu Google Drive (donde se guardan las fotos)">☁ Drive</button>
+    <button id="sync" title="Descargar fichas y fotos para usar sin conexión">⬇ Sincronizar</button>
+    <hr>
+    <button id="exj">⬇ Exportar copia (JSON con fotos)</button>
+    <button id="exc">⬇ Exportar tabla (CSV, sin fotos)</button>
+    <button id="imj">⬆ Importar copia (JSON)</button><input type="file" id="imf" accept="application/json,.json" hidden>
+    <hr>
+    <button id="out" class="mout">Salir</button>
+    <div class="mfoot">Biotaxo dex · v3.0</div>
+   </div>
+  </div>
+ </div>
 </header>
 <section id="auth" class="login">
  <div class="lcard">
@@ -211,12 +305,11 @@ button:active,.card:active,.step:active{transform:scale(.98)}
   <p class="ldesc">Inicia sesión para acceder a tu catálogo taxonómico personal. Tus hallazgos se sincronizarán en todos tus dispositivos automáticamente.</p>
   <button type="button" id="glogin" class="gbtn"><svg width="22" height="22" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.4-4.1 7-10.1 7-17.6z"/><path fill="#FBBC05" d="M10.5 28.7c-.5-1.4-.8-3-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C.9 16.4 0 20.1 0 24s.9 7.6 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg><span>Continuar con Google</span></button>
   <p class="note lerr" id="aerr" role="alert"></p>
-  <p class="lfoot">Biodiversity Intelligence System</p>
  </div>
 </section>
 <div class="app" id="app" hidden>
  <nav class="steps" id="steps" aria-label="Nivel taxonómico"></nav>
- <main><div class="tools"><input id="q" type="search" placeholder="Buscar: Felidae, mono, jaguar…" aria-label="Buscar"><button id="fav">☆ Favoritas</button><button id="study">🎓 Modo estudio</button></div><p class="crumb" id="crumb"></p><div class="grid" id="grid"></div><section id="detail" hidden></section><p class="crumb" id="exbar" style="margin-top:24px">Exportar: <button id="exj">Copia completa (JSON con fotos)</button> <button id="exc">Tabla (CSV, sin fotos)</button> · Importar: <button id="imj">⬆ Cargar copia (JSON)</button><input type="file" id="imf" accept="application/json,.json" hidden></p></main>
+ <main><div class="tools"><input id="q" type="search" placeholder="Buscar: Felidae, mono, jaguar…" aria-label="Buscar"><button id="fav">☆ Favoritas</button><button id="study">🎓 Modo estudio</button></div><p class="crumb" id="crumb"></p><div class="grid" id="grid"></div><section id="detail" hidden></section></main>
 </div>
 
 <dialog id="dlg">
@@ -270,7 +363,7 @@ button:active,.card:active,.step:active{transform:scale(.98)}
 const SB=window.supabase?supabase.createClient('https://amybwsnzxmfdvaomkopm.supabase.co','sb_publishable_DVidqeawdNUHxd46TWgfbg_xfDGda_z'):null;
 const LV=['dominio','reino','filo','clase','orden','familia','genero','especie'];
 const LN=['Dominio','Reino','Filo o división','Clase','Orden','Familia','Género','Especie'];
-const COL=['#4da3ff','#3fd6dc','#3fd99b','#5cd94f','#a9d94f','#e6d93f','#f0a04f','#d9884f'];
+const COL=['#5b9bd5','#5bbfc4','#5bbf95','#6fbf62','#a3bf62','#d1c455','#d49a5b','#c58a5e'];
 const EMO={Animalia:'🐾',Plantae:'🌿',Fungi:'🍄',Protista:'🔬',Monera:'🦠'};
 const DOM=['Bacteria','Archaea','Eukarya'];
 const REINOS={Bacteria:['Monera'],Archaea:['Monera'],Eukarya:['Animalia','Plantae','Fungi','Protista']};
@@ -889,7 +982,8 @@ function rgHTML(sp){
  return cl+(body||'<p class="empty">Aún no hay características. Toca «Editar ficha» para añadirlas.</p>');
 }
 const fav=s=>!!(s.rasgos&&s.rasgos._fav);
-const spCard=s=>'<button class="card'+(s.id===sel?' sel':'')+'" data-id="'+s.id+'"><div class="ph">'+photo(s.foto,s.reino)+'</div><div class="cap"><b>'+(s.pend?'⏳ ':'')+(fav(s)?'★ ':'')+esc(s.comun||sci(s))+'</b><i>'+esc(sci(s))+'</i></div></button>';
+const spCard=s=>'<div class="cardw"><button class="card'+(s.id===sel?' sel':'')+'" data-id="'+s.id+'"><div class="ph">'+photo(s.foto,s.reino)+'<span class="rtag">'+esc(s.reino)+'</span></div><div class="cap"><b>'+(s.pend?'⏳ ':'')+(fav(s)?'★ ':'')+esc(s.comun||sci(s))+'</b><i>'+esc(sci(s))+'</i></div></button>'
+ +'<span class="cact"><button type="button" data-act="edit" data-id="'+s.id+'" aria-label="Editar '+esc(s.comun||sci(s))+'">✎</button><button type="button" data-act="del" data-id="'+s.id+'" aria-label="Eliminar '+esc(s.comun||sci(s))+'">🗑</button></span></div>';
 const norm=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 const hay=s=>norm([].concat(LV.map(k=>s[k]),[s.comun,s.car],Object.values(s.rasgos||{}).filter(v=>typeof v==='string')).join(' '));
 const matches=s=>(!onlyFav||fav(s))&&(!Q||hay(s).includes(norm(Q)));
@@ -923,15 +1017,15 @@ function render(){
  if((Q||onlyFav)&&!showSp){const n=data.filter(matches).length;$('crumb').textContent=n+(n===1?' resultado':' resultados')+(Q?' para «'+Q+'»':'')+(onlyFav?' · solo favoritas':'')}
  const ver=!!sp&&d===7;
  document.body.classList.toggle('ficha-abierta',ver);
- $('grid').hidden=ver;$('exbar').hidden=ver;$('detail').hidden=!ver;
+ $('grid').hidden=ver;$('detail').hidden=!ver;
  $('detail').innerHTML=ver
   ?'<button id="back">← Volver a las especies</button>'
    +'<div class="ficha">'+galHTML(sp)
-   +'<div><h2>'+esc(sp.comun||sci(sp))+'</h2><p class="sci">'+esc(sci(sp))+'</p>'
-   +sumHTML(sp)+'<ol class="lin deskonly">'+linHTML(sp)+'</ol>'
-   +'<div class="btns"><button id="favb">'+(fav(sp)?'★ Favorito':'☆ Favorito')+'</button><button id="shr">↗ Compartir</button><button id="edit">Editar ficha</button><button class="danger" id="del">🗑 Eliminar</button></div></div>'
+   +'<div class="finfo"><h2 class="deskonly">'+esc(sp.comun||sci(sp))+'</h2><p class="sci deskonly">'+esc(sci(sp))+'</p>'
+   +sumHTML(sp)+'<ol class="lin deskonly">'+linHTML(sp)+'</ol></div>'
    +'<div class="ficha-car">'+distBlock(sp)+rgHTML(sp)
    +'</div></div>'
+   +'<div class="btns" role="toolbar" aria-label="Acciones de la ficha"><button id="favb">'+(fav(sp)?'★ Favorito':'☆ Favorito')+'</button><button id="shr">↗ Compartir</button><button id="edit">✎ Editar</button><button class="danger" id="del">🗑 Eliminar</button></div>'
   :'';
  if(ver){
   wireGal();wireDist(sp);
@@ -942,6 +1036,7 @@ function galHTML(sp){
  const list=sp.fotos||(sp.foto?[sp.foto]:[]),n=list.length;
  const slides=n?list.map(s=>'<div class="slide">'+IMG(s)+'</div>').join(''):'<div class="slide"><span aria-hidden="true">'+(EMO[sp.reino]||'🧬')+'</span></div>';
  return '<div class="galw'+(sp.fotos===undefined?' ld':'')+'"><div class="gal" id="gal">'+slides+'</div>'
+  +'<div class="gov mobonly"><span class="ktag">Reino: '+esc(sp.reino)+'</span><h2>'+esc(sp.comun||sci(sp))+'</h2><p>'+esc(sci(sp))+'</p></div>'
   +(n>1?'<button class="gnav prev" id="gprev" aria-label="Foto anterior">‹</button><button class="gnav next" id="gnext" aria-label="Foto siguiente">›</button><span class="gcount" id="gcount">1 / '+n+'</span>':'')+'</div>';
 }
 const SM=()=>window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth';
@@ -962,10 +1057,19 @@ document.addEventListener('keydown',e=>{
 });
 $('crumb').onclick=e=>{const b=e.target.closest('.bc');if(!b)return;clearF();path=path.slice(0,+b.dataset.bc+1);sel=null;render()};
 $('steps').onclick=e=>{const b=e.target.closest('.step');if(!b||b.disabled)return;clearF();path=path.slice(0,+b.dataset.i);sel=null;render()};
-$('grid').onclick=e=>{const c=e.target.closest('.card');if(!c)return;if(c.dataset.id){sel=c.dataset.id;const s0=data.find(x=>x.id===sel);if(s0)path=LV.slice(0,7).map(k=>s0[k])}else{path.push(c.dataset.k);sel=null}render()};
+$('grid').onclick=e=>{
+ const a=e.target.closest('[data-act]');
+ if(a){
+  const sp=data.find(x=>x.id===a.dataset.id);if(!sp)return;
+  if(a.dataset.act==='edit')openEdit(sp);
+  else{delId=sp.id;$('delerr').textContent='';$('deltxt').textContent='Vas a eliminar «'+(sp.comun||sci(sp))+'» ('+sci(sp)+').';dlgdel.showModal()}
+  return;
+ }
+ const c=e.target.closest('.card');if(!c)return;if(c.dataset.id){sel=c.dataset.id;const s0=data.find(x=>x.id===sel);if(s0)path=LV.slice(0,7).map(k=>s0[k])}else{path.push(c.dataset.k);sel=null}render()};
 
 /* ---------- Eliminar (con advertencia y confirmación) ---------- */
-const dlgdel=$('dlgdel');
+const dlgdel=$('dlgdel');let delId=null;
+dlgdel.addEventListener('close',()=>{delId=null});
 $('detail').onclick=e=>{
  const sp=data.find(x=>x.id===sel);if(!sp)return;
  if(e.target.id==='back'){sel=null;render()}
@@ -980,7 +1084,7 @@ $('detail').onclick=e=>{
 };
 $('delno').onclick=()=>dlgdel.close();
 $('delok').onclick=async()=>{
- const id=sel;if(!id)return dlgdel.close();
+ const id=delId||sel;if(!id)return dlgdel.close();
  $('delok').disabled=true;
  const dsp=data.find(x=>x.id===id),dph=dsp?(await ensureFotos(dsp)).filter(r=>/^gd:/.test(r)):[];
  await dbDel('especies',id);await dbPut('cola',{id,op:'delete',ts:Date.now(),trash:dph});netUI();flush();
@@ -1229,10 +1333,17 @@ SB&&SB.auth.onAuthStateChange(async(_e,sess)=>{
  const u=sess&&sess.user;if(!u&&off)return;
  if(u){off=false;const m=await dbGet('meta','uid');if(m&&m!==u.id){await dbClear('especies');await dbClear('cola');await dbClear('fotos');gdForget()}await dbPut('meta',u.id,'uid');await dbPut('meta',u.email,'email');if(_e==='SIGNED_IN'&&sess.provider_token&&GDRIVE_ON&&sess.provider_token!==ls('pk_ptok')){lsSet('pk_ptok',sess.provider_token);gdSet(sess.provider_token,3500);if(sess.provider_refresh_token)gdFn({action:'store',refresh_token:sess.provider_refresh_token}).catch(()=>{})}}
 
- $('auth').hidden=!!u;$('app').hidden=!u;$('top').hidden=!u;$('who').innerHTML=u?'<span class="av" title="'+esc(u.email)+'">'+esc(u.email[0].toUpperCase())+'</span>':'';
+ $('auth').hidden=!!u;$('app').hidden=!u;$('top').hidden=!u;$('who').innerHTML=u?'<span class="av" title="'+esc(u.email)+'">'+esc(u.email[0].toUpperCase())+'</span><span class="wem">'+esc(u.email)+'</span>':'';
  gdUI();if(u&&u.id!==uid){uid=u.id;loadData()}
  if(!u){uid=null;data=[];path=[];sel=null}
 });
+/* ---------- Menú de ajustes (⋮) ---------- */
+const mnu=$('mnu'),menu=$('menu');
+const setMenu=o=>{menu.hidden=!o;mnu.setAttribute('aria-expanded',o?'true':'false')};
+mnu.onclick=e=>{e.stopPropagation();setMenu(menu.hidden)};
+document.addEventListener('click',e=>{if(!menu.hidden&&!e.target.closest('#menu')&&e.target!==mnu)setMenu(false)});
+menu.addEventListener('click',e=>{if(e.target.closest('button'))setMenu(false)});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!menu.hidden){setMenu(false);mnu.focus()}});
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 
 /* ---------- Favorito, compartir, buscador ---------- */
@@ -1285,7 +1396,7 @@ $('gb').onclick=async()=>{
  if(m&&(!navigator.onLine||!SB)){
   off=true;uid=m;const em=(await dbGet('meta','email'))||'?';
   $('auth').hidden=true;$('app').hidden=false;$('top').hidden=false;
-  $('who').innerHTML='<span class="av" title="'+esc(em)+'">'+esc(em[0].toUpperCase())+'</span>';
+  $('who').innerHTML='<span class="av" title="'+esc(em)+'">'+esc(em[0].toUpperCase())+'</span><span class="wem">'+esc(em)+'</span>';
   await loadLocal();
  }
  netUI();flush();
