@@ -53,6 +53,20 @@ main{padding:20px;min-width:0}
 .ficha-car{grid-column:1/-1}
 .ficha-car h3{margin:18px 0 6px;font-size:1.05rem}
 .ficha-car h3:first-child{margin-top:0}
+.galw{position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:var(--soft)}
+.gal{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.gal::-webkit-scrollbar{display:none}
+.slide{flex:0 0 100%;scroll-snap-align:center;aspect-ratio:1/1;display:grid;place-items:center;font-size:5rem}
+.slide img{width:100%;height:100%;object-fit:cover;display:block}
+.gnav{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;padding:0;font-size:1.6rem;line-height:1;background:rgba(0,0,0,.55);color:#fff;border:0}
+.gnav.prev{left:8px}.gnav.next{right:8px}
+.gcount{position:absolute;bottom:8px;right:10px;background:rgba(0,0,0,.6);color:#fff;font-size:.78rem;padding:2px 9px;border-radius:99px}
+.thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.th{position:relative;width:76px;height:76px;border-radius:8px;overflow:hidden;border:2px solid var(--line)}
+.th.cover{border-color:var(--acc)}
+.th img{width:100%;height:100%;object-fit:cover;display:block}
+.th button{position:absolute;top:2px;padding:0;width:22px;height:22px;font-size:.72rem;line-height:1;border-radius:50%;background:rgba(0,0,0,.7);color:#fff;border:0}
+.th .rm{right:2px}.th .st{left:2px}
 .lin{font-size:.88rem;color:var(--mut);margin:0 0 14px;padding:0;list-style:none}.lin li{border-left:4px solid var(--c);padding:1px 0 1px 8px;margin-bottom:2px}.lin li span{display:inline-block;min-width:92px}
 .rg{list-style:none;margin:0 0 8px;padding:0;columns:2 300px;column-gap:32px}
 .rg li{border-top:1px solid var(--line);padding:6px 0;font-size:.95rem;white-space:pre-line;break-inside:avoid}
@@ -73,7 +87,8 @@ summary{cursor:pointer;padding:10px 0;font-weight:700;font-size:.95rem}
 .note{font-size:.8rem;color:var(--mut);margin-top:16px}
 @media (max-width:900px){
  .app{grid-template-columns:minmax(0,1fr)}
- .steps{display:none}
+ .steps{flex-direction:row;overflow-x:auto;overflow-y:hidden;border-right:0;border-bottom:1px solid var(--line);-webkit-overflow-scrolling:touch}
+ .step{flex:0 0 104px;border-bottom:0;border-right:1px solid var(--line);padding:8px 4px}
  header{flex-wrap:wrap;padding:12px 14px}
  main{padding:14px}
  .ficha{grid-template-columns:1fr}
@@ -95,9 +110,10 @@ summary{cursor:pointer;padding:10px 0;font-weight:700;font-size:.95rem}
 
 <dialog id="dlg">
  <h2 style="margin-top:0" id="dtitle">Añadir especie</h2>
- <label for="f-foto">Foto</label>
- <input type="file" id="f-foto" accept="image/*">
- <p class="hint" id="fhint" hidden>Déjala vacía para conservar la foto actual.</p>
+ <label for="f-foto">Fotos</label>
+ <input type="file" id="f-foto" accept="image/*" multiple>
+ <p class="hint">Puedes elegir varias (hasta 8). La primera es la portada; toca ★ para cambiarla o ✕ para quitar una.</p>
+ <div class="thumbs" id="fthumbs"></div>
 
  <div class="g2" id="fields"></div>
  <label for="f-comun">Nombre común</label><input id="f-comun" placeholder="Jaguar">
@@ -232,10 +248,25 @@ const $=id=>document.getElementById(id);
 const sci=s=>s.genero+' '+s.especie;
 const scoped=()=>data.filter(s=>path.every((v,i)=>s[LV[i]]===v));
 const photo=(src,r)=>src?'<img src="'+esc(src)+'" alt="">':'<span aria-hidden="true">'+(EMO[r]||'🧬')+'</span>';
-const fromRow=r=>{const o={id:r.id,comun:r.comun||'',car:r.caracteristicas||'',foto:r.foto||'',rasgos:r.rasgos&&typeof r.rasgos==='object'?r.rasgos:{}};LV.forEach(k=>o[k]=r[k]);return o};
+const COLS='id,creado,comun,caracteristicas,foto,rasgos,'+LV.join(',');
+const MAXF=8;
+// fotos === undefined significa "todavía no cargadas" (la lista solo trae la portada)
+const fromRow=r=>{const o={id:r.id,comun:r.comun||'',car:r.caracteristicas||'',foto:r.foto||'',rasgos:r.rasgos&&typeof r.rasgos==='object'?r.rasgos:{}};
+ if(r.fotos!==undefined)o.fotos=Array.isArray(r.fotos)&&r.fotos.length?r.fotos:(o.foto?[o.foto]:[]);
+ LV.forEach(k=>o[k]=r[k]);return o};
+async function ensureFotos(sp){
+ if(sp.fotos)return sp.fotos;
+ let arr=[];
+ try{
+  const {data:row,error}=await SB.from('especies').select('fotos').eq('id',sp.id).single();
+  if(!error&&row&&Array.isArray(row.fotos))arr=row.fotos;
+ }catch(_){}
+ sp.fotos=arr.length?arr:(sp.foto?[sp.foto]:[]);
+ return sp.fotos;
+}
 function fix(){if(sel&&!data.find(x=>x.id===sel))sel=null;while(path.length>2&&!scoped().length)path.pop()}
 async function loadData(){
- const {data:rows,error}=await SB.from('especies').select('*').order('creado');
+ const {data:rows,error}=await SB.from('especies').select(COLS).order('creado');
  if(error){alert('No se pudieron cargar tus especies: '+error.message);return}
  data=rows.map(fromRow);fix();render();
  if(!data.length)$('crumb').textContent='Aún no tienes especies. Toca "+ Añadir especie" para empezar.';
@@ -256,6 +287,10 @@ function render(){
   const val=i<d?path[i]:(i===7&&sp?sci(sp):'—');
   return '<button class="step'+(i===cur?' on':'')+'" style="--c:'+COL[i]+'" data-i="'+i+'"'+(i>d?' disabled':'')+'><span class="lv">'+LN[i]+'</span><span class="val">'+esc(val)+'</span></button>';
  }).join('');
+ if(window.matchMedia&&window.matchMedia('(max-width:900px)').matches){
+  const on=$('steps').querySelector('.step.on');
+  if(on)$('steps').scrollLeft=Math.max(0,on.offsetLeft-$('steps').offsetLeft-($('steps').clientWidth-on.offsetWidth)/2);
+ }
  const showSp=!!sp&&d===7;
  const bc=(d?['<button class="bc" data-bc="-1">Inicio</button>']:[]).concat(path.map((p,j)=>'<button class="bc" data-bc="'+j+'">'+esc(p)+'</button>')).join(' › ');
  const tail=d<7?'elige '+(LN[d]==='Filo o división'?'un filo o división':'un/a '+LN[d].toLowerCase()):'elige una especie';
@@ -275,14 +310,39 @@ function render(){
  $('grid').hidden=ver;$('exbar').hidden=ver;$('detail').hidden=!ver;
  $('detail').innerHTML=ver
   ?'<button id="back">← Volver a las especies</button>'
-   +'<div class="ficha"><div class="ph">'+photo(sp.foto,sp.reino)+'</div>'
+   +'<div class="ficha">'+galHTML(sp)
    +'<div><h2>'+esc(sp.comun||sci(sp))+'</h2><p class="sci">'+esc(sci(sp))+'</p>'
    +'<div class="btns"><button id="edit">Editar ficha</button><button class="danger" id="del">Eliminar</button></div></div>'
    +'<div class="ficha-car">'+rgHTML(sp)
    +(sp.car?'<h3>Notas</h3><p style="margin:0 0 8px;white-space:pre-line">'+esc(sp.car)+'</p>':'')
    +'</div></div>'
   :'';
+ if(ver){
+  wireGal();
+  if(sp.fotos===undefined)ensureFotos(sp).then(()=>{if(sel===sp.id&&sp.fotos.length>1)render()});
+ }
 }
+function galHTML(sp){
+ const list=sp.fotos||(sp.foto?[sp.foto]:[]),n=list.length;
+ const slides=n?list.map(s=>'<div class="slide"><img src="'+esc(s)+'" alt=""></div>').join(''):'<div class="slide"><span aria-hidden="true">'+(EMO[sp.reino]||'🧬')+'</span></div>';
+ return '<div class="galw"><div class="gal" id="gal">'+slides+'</div>'
+  +(n>1?'<button class="gnav prev" id="gprev" aria-label="Foto anterior">‹</button><button class="gnav next" id="gnext" aria-label="Foto siguiente">›</button><span class="gcount" id="gcount">1 / '+n+'</span>':'')+'</div>';
+}
+function wireGal(){
+ const g=$('gal');if(!g)return;
+ const n=g.children.length;
+ g.addEventListener('scroll',()=>{const c=$('gcount');if(c&&g.clientWidth)c.textContent=(Math.round(g.scrollLeft/g.clientWidth)+1)+' / '+n});
+ const by=s=>g.scrollBy({left:s*g.clientWidth,behavior:'smooth'});
+ if($('gprev'))$('gprev').onclick=()=>by(-1);
+ if($('gnext'))$('gnext').onclick=()=>by(1);
+}
+document.addEventListener('keydown',e=>{
+ if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')return;
+ if(dlg.hasAttribute('open')||dlgdel.hasAttribute('open'))return;
+ if(/^(INPUT|TEXTAREA|SELECT)$/.test((e.target&&e.target.tagName)||''))return;
+ const g=$('gal');if(!g||$('detail').hidden)return;
+ g.scrollBy({left:(e.key==='ArrowRight'?1:-1)*g.clientWidth,behavior:'smooth'});
+});
 $('crumb').onclick=e=>{const b=e.target.closest('.bc');if(!b)return;path=path.slice(0,+b.dataset.bc+1);sel=null;render()};
 $('steps').onclick=e=>{const b=e.target.closest('.step');if(!b||b.disabled)return;path=path.slice(0,+b.dataset.i);sel=null;render()};
 $('grid').onclick=e=>{const c=e.target.closest('.card');if(!c)return;if(c.dataset.id)sel=c.dataset.id;else{path.push(c.dataset.k);sel=null}render()};
@@ -365,16 +425,18 @@ $('f-reino').onchange=()=>{
 
 $('add').onclick=()=>{
  editId=null;
- $('dtitle').textContent='Añadir especie';$('save').textContent='Guardar especie';$('fhint').hidden=true;
+ $('dtitle').textContent='Añadir especie';$('save').textContent='Guardar especie';
+ formFotos=[];drawThumbs();
  $('err').textContent='';$('f-foto').value='';$('f-comun').value='';$('f-car').value='';
  LV.forEach((k,i)=>{$('f-'+k).value=path[i]||(i<2?$('f-'+k).options[0].value:'')});
  buildRasgos();fillRasgos({});
  dlg.querySelectorAll('details').forEach(d=>d.open=false);
  dlg.showModal();
 };
-function openEdit(sp){
+async function openEdit(sp){
  editId=sp.id;
- $('dtitle').textContent='Editar especie';$('save').textContent='Guardar cambios';$('fhint').hidden=false;
+ formFotos=(await ensureFotos(sp)).slice();drawThumbs();
+ $('dtitle').textContent='Editar especie';$('save').textContent='Guardar cambios';
  $('err').textContent='';$('f-foto').value='';$('f-comun').value=sp.comun;$('f-car').value=sp.car;
  LV.forEach(k=>{$('f-'+k).value=sp[k]});
  buildRasgos();fillRasgos(sp.rasgos||{});
@@ -382,19 +444,39 @@ function openEdit(sp){
  dlg.showModal();
 }
 $('cancel').onclick=()=>dlg.close();
-function resize(file){return new Promise(res=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,420/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.72))};im.onerror=()=>res('');im.src=r.result};r.onerror=()=>res('');r.readAsDataURL(file)})}
+let formFotos=[];
+function drawThumbs(){
+ $('fthumbs').innerHTML=formFotos.map((s,i)=>'<div class="th'+(i===0?' cover':'')+'"><img src="'+esc(s)+'" alt="">'
+  +(i?'<button type="button" class="st" data-st="'+i+'" title="Hacer portada">★</button>':'')
+  +'<button type="button" class="rm" data-rm="'+i+'" title="Quitar">✕</button></div>').join('');
+}
+$('fthumbs').onclick=e=>{
+ const b=e.target.closest('button');if(!b)return;
+ if(b.dataset.rm!==undefined)formFotos.splice(+b.dataset.rm,1);
+ else if(b.dataset.st!==undefined){const [x]=formFotos.splice(+b.dataset.st,1);formFotos.unshift(x)}
+ drawThumbs();
+};
+$('f-foto').onchange=async e=>{
+ const files=[...e.target.files];e.target.value='';
+ $('err').textContent='';
+ for(const f of files){
+  if(formFotos.length>=MAXF){$('err').textContent='Máximo '+MAXF+' fotos por especie.';break}
+  const s=await resize(f);if(s)formFotos.push(s);
+ }
+ drawThumbs();
+};
+function resize(file){return new Promise(res=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,520/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.72))};im.onerror=()=>res('');im.src=r.result};r.onerror=()=>res('');r.readAsDataURL(file)})}
 $('save').onclick=async()=>{
  const rec={comun:$('f-comun').value.trim(),caracteristicas:$('f-car').value.trim(),rasgos:collectRasgos()};
  LV.forEach(k=>rec[k]=$('f-'+k).value.trim());
  const miss=LV.filter(k=>!rec[k]).map(k=>LN[LV.indexOf(k)].toLowerCase());
  if(miss.length){$('err').textContent='Falta: '+miss.join(', ')+'.';return}
- const f=$('f-foto').files[0];
- if(f)rec.foto=await resize(f);else if(!editId)rec.foto='';
+ rec.fotos=formFotos.slice();rec.foto=formFotos[0]||'';
  $('save').disabled=true;
  const q=editId?SB.from('especies').update(rec).eq('id',editId).select().single():SB.from('especies').insert(rec).select().single();
  const {data:row,error}=await q;
  $('save').disabled=false;
- if(error){$('err').textContent='No se pudo guardar: '+error.message+(/rasgos/i.test(error.message)?' (Falta crear la columna "rasgos" en Supabase: ejecuta el archivo rasgos.sql).':'');return}
+ if(error){$('err').textContent='No se pudo guardar: '+error.message+(/rasgos|fotos/i.test(error.message)?' (Falta crear una columna nueva en Supabase: ejecuta rasgos.sql y fotos.sql en el SQL Editor).':'');return}
  const o=fromRow(row);
  if(editId)data=data.map(x=>x.id===editId?o:x);else data.push(o);
  path=LV.slice(0,7).map(k=>o[k]);sel=o.id;dlg.close();render();
@@ -403,8 +485,9 @@ $('save').onclick=async()=>{
 /* ---------- Exportar ---------- */
 function saveFile(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 const rasgosTxt=r=>Object.entries(r.rasgos||{}).map(([k,v])=>(LABEL[k]||k)+': '+v).join(' | ');
-function exportData(kind){
+async function exportData(kind){
  if(!data.length){alert('Aún no hay especies para exportar.');return}
+ if(kind==='json')await Promise.all(data.map(ensureFotos));
  const d=new Date().toISOString().slice(0,10);
  if(kind==='json')return saveFile('pokedex-taxonomica-'+d+'.json',JSON.stringify(data,null,1),'application/json');
  const cols=LV.concat(['comun','car','rasgos']),q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
