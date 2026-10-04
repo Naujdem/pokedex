@@ -176,6 +176,16 @@ button:active,.card:active,.step:active{transform:scale(.98)}
 .chip.on{border-color:var(--acc);background:var(--soft);box-shadow:0 0 0 2px var(--acc);font-weight:700}
 .chip.on:after{content:"✓";position:absolute;top:3px;right:6px;font-size:.7rem;color:var(--ink)}
 .chip.otra{border-style:dashed}
+/* Cuadros en la ficha: PC = se acomodan en filas; móvil = carrete horizontal */
+.vchips{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 2px}
+.vchip{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:92px;max-width:150px;padding:10px 8px 8px;text-align:center;font-size:.8rem;line-height:1.15;background:var(--soft);border:1px solid var(--line);border-radius:10px;hyphens:auto;overflow-wrap:anywhere}
+.vchip .ci{font-size:1.6rem;line-height:1}
+.vo{margin-top:6px;font-size:.95rem}
+@media (max-width:700px){
+ .vchips{flex-wrap:nowrap;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;scrollbar-width:none;padding-bottom:4px;margin-right:-16px;padding-right:16px}
+ .vchips::-webkit-scrollbar{display:none}
+ .vchip{flex:0 0 auto;width:104px;scroll-snap-align:start}
+}
 </style>
 </head>
 <body>
@@ -641,9 +651,17 @@ function sumHTML(sp){
  (SUMK[sp.reino]||[]).forEach(k=>{if(r[k])c.push(r[k].split(', ').map(x=>x.replace(/\s*\(.*\)$/,'')).join(', '))});
  return c.length?'<p class="sum">'+c.map(t=>'<span>'+esc(t)+'</span>').join('')+'</p>':'';
 }
+/* Valor de una característica: en cuadros si es de selección múltiple, texto normal en los demás */
+function valHTML(f,v){
+ if(f.t!=='m')return termHTML(v,f.key);
+ const sel=[],rest=[];
+ String(v).split(', ').forEach(t=>{const n=(f.al&&f.al[t])||t,i=f.items.find(x=>x[1]===n);if(i){if(!sel.includes(i))sel.push(i)}else rest.push(t)});
+ return (sel.length?'<div class="vchips">'+sel.map(i=>'<div class="vchip"><span class="ci" aria-hidden="true">'+i[0]+'</span><span>'+termHTML(i[1],f.key)+'</span></div>').join('')+'</div>':'')
+  +(rest.length?'<div class="vo">'+(sel.length?'✏️ ':'')+termHTML(rest.join(', '),f.key)+'</div>':'');
+}
 function rgHTML(sp){
  const r=sp.rasgos||{},W=window.matchMedia,max=!W('(min-width:701px)').matches?1:W('(min-width:1100px)').matches?3:2;
- const li=fs=>fs.filter(f=>r[f.key]).map(f=>'<li><b>'+esc(f.lab?f.lab(r):f.label)+'</b>'+termHTML(r[f.key],f.key)+'</li>').join('');
+ const li=fs=>fs.filter(f=>r[f.key]).map(f=>'<li><b>'+esc(f.lab?f.lab(r):f.label)+'</b>'+valHTML(f,r[f.key])+'</li>').join('');
  const DIA=['diagnosticas','similares'],FUN=['curiosos','fuentes'];
  const pick=(a,inc)=>a.filter(f=>inc?DIA.concat(FUN).includes(f.key)===false:true);
  const secs=[
