@@ -265,7 +265,7 @@ const UNIV=[
  S('uicn','Estado de conservación (UICN)',['Preocupación Menor (LC)','Casi Amenazado (NT)','Vulnerable (VU)','En Peligro (EN)','En Peligro Crítico (CR)','Extinto en Estado Silvestre (EW)','Extinto (EX)','Datos Insuficientes (DD)']),
  Object.assign(S('origen','Origen / Endemismo',['Exótico / Introducido','Endémico']),{noOtra:1}),
  Object.assign(T('origen_lugar','Lugar de endemismo / introducción','Ej: Andes colombianos, Madagascar…'),{dep:1,lab:r=>r.origen==='Endémico'?'Endémico de':'Introducido desde'}),
- M('habitat','Hábitat',[['🏙️','Ciudades'],['🌲','Bosques'],['🌾','Sabana'],['🏜️','Desierto'],['🦆','Humedal'],['🏖️','Costa'],['⛰️','Montaña'],['🌴','Selva'],['🚜','Antrópico / agroecosistemas']]),
+ M('habitat','Hábitat',[['🏙️','Ciudades'],['🌲','Bosques'],['🍂','Bosques secos tropicales'],['🌵','Matorrales'],['🌾','Sabana'],['🏜️','Desierto'],['🦆','Humedal'],['🏖️','Costa'],['⛰️','Montaña'],['🌴','Selva'],['🛣️','Bordes de caminos'],['🚜','Antrópico / agroecosistemas']]),
  M('peligro','Nivel de peligrosidad / toxicidad',[['🕊️','Inofensivo'],['☠️','Venenoso'],['🐍','Ponzoñoso'],['⚠️','Irritante'],['🦠','Patógeno']],'',{ex:'Inofensivo'}),
  T('tamano','Tamaño / dimensiones','Longitud, altura, envergadura, diámetro…'),
  T('ciclo','Ciclo de vida','Anual, bienal, perenne; fases principales…'),
@@ -283,23 +283,22 @@ const UNIV=[
 ];
 const ESP={
  Animalia:[
-  T('an_suborden','Suborden','Opcional. Ej: Feliformia'),
-  M('an_defensa','Mecanismo de defensa / ataque',[['☠️','Venenoso'],['🐍','Ponzoñoso'],['🦎','Camuflaje'],['🐢','Armadura / Caparazón'],['🚫','Ninguno']],'',{ex:'Ninguno'}),
-  M('an_dieta','Dieta / trofismo',[['🌿','Herbívoro'],['🥩','Carnívoro'],['🍽️','Omnívoro'],['🍎','Frugívoro'],['🍂','Detritívoro'],['🩸','Hematófago']]),
+  M('an_defensa','Mecanismo de defensa / ataque',[['☠️','Venenoso'],['🐍','Ponzoñoso'],['🦎','Camuflaje'],['🐢','Armadura / Caparazón'],['🤢','Química por olor desagradable'],['🚫','Ninguno']],'',{ex:'Ninguno'}),
+  M('an_dieta','Dieta / trofismo',[['🌿','Herbívoro'],['🥩','Carnívoro'],['🍽️','Omnívoro'],['🍎','Frugívoro'],['🐛','Fitófago'],['🍂','Detritívoro'],['🩸','Hematófago']]),
   M('an_actividad','Patrón de actividad',[['☀️','Diurno'],['🌙','Nocturno'],['🌅','Crepuscular']]),
   M('an_habitos','Hábitos de vida',[['🧍','Solitario'],['👥','Gregario'],['🐝','Eusocial']],'',{al:{'Gregario (manada / bandada)':'Gregario','Social (eusocial)':'Eusocial'}}),
   M('an_respiracion','Tipo de respiración',[['🫁','Pulmonar'],['🐟','Branquial'],['🐸','Cutánea'],['🪲','Traqueal']]),
   M('an_reproduccion','Reproducción / desarrollo',[['🥚','Ovíparo'],['🍼','Vivíparo'],['🐣','Ovovivíparo'],['🦋','Metamorfosis']]),
   T('an_camada','Tamaño de camada / número de crías'),
   M('an_locomocion','Tipo de locomoción',[['🏃','Cursorial'],['🦘','Saltador'],['🦅','Volador'],['🧗','Trepador'],['⛏️','Excavador'],['🏊','Nadador']]),
-  M('an_sentidos','Sensibilidad sensorial destacada',[['👁️','Visión'],['👃','Olfato'],['🦇','Ecolocación'],['⚡','Electrorrecepción']]),
+  M('an_sentidos','Sensibilidad sensorial destacada',[['👁️','Visión'],['👃','Olfato'],['🦇','Ecolocación'],['⚡','Electrorrecepción'],['🧪','Quimiorrecepción']]),
   S('an_territorialidad','Territorialidad',['Territorial','No territorial','Migratorio']),
   S('an_estrategia','Estrategia reproductiva',['K estratega','r estratega']),
-  S('an_dimorfismo','Dimorfismo sexual',['Presente','Ausente'],'Ej: Presente: el macho es más grande y colorido'),
+  Object.assign(S('an_dimorfismo','Dimorfismo sexual',['Presente','Ausente']),{noOtra:1}),
+  Object.assign(A('an_dimorfismo_dif','Diferencia entre sexos','Ej: el macho es más grande y colorido'),{dep:1}),
   T('an_nido','Tipo de nido / refugio')
  ],
  Plantae:[
-  T('pl_subphylum','Subphylum','Opcional. Subdivisión entre filo y clase'),
   S('pl_uso','Toxicidad / uso humano',['Medicinal','Comestible','Ornamental','Tóxica / Venenosa','Industrial','Maderable']),
   M('pl_habito','Forma de crecimiento (hábito)',[['🌳','Árbol'],['🪴','Arbusto'],['🌱','Hierba'],['🍃','Trepadora / Liana'],['🌸','Epífita'],['🪨','Litófita']]),
   S('pl_follaje','Tipo de hoja / follaje',['Perennifolio','Caduco (caducifolio)']),
@@ -354,7 +353,7 @@ const TIT={Animalia:'Características animales',Plantae:'Características de la 
 /* Dato antiguo (ya separado en sequía / inundación): solo se muestra si la ficha lo tiene, para no perderlo */
 const LEGP=T('pl_tolerancia','Tolerancia a la sequía / inundación (dato anterior)','Pásalo a los dos campos nuevos y bórralo de aquí');
 let legOn=false;
-const LABEL={},FD={};UNIV.concat(...Object.values(ESP),[LEGP]).forEach(f=>{LABEL[f.key]=f.label;FD[f.key]=f});
+const LABEL={},FD={};UNIV.concat(...Object.values(ESP),[LEGP]).forEach(f=>{LABEL[f.key]=f.label;FD[f.key]=f});LABEL.subphylum='Subphylum';LABEL.suborden='Suborden';
 
 let data=[],path=[],sel=null,uid=null,editId=null,Q='',onlyFav=false;
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -390,6 +389,8 @@ Metamorfosis||Metamorfosis|animal
 Cursorial||Cursorial locomoción|animal
 Ecolocación|Ecolocalización|Ecolocalización|animal
 Electrorrecepción|Electrorecepción|Electrorrecepción|animal
+Quimiorrecepción|Quimiorreceptor|Quimiorrecepción|animal
+Fitófago|Fitófaga,Fitofagia|Fitofagia|insecto herbívoro
 K estratega|K-estratega|Selección r/K|estrategia reproductiva
 r estratega|r-estratega|Selección r/K|estrategia reproductiva
 Dimorfismo sexual||Dimorfismo sexual|animal
@@ -652,6 +653,13 @@ function sumHTML(sp){
  return c.length?'<p class="sum">'+c.map(t=>'<span>'+esc(t)+'</span>').join('')+'</p>':'';
 }
 /* Valor de una característica: en cuadros si es de selección múltiple, texto normal en los demás */
+const SUBX={filo:['subphylum','Subphylum',2],orden:['suborden','Suborden',4]};
+function linHTML(sp){
+ const r=sp.rasgos||{},v={subphylum:r.subphylum||r.pl_subphylum,suborden:r.suborden||r.an_suborden};
+ return LV.map((k,i)=>{const x=SUBX[k];
+  return '<li style="--c:'+COL[i]+'"><span>'+LN[i]+'</span> '+esc(sp[k])+'</li>'+(x&&v[x[0]]?'<li style="--c:'+COL[x[2]]+'"><span>'+x[1]+'</span> '+esc(v[x[0]])+'</li>':'');
+ }).join('');
+}
 function valHTML(f,v){
  if(f.t!=='m')return termHTML(v,f.key);
  const sel=[],rest=[];
@@ -673,7 +681,7 @@ function rgHTML(sp){
  ];
  let n=0;
  const acc=(t,h,c)=>{if(!h)return '';const o=n++<max;return '<details class="acc '+(c||'')+'"'+(o?' open':'')+'><summary>'+esc(t)+'<small>'+h.match(/<li>/g).length+'</small></summary><div class="accb"><ul class="rg">'+h+'</ul></div></details>'};
- const cl='<details class="acc mobonly"><summary>Clasificación taxonómica<small>8 niveles</small></summary><div class="accb"><ol class="lin">'+LV.map((k,i)=>'<li style="--c:'+COL[i]+'"><span>'+LN[i]+'</span> '+esc(sp[k])+'</li>').join('')+'</ol></div></details>';
+ const cl='<details class="acc mobonly"><summary>Clasificación taxonómica<small>8 niveles</small></summary><div class="accb"><ol class="lin">'+linHTML(sp)+'</ol></div></details>';
  const body=secs.map(x=>acc(x[0],x[1],x[2])).join('');
  return cl+(body||'<p class="empty">Aún no hay características. Toca «Editar ficha» para añadirlas.</p>');
 }
@@ -717,7 +725,7 @@ function render(){
   ?'<button id="back">← Volver a las especies</button>'
    +'<div class="ficha">'+galHTML(sp)
    +'<div><h2>'+esc(sp.comun||sci(sp))+'</h2><p class="sci">'+esc(sci(sp))+'</p>'
-   +sumHTML(sp)+'<ol class="lin deskonly">'+LV.map((k,i)=>'<li style="--c:'+COL[i]+'"><span>'+LN[i]+'</span> '+esc(sp[k])+'</li>').join('')+'</ol>'
+   +sumHTML(sp)+'<ol class="lin deskonly">'+linHTML(sp)+'</ol>'
    +'<div class="btns"><button id="favb">'+(fav(sp)?'★ Favorito':'☆ Favorito')+'</button><button id="shr">↗ Compartir</button><button id="edit">Editar ficha</button><button class="danger" id="del">🗑 Eliminar</button></div></div>'
    +'<div class="ficha-car">'+distBlock(sp)+rgHTML(sp)
    +'</div></div>'
@@ -779,7 +787,8 @@ $('delok').onclick=async()=>{
 /* ---------- Formulario (añadir / editar) ---------- */
 const PH={filo:'Chordata',clase:'Mammalia',orden:'Carnivora',familia:'Felidae',genero:'Panthera',especie:'onca'};
 const dlg=$('dlg');
-$('fields').innerHTML=LV.map((k,i)=>'<div><label for="f-'+k+'">'+LN[i]+'</label>'+(k==='dominio'?'<select id="f-dominio">'+DOM.map(x=>'<option>'+x+'</option>').join('')+'</select>':k==='reino'?'<select id="f-reino">'+['Animalia','Plantae','Fungi','Protista','Monera'].map(x=>'<option>'+x+'</option>').join('')+'</select>':'<input id="f-'+k+'" placeholder="'+PH[k]+'">')+'</div>').join('');
+const OPC={filo:['subphylum','Subphylum (opcional)','Opcional · Ej: Vertebrata'],orden:['suborden','Suborden (opcional)','Opcional · Ej: Feliformia']};
+$('fields').innerHTML=LV.map((k,i)=>'<div><label for="f-'+k+'">'+LN[i]+'</label>'+(k==='dominio'?'<select id="f-dominio">'+DOM.map(x=>'<option>'+x+'</option>').join('')+'</select>':k==='reino'?'<select id="f-reino">'+['Animalia','Plantae','Fungi','Protista','Monera'].map(x=>'<option>'+x+'</option>').join('')+'</select>':'<input id="f-'+k+'" placeholder="'+PH[k]+'">')+'</div>'+(OPC[k]?'<div><label for="r-'+OPC[k][0]+'">'+OPC[k][1]+'</label><input id="r-'+OPC[k][0]+'" data-k="'+OPC[k][0]+'" placeholder="'+OPC[k][2]+'"></div>':'')).join('');
 
 function fHTML(f){
  const id='r-'+f.key,ph=esc(f.ph||'');
@@ -836,14 +845,13 @@ function fillRasgos(obj){
    else el.value='';
   }else el.value=v||'';
  });
- depOrigen();
+ depAll();
 }
-/* El lugar de origen solo aparece cuando se elige Endémico o Exótico / Introducido */
-function depOrigen(){
- const s=$('r-origen'),w=$('w-origen_lugar');if(!s||!w)return;
- w.hidden=!s.value;
- const l=$('l-origen_lugar');if(l)l.textContent=s.value==='Endémico'?'¿De dónde es endémico?':s.value?'¿De dónde fue introducido?':'';
- if(!s.value)$('r-origen_lugar').value='';
+/* Campos que aparecen según otra respuesta: lugar de origen (si hay origen) y diferencia entre sexos (si hay dimorfismo) */
+const DEPS=[['origen_lugar','origen',v=>!!v],['an_dimorfismo_dif','an_dimorfismo',v=>v==='Presente']];
+function depAll(){
+ DEPS.forEach(([k,on,when])=>{const s=$('r-'+on),w=$('w-'+k);if(!s||!w)return;const show=when(s.value);w.hidden=!show;if(!show){const x=$('r-'+k);if(x)x.value=''}});
+ const s=$('r-origen'),l=$('l-origen_lugar');if(s&&l)l.textContent=s.value==='Endémico'?'¿De dónde es endémico?':s.value?'¿De dónde fue introducido?':'';
 }
 /* Fichas antiguas: «Nativo» / «Invasor» ya no existen (lo maneja el mapa); los textos de endemismo se conservan en el campo de lugar */
 function legacy(r){
@@ -852,6 +860,14 @@ function legacy(r){
   const k=/^end[eé]m/i.test(o)?'Endémico':/^(ex[oó]tic|introd)/i.test(o)?'Exótico / Introducido':'';
   if(k){r.origen=k;if(!r.origen_lugar&&o.trim().length>k.length)r.origen_lugar=o.trim()}else delete r.origen;
  }
+ const d=r.an_dimorfismo;
+ if(d&&d!=='Presente'&&d!=='Ausente'){
+  if(/^ausente/i.test(d))r.an_dimorfismo='Ausente';
+  else{r.an_dimorfismo='Presente';if(!r.an_dimorfismo_dif)r.an_dimorfismo_dif=d.replace(/^presente\s*[:\-–—,.]?\s*/i,'').trim()}
+ }
+ if(r.an_suborden&&!r.suborden)r.suborden=r.an_suborden;
+ if(r.pl_subphylum&&!r.subphylum)r.subphylum=r.pl_subphylum;
+ delete r.an_suborden;delete r.pl_subphylum;
  return r;
 }
 dlg.addEventListener('click',e=>{
@@ -866,7 +882,7 @@ dlg.addEventListener('change',e=>{
  if(el.matches&&el.matches('select[data-k]')){
   const o=$(el.id+'-o');
   if(o){o.hidden=el.value!==OTRA;if(!o.hidden)o.focus()}
-  if(el.id==='r-origen')depOrigen();
+  depAll();
  }
 });
 $('f-reino').onchange=()=>{
