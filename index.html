@@ -268,21 +268,20 @@ main{display:contents}
 .gov{position:absolute;left:0;right:0;bottom:0;padding:90px 18px 16px;text-align:left;pointer-events:none;background:linear-gradient(to top,rgba(0,0,0,.92),rgba(0,0,0,.6) 55%,transparent)}
 .ficha .gov h2{margin:10px 0 0;font-size:1.7rem;color:#fff}
 .gov p{margin:2px 0 0;font-style:italic;font-weight:600;font-size:1.1rem;color:#7ee8cb}
-@media (max-width:700px){.slide{aspect-ratio:4/3}}
 .btns{margin-top:18px}
 .btns button{border-radius:12px}
 .btns .danger{color:var(--dng);border-color:var(--dng)}
 /* Fotos: caja fija, la imagen se recorta (no estira la tarjeta ni la galería) */
-.slide{position:relative;overflow:hidden}
-.slide{background:#0c0c0c}
-.slide img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
-@media (max-width:700px){.slide{max-height:42vh}}
+.slide{position:relative;overflow:hidden;aspect-ratio:auto;min-height:220px;background:var(--soft)}
+.slide:not(:has(img)){aspect-ratio:1/1}
+.gal{align-items:center}
+.slide img{position:static;display:block;width:100%;height:auto;max-height:62vh;object-fit:contain}
 .card{display:flex;flex-direction:column;justify-content:flex-start;text-align:left}
 .cardw{display:flex}
 .cardw .card{flex:1;min-width:0}
 .card .ph{flex:none;width:100%;overflow:hidden}
-.card .ph{background:#0c0c0c}
-.card .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.card .ph:has(img){aspect-ratio:auto;display:block;min-height:150px}
+.card .ph img{position:static;display:block;width:100%;height:auto;max-height:70vh;object-fit:contain}
 /* La ficha no pega a la barra de arriba y cabe sin hacer scroll */
 body.ficha-abierta #detail{padding-top:18px;padding-bottom:40px}
 body.ficha-abierta .ficha{margin-top:0}
