@@ -81,7 +81,7 @@ dialog{border:1px solid var(--line);border-radius:12px;background:var(--panel);c
 dialog::backdrop{background:rgba(0,0,0,.5)}
 dialog label{display:block;font-size:.85rem;margin:10px 0 3px;color:var(--mut)}
 dialog input,dialog select,dialog textarea{width:100%;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font-size:.95rem}
-dialog input.otro{margin-top:6px}
+dialog .otro{margin-top:6px;resize:vertical}
 details{border:1px solid var(--line);border-radius:8px;margin:14px 0 0;padding:0 12px}
 details[open]{padding-bottom:10px}
 summary{cursor:pointer;padding:10px 0;font-weight:700;font-size:.95rem}
@@ -168,6 +168,14 @@ button:active,.card:active,.step:active{transform:scale(.98)}
 .mode{display:flex;gap:8px;margin:8px 0 0}.mode button{flex:1;padding:10px}
 #m-n.on{background:#2f9e5f;color:#fff;border-color:#2f9e5f}#m-i.on{background:var(--acc);color:#fff;border-color:var(--acc)}
 #m-sum{font-size:.85rem;margin-top:8px}
+/* ---------- Características en cuadros (selección múltiple) ---------- */
+.chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;margin-top:4px}
+.chip{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:4px;padding:10px 6px 8px;min-height:72px;text-align:center;font-size:.76rem;line-height:1.15;background:var(--bg);border:1px solid var(--line);border-radius:10px;hyphens:auto;overflow-wrap:anywhere}
+.chip .ci{font-size:1.55rem;line-height:1}
+@media (hover:hover){.chip:hover{border-color:var(--acc)}}
+.chip.on{border-color:var(--acc);background:var(--soft);box-shadow:0 0 0 2px var(--acc);font-weight:700}
+.chip.on:after{content:"✓";position:absolute;top:3px;right:6px;font-size:.7rem;color:var(--ink)}
+.chip.otra{border-style:dashed}
 </style>
 </head>
 <body>
@@ -241,14 +249,18 @@ const OTRA='__otra';
 const S=(key,label,opts,ph)=>({key,label,t:'s',opts,ph});
 const T=(key,label,ph)=>({key,label,t:'t',ph});
 const A=(key,label,ph)=>({key,label,t:'a',ph});
+/* M = selección múltiple en cuadros. items: [icono, valor, texto corto opcional]. x: {ex:'valor exclusivo', al:{valorAntiguo:valorNuevo}} */
+const M=(key,label,items,ph,x)=>Object.assign({key,label,t:'m',items,opts:items.map(i=>i[1]),ph},x||{});
 const UNIV=[
  S('uicn','Estado de conservación (UICN)',['Preocupación Menor (LC)','Casi Amenazado (NT)','Vulnerable (VU)','En Peligro (EN)','En Peligro Crítico (CR)','Extinto en Estado Silvestre (EW)','Extinto (EX)','Datos Insuficientes (DD)']),
- S('origen','Origen / Endemismo',['Nativo','Exótico / Introducido','Invasor','Endémico'],'Ej: Endémico de los Andes colombianos'),
- T('distribucion','Distribución geográfica y altitudinal','Países o regiones + rango (ej. 0 – 2.600 m s. n. m.)'),
- T('habitat','Hábitat','Ecorregión o ecosistema principal'),
- S('peligro','Nivel de peligrosidad / toxicidad',['Inofensivo','Venenoso','Ponzoñoso','Irritante','Patógeno']),
+ Object.assign(S('origen','Origen / Endemismo',['Exótico / Introducido','Endémico']),{noOtra:1}),
+ Object.assign(T('origen_lugar','Lugar de endemismo / introducción','Ej: Andes colombianos, Madagascar…'),{dep:1,lab:r=>r.origen==='Endémico'?'Endémico de':'Introducido desde'}),
+ M('habitat','Hábitat',[['🏙️','Ciudades'],['🌲','Bosques'],['🌾','Sabana'],['🏜️','Desierto'],['🦆','Humedal'],['🏖️','Costa'],['⛰️','Montaña'],['🌴','Selva'],['🚜','Antrópico / agroecosistemas']]),
+ M('peligro','Nivel de peligrosidad / toxicidad',[['🕊️','Inofensivo'],['☠️','Venenoso'],['🐍','Ponzoñoso'],['⚠️','Irritante'],['🦠','Patógeno']],'',{ex:'Inofensivo'}),
  T('tamano','Tamaño / dimensiones','Longitud, altura, envergadura, diámetro…'),
- T('ciclo','Ciclo de vida / longevidad','Esperanza de vida aproximada'),
+ T('ciclo','Ciclo de vida','Anual, bienal, perenne; fases principales…'),
+ T('longevidad','Longevidad','Esperanza de vida aproximada'),
+ S('metamorfosis','Metamorfosis',['Completa (holometábola)','Incompleta (hemimetábola)','Sin metamorfosis (desarrollo directo)']),
  S('poblacion','Estado poblacional / tendencia',['Estable','En declive','En aumento']),
  T('amenazas','Amenazas principales','Pérdida de hábitat, caza, contaminación…'),
  T('ecologica','Importancia ecológica','Polinizador, dispersor de semillas, depredador tope, bioindicador…'),
@@ -261,31 +273,34 @@ const UNIV=[
 ];
 const ESP={
  Animalia:[
-  S('an_defensa','Mecanismo de defensa / ataque',['Venenoso','Ponzoñoso','Camuflaje','Armadura / Caparazón','Ninguno']),
-  S('an_dieta','Dieta / trofismo',['Herbívoro','Carnívoro','Omnívoro','Frugívoro','Detritívoro','Hematófago']),
-  S('an_actividad','Patrón de actividad',['Diurno','Nocturno','Crepuscular']),
-  S('an_habitos','Hábitos de vida',['Solitario','Gregario (manada / bandada)','Social (eusocial)']),
-  S('an_respiracion','Tipo de respiración',['Pulmonar','Branquial','Cutánea','Traqueal']),
-  S('an_reproduccion','Reproducción / desarrollo',['Ovíparo','Vivíparo','Ovovivíparo','Metamorfosis']),
+  T('an_suborden','Suborden','Opcional. Ej: Feliformia'),
+  M('an_defensa','Mecanismo de defensa / ataque',[['☠️','Venenoso'],['🐍','Ponzoñoso'],['🦎','Camuflaje'],['🐢','Armadura / Caparazón'],['🚫','Ninguno']],'',{ex:'Ninguno'}),
+  M('an_dieta','Dieta / trofismo',[['🌿','Herbívoro'],['🥩','Carnívoro'],['🍽️','Omnívoro'],['🍎','Frugívoro'],['🍂','Detritívoro'],['🩸','Hematófago']]),
+  M('an_actividad','Patrón de actividad',[['☀️','Diurno'],['🌙','Nocturno'],['🌅','Crepuscular']]),
+  M('an_habitos','Hábitos de vida',[['🧍','Solitario'],['👥','Gregario'],['🐝','Eusocial']],'',{al:{'Gregario (manada / bandada)':'Gregario','Social (eusocial)':'Eusocial'}}),
+  M('an_respiracion','Tipo de respiración',[['🫁','Pulmonar'],['🐟','Branquial'],['🐸','Cutánea'],['🪲','Traqueal']]),
+  M('an_reproduccion','Reproducción / desarrollo',[['🥚','Ovíparo'],['🍼','Vivíparo'],['🐣','Ovovivíparo'],['🦋','Metamorfosis']]),
   T('an_camada','Tamaño de camada / número de crías'),
-  S('an_locomocion','Tipo de locomoción',['Cursorial','Saltador','Volador','Trepador','Excavador','Nadador']),
-  S('an_sentidos','Sensibilidad sensorial destacada',['Visión','Olfato','Ecolocación','Electrorrecepción']),
+  M('an_locomocion','Tipo de locomoción',[['🏃','Cursorial'],['🦘','Saltador'],['🦅','Volador'],['🧗','Trepador'],['⛏️','Excavador'],['🏊','Nadador']]),
+  M('an_sentidos','Sensibilidad sensorial destacada',[['👁️','Visión'],['👃','Olfato'],['🦇','Ecolocación'],['⚡','Electrorrecepción']]),
   S('an_territorialidad','Territorialidad',['Territorial','No territorial','Migratorio']),
   S('an_estrategia','Estrategia reproductiva',['K estratega','r estratega']),
   S('an_dimorfismo','Dimorfismo sexual',['Presente','Ausente'],'Ej: Presente: el macho es más grande y colorido'),
   T('an_nido','Tipo de nido / refugio')
  ],
  Plantae:[
+  T('pl_subphylum','Subphylum','Opcional. Subdivisión entre filo y clase'),
   S('pl_uso','Toxicidad / uso humano',['Medicinal','Comestible','Ornamental','Tóxica / Venenosa','Industrial','Maderable']),
-  S('pl_habito','Forma de crecimiento (hábito)',['Árbol','Arbusto','Hierba','Trepadora / Liana','Epífita','Litófita']),
+  M('pl_habito','Forma de crecimiento (hábito)',[['🌳','Árbol'],['🪴','Arbusto'],['🌱','Hierba'],['🍃','Trepadora / Liana'],['🌸','Epífita'],['🪨','Litófita']]),
   S('pl_follaje','Tipo de hoja / follaje',['Perennifolio','Caduco (caducifolio)']),
-  S('pl_polinizacion','Tipo de polinización',['Anemófila (viento)','Entomófila (insectos)','Ornitófila (aves)','Quiropterófila (murciélagos)']),
+  M('pl_polinizacion','Tipo de polinización',[['💨','Anemófila (viento)','Viento'],['🐝','Entomófila (insectos)','Insectos'],['🐦','Ornitófila (aves)','Aves'],['🦇','Quiropterófila (murciélagos)','Murciélagos']]),
   S('pl_estructuras','Estructuras de interés',['Flores','Frutos comestibles','Espinas / Aguijones','Esporas']),
   S('pl_raiz','Tipo de raíz',['Pivotante','Fasciculada','Adventicia','Aérea']),
   S('pl_fruto','Tipo de fruto',['Baya','Drupa','Cápsula','Legumbre','Aquenio']),
   S('pl_dispersion','Dispersión de semillas',['Zoocoria','Anemocoria','Hidrocoria','Autocoria']),
   S('pl_luz','Requerimientos de luz',['Heliófita','Esciófita','Intermedia']),
-  T('pl_tolerancia','Tolerancia a la sequía / inundación'),
+  T('pl_sequia','Tolerancia a la sequía'),
+  T('pl_inundacion','Tolerancia a la inundación'),
   T('pl_latex','Látex, resinas o metabolitos secundarios'),
   T('pl_fenologia','Fenología','Época de floración y fructificación'),
   S('pl_inflorescencia','Tipo de inflorescencia',['Racimo','Espiga','Panoja / Panícula','Umbela','Corimbo','Capítulo','Cima','Espádice','Amento','Solitaria (flor solitaria)'])
@@ -326,7 +341,10 @@ const ESP={
 };
 const ESPN={Animalia:'Animales',Plantae:'Plantas',Fungi:'Hongos',Protista:'Protistas',Monera:'Bacterias y arqueas'};
 const TIT={Animalia:'Características animales',Plantae:'Características de la planta',Fungi:'Características del hongo',Protista:'Características del protista',Monera:'Características de la bacteria o arquea'};
-const LABEL={};UNIV.concat(...Object.values(ESP)).forEach(f=>LABEL[f.key]=f.label);
+/* Dato antiguo (ya separado en sequía / inundación): solo se muestra si la ficha lo tiene, para no perderlo */
+const LEGP=T('pl_tolerancia','Tolerancia a la sequía / inundación (dato anterior)','Pásalo a los dos campos nuevos y bórralo de aquí');
+let legOn=false;
+const LABEL={},FD={};UNIV.concat(...Object.values(ESP),[LEGP]).forEach(f=>{LABEL[f.key]=f.label;FD[f.key]=f});
 
 let data=[],path=[],sel=null,uid=null,editId=null,Q='',onlyFav=false;
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -620,18 +638,18 @@ const SUMK={Animalia:['an_dieta','an_actividad','ciclo','peligro'],Plantae:['pl_
 function sumHTML(sp){
  const r=sp.rasgos||{},u=(r.uicn||'').match(/\(([A-Z]{2})\)/),c=[];
  if(u)c.push('UICN '+u[1]);
- (SUMK[sp.reino]||[]).forEach(k=>{if(r[k])c.push(r[k].replace(/\s*\(.*\)$/,''))});
+ (SUMK[sp.reino]||[]).forEach(k=>{if(r[k])c.push(r[k].split(', ').map(x=>x.replace(/\s*\(.*\)$/,'')).join(', '))});
  return c.length?'<p class="sum">'+c.map(t=>'<span>'+esc(t)+'</span>').join('')+'</p>':'';
 }
 function rgHTML(sp){
  const r=sp.rasgos||{},W=window.matchMedia,max=!W('(min-width:701px)').matches?1:W('(min-width:1100px)').matches?3:2;
- const li=fs=>fs.filter(f=>r[f.key]).map(f=>'<li><b>'+esc(f.label)+'</b>'+termHTML(r[f.key],f.key)+'</li>').join('');
+ const li=fs=>fs.filter(f=>r[f.key]).map(f=>'<li><b>'+esc(f.lab?f.lab(r):f.label)+'</b>'+termHTML(r[f.key],f.key)+'</li>').join('');
  const DIA=['diagnosticas','similares'],FUN=['curiosos','fuentes'];
  const pick=(a,inc)=>a.filter(f=>inc?DIA.concat(FUN).includes(f.key)===false:true);
  const secs=[
   ['Características generales',li(UNIV.filter(f=>!DIA.concat(FUN).includes(f.key)))],
   ['Características diagnósticas',li(UNIV.filter(f=>DIA.includes(f.key)))],
-  [TIT[sp.reino]||('Características · '+sp.reino),li(ESP[sp.reino]||[])],
+  [TIT[sp.reino]||('Características · '+sp.reino),li((ESP[sp.reino]||[]).concat(sp.reino==='Plantae'?[LEGP]:[]))],
   ['Datos de campo',li(CAMPO)],
   ['💡 Datos curiosos y notas',li(UNIV.filter(f=>FUN.includes(f.key)))+(sp.car?'<li><b>Notas</b>'+esc(sp.car)+'</li>':''),'fun']
  ];
@@ -748,44 +766,89 @@ $('fields').innerHTML=LV.map((k,i)=>'<div><label for="f-'+k+'">'+LN[i]+'</label>
 function fHTML(f){
  const id='r-'+f.key,ph=esc(f.ph||'');
  let c;
- if(f.t==='s')c='<select id="'+id+'" data-k="'+f.key+'"><option value="">—</option>'+f.opts.map(o=>'<option>'+esc(o)+'</option>').join('')+'<option value="'+OTRA+'">Otra…</option></select><input class="otro" id="'+id+'-o" hidden placeholder="'+(ph||'Escribe cuál')+'">';
+ if(f.t==='m')c='<div class="chips" id="'+id+'" data-k="'+f.key+'" data-m="1" role="group" aria-labelledby="l-'+f.key+'">'
+  +f.items.map(i=>'<button type="button" class="chip" aria-pressed="false" data-v="'+esc(i[1])+'"><span class="ci" aria-hidden="true">'+i[0]+'</span><span>'+esc(i[2]||i[1])+'</span></button>').join('')
+  +'<button type="button" class="chip otra" aria-pressed="false" data-v="'+OTRA+'"><span class="ci" aria-hidden="true">✏️</span><span>Otra…</span></button></div>'
+  +'<textarea class="otro" id="'+id+'-o" hidden rows="2" placeholder="'+(ph||'Escribe cuál (Enter = nueva línea)')+'"></textarea>';
+ else if(f.t==='s')c='<select id="'+id+'" data-k="'+f.key+'"><option value="">—</option>'+f.opts.map(o=>'<option>'+esc(o)+'</option>').join('')+(f.noOtra?'':'<option value="'+OTRA+'">Otra…</option>')+'</select>'
+  +(f.noOtra?'':'<textarea class="otro" id="'+id+'-o" hidden rows="2" placeholder="'+(ph||'Escribe cuál (Enter = nueva línea)')+'"></textarea>');
  else if(f.t==='a')c='<textarea id="'+id+'" data-k="'+f.key+'" rows="2" placeholder="'+ph+'"></textarea>';
  else c='<input id="'+id+'" data-k="'+f.key+'" placeholder="'+ph+'">';
- return '<label for="'+id+'">'+esc(f.label)+'</label>'+c;
+ const h='<label id="l-'+f.key+'"'+(f.t==='m'?'':' for="'+id+'"')+'>'+esc(f.label)+'</label>'+c;
+ return f.dep?'<div id="w-'+f.key+'" hidden>'+h+'</div>':h;
 }
 function buildRasgos(){
  const r=$('f-reino').value;
  $('rg-u').innerHTML=UNIV.map(fHTML).join('');
  $('rg-c').innerHTML=CAMPO.map(fHTML).join('');
- $('rg-e').innerHTML=(ESP[r]||[]).map(fHTML).join('');
+ $('rg-e').innerHTML=(ESP[r]||[]).concat(legOn&&r==='Plantae'?[LEGP]:[]).map(fHTML).join('');
  $('rg-et').textContent='Características específicas · '+(ESPN[r]||r)+' (opcional)';
 }
 function collectRasgos(){
  const o={};
  dlg.querySelectorAll('[data-k]').forEach(el=>{
-  let v=el.value;
-  if(el.tagName==='SELECT'&&v===OTRA)v=$(el.id+'-o').value;
+  let v;
+  if(el.dataset.m){
+   const on=[...el.querySelectorAll('.chip.on:not(.otra)')].map(b=>b.dataset.v),ot=el.querySelector('.chip.otra.on')?$(el.id+'-o').value.trim():'';
+   v=on.concat(ot?[ot]:[]).join(', ');
+  }else{
+   v=el.value;
+   if(el.tagName==='SELECT'&&v===OTRA)v=$(el.id+'-o').value;
+  }
   v=(v||'').trim();
   if(v)o[el.dataset.k]=v;
  });
  return o;
 }
+const setChip=(b,on)=>{b.classList.toggle('on',on);b.setAttribute('aria-pressed',on?'true':'false')};
 function fillRasgos(obj){
  dlg.querySelectorAll('[data-k]').forEach(el=>{
-  const v=obj[el.dataset.k];
-  if(el.tagName==='SELECT'){
+  const v=obj[el.dataset.k],f=FD[el.dataset.k];
+  if(el.dataset.m){
+   const sel=new Set(),rest=[];
+   (v==null||v===''?[]:String(v).split(', ')).forEach(t=>{const n=(f&&f.al&&f.al[t])||t;if(f&&f.opts.includes(n))sel.add(n);else rest.push(t)});
+   el.querySelectorAll('.chip:not(.otra)').forEach(b=>setChip(b,sel.has(b.dataset.v)));
+   setChip(el.querySelector('.chip.otra'),rest.length>0);
+   const o=$(el.id+'-o');o.hidden=!rest.length;o.value=rest.join(', ');
+  }else if(el.tagName==='SELECT'){
    const o=$(el.id+'-o');
-   if(v==null||v===''){el.value='';o.hidden=true;o.value=''}
-   else if([...el.options].some(op=>op.value===v&&v!==OTRA)){el.value=v;o.hidden=true;o.value=''}
-   else{el.value=OTRA;o.hidden=false;o.value=v}
+   if(v==null||v===''){el.value='';if(o){o.hidden=true;o.value=''}}
+   else if([...el.options].some(op=>op.value===v&&v!==OTRA)){el.value=v;if(o){o.hidden=true;o.value=''}}
+   else if(o){el.value=OTRA;o.hidden=false;o.value=v}
+   else el.value='';
   }else el.value=v||'';
  });
+ depOrigen();
 }
+/* El lugar de origen solo aparece cuando se elige Endémico o Exótico / Introducido */
+function depOrigen(){
+ const s=$('r-origen'),w=$('w-origen_lugar');if(!s||!w)return;
+ w.hidden=!s.value;
+ const l=$('l-origen_lugar');if(l)l.textContent=s.value==='Endémico'?'¿De dónde es endémico?':s.value?'¿De dónde fue introducido?':'';
+ if(!s.value)$('r-origen_lugar').value='';
+}
+/* Fichas antiguas: «Nativo» / «Invasor» ya no existen (lo maneja el mapa); los textos de endemismo se conservan en el campo de lugar */
+function legacy(r){
+ r=Object.assign({},r);const o=r.origen;
+ if(o&&o!=='Endémico'&&o!=='Exótico / Introducido'){
+  const k=/^end[eé]m/i.test(o)?'Endémico':/^(ex[oó]tic|introd)/i.test(o)?'Exótico / Introducido':'';
+  if(k){r.origen=k;if(!r.origen_lugar&&o.trim().length>k.length)r.origen_lugar=o.trim()}else delete r.origen;
+ }
+ return r;
+}
+dlg.addEventListener('click',e=>{
+ const b=e.target.closest&&e.target.closest('.chip');if(!b)return;
+ const box=b.parentElement,f=FD[box.dataset.k],on=!b.classList.contains('on');
+ setChip(b,on);
+ if(b.classList.contains('otra')){const o=$(box.id+'-o');o.hidden=!on;if(on)o.focus();return}
+ if(on&&f&&f.ex)box.querySelectorAll('.chip.on:not(.otra)').forEach(x=>{if(x!==b&&((b.dataset.v===f.ex)!==(x.dataset.v===f.ex)))setChip(x,false)});
+});
 dlg.addEventListener('change',e=>{
  const el=e.target;
  if(el.matches&&el.matches('select[data-k]')){
-  const o=$(el.id+'-o');o.hidden=el.value!==OTRA;
-  if(!o.hidden)o.focus();
+  const o=$(el.id+'-o');
+  if(o){o.hidden=el.value!==OTRA;if(!o.hidden)o.focus()}
+  if(el.id==='r-origen')depOrigen();
  }
 });
 $('f-reino').onchange=()=>{
@@ -796,7 +859,7 @@ $('f-reino').onchange=()=>{
 };
 
 $('add').onclick=()=>{
- editId=null;distLoad(null);
+ editId=null;legOn=false;distLoad(null);
  $('dtitle').textContent='Añadir especie';$('save').textContent='Guardar especie';
  formFotos=[];drawThumbs();
  $('err').textContent='';$('f-foto').value='';$('f-comun').value='';$('f-car').value='';
@@ -806,12 +869,12 @@ $('add').onclick=()=>{
  dlg.showModal();
 };
 async function openEdit(sp){
- editId=sp.id;distLoad(sp.dist);
+ editId=sp.id;legOn=!!(sp.rasgos&&sp.rasgos.pl_tolerancia);distLoad(sp.dist);
  formFotos=(await ensureFotos(sp)).slice();drawThumbs();
  $('dtitle').textContent='Editar especie';$('save').textContent='Guardar cambios';
  $('err').textContent='';$('f-foto').value='';$('f-comun').value=sp.comun;$('f-car').value=sp.car;
  LV.forEach(k=>{$('f-'+k).value=sp[k]});
- buildRasgos();fillRasgos(sp.rasgos||{});
+ buildRasgos();fillRasgos(legacy(sp.rasgos||{}));
  dlg.querySelectorAll('details').forEach(d=>d.open=false);
  dlg.showModal();
 }
