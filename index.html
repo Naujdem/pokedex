@@ -17,13 +17,15 @@
 *,*:before,*:after{box-sizing:inherit}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
 body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 "Source Serif 4",Georgia,serif}
-h1,h2,h3,.sans,button,label,input,select,textarea{font-family:"Bricolage Grotesque",system-ui,sans-serif}
+h1,h2,h3,.sans,button,label,input,select,textarea,summary{font-family:"Bricolage Grotesque",system-ui,sans-serif}
 header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line)}
 h1{font-size:1.25rem;margin:0;display:flex;align-items:center;gap:10px}
 .lens{width:18px;height:18px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 3px var(--panel),0 0 0 4px var(--line)}
 button{cursor:pointer;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:8px 14px;border-radius:8px;font-size:.9rem}
 button.primary{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
-button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.card:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+button.danger{border-color:var(--acc);color:var(--acc)}
+button.danger.solid{background:var(--acc);color:var(--acc-ink)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.card:focus-visible,summary:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
 .app{display:grid;grid-template-columns:180px minmax(0,1fr) 320px;min-height:calc(100vh - 62px)}
 .steps{border-right:1px solid var(--line);display:flex;flex-direction:column}
 .step{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:6px;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;padding:10px 6px;text-align:center}
@@ -47,12 +49,22 @@ aside{border-left:1px solid var(--line);padding:20px;background:var(--panel)}
 aside .ph{border-radius:10px;overflow:hidden;font-size:4rem;border:1px solid var(--line)}
 aside h2{margin:14px 0 0;font-size:1.4rem}
 aside .sci{font-style:italic;font-size:1.1rem;color:var(--mut);margin:0 0 12px}
+aside h3{margin:16px 0 4px;font-size:1rem}
 .lin{font-size:.88rem;color:var(--mut);margin:0 0 14px;padding:0;list-style:none}.lin li{border-left:4px solid var(--c);padding:1px 0 1px 8px;margin-bottom:2px}.lin li span{display:inline-block;min-width:92px}
+.rg{list-style:none;margin:0 0 8px;padding:0}
+.rg li{border-top:1px solid var(--line);padding:6px 0;font-size:.92rem;white-space:pre-line}
+.rg li b{display:block;font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:.76rem;font-weight:500;color:var(--mut)}
+.btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
 .cl{font-size:.85rem;color:var(--mut)}.cl:before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--mut);margin-right:6px}.cl.on:before{background:#2f9e5f}.empty{color:var(--mut)}
-dialog{border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);max-width:480px;width:calc(100% - 32px);padding:20px;max-height:90vh;overflow:auto}
+dialog{border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);max-width:560px;width:calc(100% - 32px);padding:20px;max-height:90vh;overflow:auto}
 dialog::backdrop{background:rgba(0,0,0,.5)}
 dialog label{display:block;font-size:.85rem;margin:10px 0 3px;color:var(--mut)}
 dialog input,dialog select,dialog textarea{width:100%;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font-size:.95rem}
+dialog input.otro{margin-top:6px}
+details{border:1px solid var(--line);border-radius:8px;margin:14px 0 0;padding:0 12px}
+details[open]{padding-bottom:10px}
+summary{cursor:pointer;padding:10px 0;font-weight:700;font-size:.95rem}
+.hint{font-size:.8rem;color:var(--mut);margin:2px 0 0}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}.row{display:flex;gap:10px}.row>div{flex:1;min-width:0}
 .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
 .note{font-size:.8rem;color:var(--mut);margin-top:16px}
@@ -78,16 +90,35 @@ dialog input,dialog select,dialog textarea{width:100%;padding:8px;border:1px sol
 </div>
 
 <dialog id="dlg">
- <h2 style="margin-top:0">Añadir especie</h2>
+ <h2 style="margin-top:0" id="dtitle">Añadir especie</h2>
  <label for="f-foto">Foto</label>
  <input type="file" id="f-foto" accept="image/*">
- 
+ <p class="hint" id="fhint" hidden>Déjala vacía para conservar la foto actual.</p>
+
  <div class="g2" id="fields"></div>
  <label for="f-comun">Nombre común</label><input id="f-comun" placeholder="Jaguar">
- <label for="f-car">Características</label>
- <textarea id="f-car" rows="3" placeholder="Hábitat, tamaño, dieta, rasgos para reconocerla"></textarea>
+
+ <details>
+  <summary>Características generales (opcional)</summary>
+  <div id="rg-u"></div>
+ </details>
+ <details>
+  <summary id="rg-et">Características específicas del reino (opcional)</summary>
+  <div id="rg-e"></div>
+ </details>
+
+ <label for="f-car">Notas adicionales</label>
+ <textarea id="f-car" rows="3" placeholder="Cualquier otro dato que quieras guardar"></textarea>
  <p class="note" id="err" role="alert"></p>
  <div class="acts"><button id="cancel">Cancelar</button><button class="primary" id="save">Guardar especie</button></div>
+</dialog>
+
+<dialog id="dlgdel">
+ <h2 style="margin-top:0">¿Eliminar esta especie?</h2>
+ <p id="deltxt"></p>
+ <p class="note" style="color:var(--acc);margin-top:8px"><b>Esta acción no se puede deshacer.</b> Se borrarán la ficha, la foto y todas sus características.</p>
+ <div class="acts"><button id="delno">No, conservar</button><button class="danger solid" id="delok">Sí, eliminar</button></div>
+ <p class="note" id="delerr" role="alert"></p>
 </dialog>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -99,19 +130,121 @@ const COL=['#4da3ff','#3fd6dc','#3fd99b','#5cd94f','#a9d94f','#e6d93f','#f0a04f'
 const EMO={Animalia:'🐾',Plantae:'🌿',Fungi:'🍄',Protista:'🔬',Monera:'🦠'};
 const DOM=['Bacteria','Archaea','Eukarya'];
 const REINOS={Bacteria:['Monera'],Archaea:['Monera'],Eukarya:['Animalia','Plantae','Fungi','Protista']};
-let data=[],path=[],sel=null,uid=null;
+
+/* ---------- Características: s = lista + "Otra…", t = texto corto, a = texto largo ---------- */
+const OTRA='__otra';
+const S=(key,label,opts,ph)=>({key,label,t:'s',opts,ph});
+const T=(key,label,ph)=>({key,label,t:'t',ph});
+const A=(key,label,ph)=>({key,label,t:'a',ph});
+const UNIV=[
+ S('uicn','Estado de conservación (UICN)',['Preocupación Menor (LC)','Casi Amenazado (NT)','Vulnerable (VU)','En Peligro (EN)','En Peligro Crítico (CR)','Extinto en Estado Silvestre (EW)','Extinto (EX)','Datos Insuficientes (DD)']),
+ S('origen','Origen / Endemismo',['Nativo','Exótico / Introducido','Invasor','Endémico'],'Ej: Endémico de los Andes colombianos'),
+ T('distribucion','Distribución geográfica y altitudinal','Países o regiones + rango (ej. 0 – 2.600 m s. n. m.)'),
+ T('habitat','Hábitat','Ecorregión o ecosistema principal'),
+ S('peligro','Nivel de peligrosidad / toxicidad',['Inofensivo','Venenoso','Ponzoñoso','Irritante','Patógeno']),
+ T('tamano','Tamaño / dimensiones','Longitud, altura, envergadura, diámetro…'),
+ T('ciclo','Ciclo de vida / longevidad','Esperanza de vida aproximada'),
+ S('poblacion','Estado poblacional / tendencia',['Estable','En declive','En aumento']),
+ T('amenazas','Amenazas principales','Pérdida de hábitat, caza, contaminación…'),
+ T('ecologica','Importancia ecológica','Polinizador, dispersor de semillas, depredador tope, bioindicador…'),
+ T('humanos','Interacciones con humanos','Beneficio económico, conflicto, uso cultural/tradicional'),
+ T('legal','Estatus legal','Protegida, veda, CITES…'),
+ A('diagnosticas','Características diagnósticas','Rasgos clave para identificarla'),
+ T('similares','Especies similares / confusiones frecuentes'),
+ A('curiosos','Datos curiosos o culturales'),
+ A('fuentes','Referencias / fuentes')
+];
+const ESP={
+ Animalia:[
+  S('an_defensa','Mecanismo de defensa / ataque',['Venenoso','Ponzoñoso','Camuflaje','Armadura / Caparazón','Ninguno']),
+  S('an_dieta','Dieta / trofismo',['Herbívoro','Carnívoro','Omnívoro','Frugívoro','Detritívoro','Hematófago']),
+  S('an_actividad','Patrón de actividad',['Diurno','Nocturno','Crepuscular']),
+  S('an_habitos','Hábitos de vida',['Solitario','Gregario (manada / bandada)','Social (eusocial)']),
+  S('an_respiracion','Tipo de respiración',['Pulmonar','Branquial','Cutánea','Traqueal']),
+  S('an_reproduccion','Reproducción / desarrollo',['Ovíparo','Vivíparo','Ovovivíparo','Metamorfosis']),
+  T('an_camada','Tamaño de camada / número de crías'),
+  S('an_locomocion','Tipo de locomoción',['Cursorial','Saltador','Volador','Trepador','Excavador','Nadador']),
+  S('an_sentidos','Sensibilidad sensorial destacada',['Visión','Olfato','Ecolocación','Electrorrecepción']),
+  S('an_territorialidad','Territorialidad',['Territorial','No territorial','Migratorio']),
+  S('an_estrategia','Estrategia reproductiva',['K estratega','r estratega']),
+  S('an_dimorfismo','Dimorfismo sexual',['Presente','Ausente'],'Ej: Presente: el macho es más grande y colorido'),
+  T('an_nido','Tipo de nido / refugio')
+ ],
+ Plantae:[
+  S('pl_uso','Toxicidad / uso humano',['Medicinal','Comestible','Ornamental','Tóxica / Venenosa','Industrial','Maderable']),
+  S('pl_habito','Forma de crecimiento (hábito)',['Árbol','Arbusto','Hierba','Trepadora / Liana','Epífita','Litófita']),
+  S('pl_follaje','Tipo de hoja / follaje',['Perennifolio','Caduco (caducifolio)']),
+  S('pl_polinizacion','Tipo de polinización',['Anemófila (viento)','Entomófila (insectos)','Ornitófila (aves)','Quiropterófila (murciélagos)']),
+  S('pl_estructuras','Estructuras de interés',['Flores','Frutos comestibles','Espinas / Aguijones','Esporas']),
+  S('pl_raiz','Tipo de raíz',['Pivotante','Fasciculada','Adventicia','Aérea']),
+  S('pl_fruto','Tipo de fruto',['Baya','Drupa','Cápsula','Legumbre','Aquenio']),
+  S('pl_dispersion','Dispersión de semillas',['Zoocoria','Anemocoria','Hidrocoria','Autocoria']),
+  S('pl_luz','Requerimientos de luz',['Heliófita','Esciófita','Intermedia']),
+  T('pl_tolerancia','Tolerancia a la sequía / inundación'),
+  T('pl_latex','Látex, resinas o metabolitos secundarios'),
+  T('pl_fenologia','Fenología','Época de floración y fructificación'),
+  S('pl_inflorescencia','Tipo de inflorescencia',['Racimo','Espiga','Panoja / Panícula','Umbela','Corimbo','Capítulo','Cima','Espádice','Amento','Solitaria (flor solitaria)'])
+ ],
+ Fungi:[
+  S('fu_comestibilidad','Comestibilidad y toxicidad',['Comestible excelente','Comestible con precaución','Sin valor culinario','Tóxico / Venenoso','Mortal','Alucinógeno / Psicoactivo']),
+  S('fu_nutricion','Ecología / nutrición',['Saprófito (descomponedor)','Micorrícico','Parásito']),
+  S('fu_esporocarpo','Tipo de esporocarpo (cuerpo fructífero)',['Sombrilla (láminas / poros)','Copa','Gelatinoso','Coralino','Polvo (bejín)']),
+  S('fu_sustrato','Sustrato',['Madera en descomposición (lígnicola)','Suelo (humícola)','Hojarasca','Sobre insectos (entomopatógeno)']),
+  T('fu_esporada','Color de la esporada'),
+  T('fu_olor','Olor característico'),
+  T('fu_sabor','Sabor (solo si se prueba con precaución)'),
+  S('fu_estacionalidad','Estacionalidad',['Primavera','Verano','Otoño','Invierno','Todo el año']),
+  T('fu_simbiosis','Relación simbiótica específica','Con qué árboles o plantas forma micorrizas'),
+  S('fu_anillo','Anillo / volva (agaricales)',['Con anillo','Con volva','Con anillo y volva','Sin anillo ni volva'])
+ ],
+ Protista:[
+  S('pr_nutricion','Nutrición',['Autótrofo (fotosintético)','Heterótrofo','Mixótrofo']),
+  S('pr_locomocion','Locomoción',['Flagelos','Cilios','Seudópodos','Inmóvil']),
+  S('pr_rol','Importancia / rol',['Productor primario acuático','Bioluminiscente','Causa mareas rojas','Patógeno / Parásito','Simbionte']),
+  S('pr_pared','Pared celular',['Presente','Ausente'],'Ej: Presente, de celulosa'),
+  S('pr_reproduccion','Forma de reproducción',['Binaria','Sexual','Formación de quistes']),
+  S('pr_habitat','Hábitat específico',['Planctónico','Bentónico','Endosimbionte']),
+  T('pr_pigmentos','Pigmentos fotosintéticos','Clorofila a/b/c, ficoeritrina…')
+ ],
+ Monera:[
+  S('mo_morfologia','Morfología',['Coco','Bacilo','Espirilo','Vibrión']),
+  S('mo_oxigeno','Relación con el oxígeno',['Aerobia estricta','Anaerobia estricta','Anaerobia facultativa']),
+  S('mo_efecto','Efecto / patogenicidad',['Benéfica (simbionte / flora intestinal / fijadora de nitrógeno)','Utilidad industrial (fermentación)','Patógena']),
+  S('mo_gram','Tinción de Gram',['Gram positiva','Gram negativa']),
+  S('mo_metabolismo','Metabolismo energético',['Quimioautótrofo','Fotoautótrofo','Quimioheterótrofo']),
+  S('mo_endosporas','Presencia de endosporas',['Presente','Ausente']),
+  S('mo_movilidad','Movilidad',['Flagelos','Deslizamiento','Inmóvil']),
+  S('mo_biofilm','Capacidad de formar biofilms',['Sí','No']),
+  T('mo_antibioticos','Resistencia a antibióticos','Solo cuando sea relevante'),
+  S('mo_extremo','Hábitat extremo',['Termófila','Acidófila','Halófila'])
+ ]
+};
+const ESPN={Animalia:'Animales',Plantae:'Plantas',Fungi:'Hongos',Protista:'Protistas',Monera:'Bacterias y arqueas'};
+const LABEL={};UNIV.concat(...Object.values(ESP)).forEach(f=>LABEL[f.key]=f.label);
+
+let data=[],path=[],sel=null,uid=null,editId=null;
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const $=id=>document.getElementById(id);
 const sci=s=>s.genero+' '+s.especie;
 const scoped=()=>data.filter(s=>path.every((v,i)=>s[LV[i]]===v));
 const photo=(src,r)=>src?'<img src="'+esc(src)+'" alt="">':'<span aria-hidden="true">'+(EMO[r]||'🧬')+'</span>';
-const fromRow=r=>{const o={id:r.id,comun:r.comun||'',car:r.caracteristicas||'',foto:r.foto||''};LV.forEach(k=>o[k]=r[k]);return o};
+const fromRow=r=>{const o={id:r.id,comun:r.comun||'',car:r.caracteristicas||'',foto:r.foto||'',rasgos:r.rasgos&&typeof r.rasgos==='object'?r.rasgos:{}};LV.forEach(k=>o[k]=r[k]);return o};
 function fix(){if(sel&&!data.find(x=>x.id===sel))sel=null;while(path.length>2&&!scoped().length)path.pop()}
 async function loadData(){
  const {data:rows,error}=await SB.from('especies').select('*').order('creado');
  if(error){alert('No se pudieron cargar tus especies: '+error.message);return}
  data=rows.map(fromRow);fix();render();
  if(!data.length)$('crumb').textContent='Aún no tienes especies. Toca "+ Añadir especie" para empezar.';
+}
+
+/* ---------- Ficha ---------- */
+function rgHTML(sp){
+ const r=sp.rasgos||{};
+ const sec=(title,fields)=>{
+  const items=fields.filter(f=>r[f.key]).map(f=>'<li><b>'+esc(f.label)+'</b>'+esc(r[f.key])+'</li>').join('');
+  return items?'<h3>'+esc(title)+'</h3><ul class="rg">'+items+'</ul>':'';
+ };
+ return sec('Características generales',UNIV)+sec('Características · '+(ESPN[sp.reino]||sp.reino),ESP[sp.reino]||[]);
 }
 function render(){
  const d=path.length,cur=Math.min(d,7),sp=data.find(x=>x.id===sel);
@@ -131,49 +264,141 @@ function render(){
   h=items.map(s=>'<button class="card'+(s.id===sel?' sel':'')+'" data-id="'+s.id+'"><div class="ph">'+photo(s.foto,s.reino)+'</div><div class="cap"><b>'+esc(s.comun||sci(s))+'</b><i>'+esc(sci(s))+'</i></div></button>').join('');
  }
  $('grid').innerHTML=h;
- $('detail').innerHTML=sp?'<div class="ph">'+photo(sp.foto,sp.reino)+'</div><h2>'+esc(sp.comun||sci(sp))+'</h2><p class="sci">'+esc(sci(sp))+'</p><ol class="lin">'+LV.slice(0,7).map((k,i)=>'<li style="--c:'+COL[i]+'"><span>'+LN[i]+'</span> '+esc(sp[k])+'</li>').join('')+'</ol><h3 style="margin:0 0 4px;font-size:1rem">Características</h3><p style="margin:0 0 16px">'+esc(sp.car||'Sin descripción todavía.')+'</p><button id="del">Eliminar</button>':'<p class="empty">Baja por los niveles hasta una especie para ver su ficha: foto, nombre común, nombre científico, clasificación completa y características.</p>';
+ $('detail').innerHTML=sp
+  ?'<div class="ph">'+photo(sp.foto,sp.reino)+'</div><h2>'+esc(sp.comun||sci(sp))+'</h2><p class="sci">'+esc(sci(sp))+'</p><ol class="lin">'+LV.slice(0,7).map((k,i)=>'<li style="--c:'+COL[i]+'"><span>'+LN[i]+'</span> '+esc(sp[k])+'</li>').join('')+'</ol>'
+   +rgHTML(sp)
+   +(sp.car?'<h3>Notas</h3><p style="margin:0 0 8px;white-space:pre-line">'+esc(sp.car)+'</p>':'')
+   +'<div class="btns"><button id="edit">Editar ficha</button><button class="danger" id="del">Eliminar</button></div>'
+  :'<p class="empty">Baja por los niveles hasta una especie para ver su ficha: foto, nombre común, nombre científico, clasificación completa y características.</p>';
 }
 $('steps').onclick=e=>{const b=e.target.closest('.step');if(!b||b.disabled)return;path=path.slice(0,+b.dataset.i);sel=null;render()};
 $('grid').onclick=e=>{const c=e.target.closest('.card');if(!c)return;if(c.dataset.id)sel=c.dataset.id;else{path.push(c.dataset.k);sel=null}render()};
 
-$('detail').onclick=async e=>{
- if(e.target.id!=='del'||!confirm('¿Eliminar esta especie?'))return;
- const id=sel,{error}=await SB.from('especies').delete().eq('id',id);
- if(error){alert('No se pudo eliminar: '+error.message);return}
- data=data.filter(s=>s.id!==id);sel=null;fix();render();
+/* ---------- Eliminar (con advertencia y confirmación) ---------- */
+const dlgdel=$('dlgdel');
+$('detail').onclick=e=>{
+ const sp=data.find(x=>x.id===sel);if(!sp)return;
+ if(e.target.id==='edit')openEdit(sp);
+ if(e.target.id==='del'){
+  $('delerr').textContent='';
+  $('deltxt').textContent='Vas a eliminar «'+(sp.comun||sci(sp))+'» ('+sci(sp)+').';
+  dlgdel.showModal();
+ }
 };
+$('delno').onclick=()=>dlgdel.close();
+$('delok').onclick=async()=>{
+ const id=sel;if(!id)return dlgdel.close();
+ $('delok').disabled=true;
+ const {error}=await SB.from('especies').delete().eq('id',id);
+ $('delok').disabled=false;
+ if(error){$('delerr').textContent='No se pudo eliminar: '+error.message;return}
+ data=data.filter(s=>s.id!==id);sel=null;fix();dlgdel.close();render();
+};
+
+/* ---------- Formulario (añadir / editar) ---------- */
 const PH={filo:'Chordata',clase:'Mammalia',orden:'Carnivora',familia:'Felidae',genero:'Panthera',especie:'onca'};
 const dlg=$('dlg');
 $('fields').innerHTML=LV.map((k,i)=>'<div><label for="f-'+k+'">'+LN[i]+'</label>'+(k==='dominio'?'<select id="f-dominio">'+DOM.map(x=>'<option>'+x+'</option>').join('')+'</select>':k==='reino'?'<select id="f-reino">'+['Animalia','Plantae','Fungi','Protista','Monera'].map(x=>'<option>'+x+'</option>').join('')+'</select>':'<input id="f-'+k+'" placeholder="'+PH[k]+'">')+'</div>').join('');
-$('f-reino').onchange=()=>{const m=$('f-reino').value==='Monera';if(m&&$('f-dominio').value==='Eukarya')$('f-dominio').value='Bacteria';if(!m)$('f-dominio').value='Eukarya'};
+
+function fHTML(f){
+ const id='r-'+f.key,ph=esc(f.ph||'');
+ let c;
+ if(f.t==='s')c='<select id="'+id+'" data-k="'+f.key+'"><option value="">—</option>'+f.opts.map(o=>'<option>'+esc(o)+'</option>').join('')+'<option value="'+OTRA+'">Otra…</option></select><input class="otro" id="'+id+'-o" hidden placeholder="'+(ph||'Escribe cuál')+'">';
+ else if(f.t==='a')c='<textarea id="'+id+'" data-k="'+f.key+'" rows="2" placeholder="'+ph+'"></textarea>';
+ else c='<input id="'+id+'" data-k="'+f.key+'" placeholder="'+ph+'">';
+ return '<label for="'+id+'">'+esc(f.label)+'</label>'+c;
+}
+function buildRasgos(){
+ const r=$('f-reino').value;
+ $('rg-u').innerHTML=UNIV.map(fHTML).join('');
+ $('rg-e').innerHTML=(ESP[r]||[]).map(fHTML).join('');
+ $('rg-et').textContent='Características específicas · '+(ESPN[r]||r)+' (opcional)';
+}
+function collectRasgos(){
+ const o={};
+ dlg.querySelectorAll('[data-k]').forEach(el=>{
+  let v=el.value;
+  if(el.tagName==='SELECT'&&v===OTRA)v=$(el.id+'-o').value;
+  v=(v||'').trim();
+  if(v)o[el.dataset.k]=v;
+ });
+ return o;
+}
+function fillRasgos(obj){
+ dlg.querySelectorAll('[data-k]').forEach(el=>{
+  const v=obj[el.dataset.k];
+  if(el.tagName==='SELECT'){
+   const o=$(el.id+'-o');
+   if(v==null||v===''){el.value='';o.hidden=true;o.value=''}
+   else if([...el.options].some(op=>op.value===v&&v!==OTRA)){el.value=v;o.hidden=true;o.value=''}
+   else{el.value=OTRA;o.hidden=false;o.value=v}
+  }else el.value=v||'';
+ });
+}
+dlg.addEventListener('change',e=>{
+ const el=e.target;
+ if(el.matches&&el.matches('select[data-k]')){
+  const o=$(el.id+'-o');o.hidden=el.value!==OTRA;
+  if(!o.hidden)o.focus();
+ }
+});
+$('f-reino').onchange=()=>{
+ const m=$('f-reino').value==='Monera';
+ if(m&&$('f-dominio').value==='Eukarya')$('f-dominio').value='Bacteria';
+ if(!m)$('f-dominio').value='Eukarya';
+ const keep=collectRasgos();buildRasgos();fillRasgos(keep);
+};
+
 $('add').onclick=()=>{
+ editId=null;
+ $('dtitle').textContent='Añadir especie';$('save').textContent='Guardar especie';$('fhint').hidden=true;
  $('err').textContent='';$('f-foto').value='';$('f-comun').value='';$('f-car').value='';
  LV.forEach((k,i)=>{$('f-'+k).value=path[i]||(i<2?$('f-'+k).options[0].value:'')});
+ buildRasgos();fillRasgos({});
+ dlg.querySelectorAll('details').forEach(d=>d.open=false);
  dlg.showModal();
 };
+function openEdit(sp){
+ editId=sp.id;
+ $('dtitle').textContent='Editar especie';$('save').textContent='Guardar cambios';$('fhint').hidden=false;
+ $('err').textContent='';$('f-foto').value='';$('f-comun').value=sp.comun;$('f-car').value=sp.car;
+ LV.forEach(k=>{$('f-'+k).value=sp[k]});
+ buildRasgos();fillRasgos(sp.rasgos||{});
+ dlg.querySelectorAll('details').forEach(d=>d.open=false);
+ dlg.showModal();
+}
 $('cancel').onclick=()=>dlg.close();
 function resize(file){return new Promise(res=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,420/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);res(c.toDataURL('image/jpeg',.72))};im.onerror=()=>res('');im.src=r.result};r.onerror=()=>res('');r.readAsDataURL(file)})}
 $('save').onclick=async()=>{
- const rec={comun:$('f-comun').value.trim(),caracteristicas:$('f-car').value.trim(),foto:''};
+ const rec={comun:$('f-comun').value.trim(),caracteristicas:$('f-car').value.trim(),rasgos:collectRasgos()};
  LV.forEach(k=>rec[k]=$('f-'+k).value.trim());
  const miss=LV.filter(k=>!rec[k]).map(k=>LN[LV.indexOf(k)].toLowerCase());
  if(miss.length){$('err').textContent='Falta: '+miss.join(', ')+'.';return}
- const f=$('f-foto').files[0];if(f)rec.foto=await resize(f);
+ const f=$('f-foto').files[0];
+ if(f)rec.foto=await resize(f);else if(!editId)rec.foto='';
  $('save').disabled=true;
- const {data:row,error}=await SB.from('especies').insert(rec).select().single();
+ const q=editId?SB.from('especies').update(rec).eq('id',editId).select().single():SB.from('especies').insert(rec).select().single();
+ const {data:row,error}=await q;
  $('save').disabled=false;
- if(error){$('err').textContent='No se pudo guardar: '+error.message;return}
- const o=fromRow(row);data.push(o);path=LV.slice(0,7).map(k=>o[k]);sel=o.id;dlg.close();render();
+ if(error){$('err').textContent='No se pudo guardar: '+error.message+(/rasgos/i.test(error.message)?' (Falta crear la columna "rasgos" en Supabase: ejecuta el archivo rasgos.sql).':'');return}
+ const o=fromRow(row);
+ if(editId)data=data.map(x=>x.id===editId?o:x);else data.push(o);
+ path=LV.slice(0,7).map(k=>o[k]);sel=o.id;dlg.close();render();
 };
+
+/* ---------- Exportar ---------- */
 function saveFile(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
+const rasgosTxt=r=>Object.entries(r.rasgos||{}).map(([k,v])=>(LABEL[k]||k)+': '+v).join(' | ');
 function exportData(kind){
  if(!data.length){alert('Aún no hay especies para exportar.');return}
  const d=new Date().toISOString().slice(0,10);
  if(kind==='json')return saveFile('pokedex-taxonomica-'+d+'.json',JSON.stringify(data,null,1),'application/json');
- const cols=LV.concat(['comun','car']),q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
- saveFile('pokedex-taxonomica-'+d+'.csv','\uFEFF'+[cols.map(q).join(',')].concat(data.map(r=>cols.map(c=>q(r[c])).join(','))).join('\r\n'),'text/csv');
+ const cols=LV.concat(['comun','car','rasgos']),q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+ saveFile('pokedex-taxonomica-'+d+'.csv','﻿'+[cols.map(q).join(',')].concat(data.map(r=>cols.map(c=>q(c==='rasgos'?rasgosTxt(r):r[c])).join(','))).join('\r\n'),'text/csv');
 }
 $('exj').onclick=()=>exportData('json');$('exc').onclick=()=>exportData('csv');
+
+/* ---------- Sesión ---------- */
 async function auth(m){
  const email=$('em').value.trim(),password=$('pw').value;$('aerr').textContent='';
  const r=m==='in'?await SB.auth.signInWithPassword({email,password}):await SB.auth.signUp({email,password});
