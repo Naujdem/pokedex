@@ -190,7 +190,7 @@ button:active,.card:active,.step:active{transform:scale(.98)}
 </head>
 <body>
 <header>
- <h1><span class="lens" aria-hidden="true"></span>Pokédex Taxonómica</h1>
+ <h1><span class="lens" aria-hidden="true"></span>Pokédex Taxonómica <small class="sans" style="font-size:.65rem;color:var(--mut);font-weight:500">v2.1</small></h1>
  <div id="top" hidden style="display:flex;align-items:center;gap:10px"><span class="sans cl" id="net" hidden></span><button id="gdb" hidden title="Conexión con tu Google Drive (donde se guardan las fotos)">☁ Drive</button><button id="sync" title="Descargar fichas y fotos para usar sin conexión">⬇ Sincronizar</button><span class="sans cl on" id="who"></span><button id="out">Salir</button><button class="primary" id="add">+ Añadir especie</button></div>
 </header>
 <section id="auth" class="authbox"><h2 style="margin-top:0">Entra a tu colección</h2><label for="em">Correo</label><input id="em" type="email" autocomplete="email"><label for="pw">Contraseña (mínimo 6 caracteres)</label><input id="pw" type="password" autocomplete="current-password"><p class="note" id="aerr" role="alert"></p><div class="acts"><button id="signup">Crear cuenta</button><button class="primary" id="login">Entrar</button></div><p class="gsep" id="gsep" hidden>— o —</p><div class="acts" id="gwrap" hidden style="justify-content:center"><button id="glogin">Entrar con Google</button></div></section>
