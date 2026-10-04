@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "io.github.naujdem.twa",
+        "sha256_cert_fingerprints": ["F7:51:2A:EA:57:03:1C:F1:AF:3F:1B:BB:52:AE:9A:1A:5E:B9:7D:10:A7:FE:D6:48:F2:B2:FC:7B:65:9D:04:97"]
+      }
+    }]
