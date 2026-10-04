@@ -300,6 +300,24 @@ body.ficha-abierta .ficha{margin-top:0}
  .cact button{width:32px;height:32px;font-size:.85rem}
  .cap{padding:10px 12px 12px}.cap b{font-size:.95rem}
 }
+
+/* Barra lateral (PC): llega hasta el final de la pantalla y los niveles se reparten el alto */
+@media (min-width:901px){.steps{height:calc(100vh - 61px);height:calc(100dvh - 61px)}.step{min-height:72px}}
+.crumb:empty{display:none}
+.tools{margin-bottom:14px}
+/* Selector de fotos */
+.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;pointer-events:none}
+dialog label.filebtn{display:inline-flex;align-items:center;gap:8px;margin:2px 0 0;padding:11px 16px;border:1px solid var(--line);border-radius:12px;background:var(--soft);color:var(--ink);font-size:.95rem;cursor:pointer}
+dialog label.filebtn:focus-within,.vh:focus-visible + *{outline:3px solid var(--acc)}
+@media (hover:hover){dialog label.filebtn:hover{border-color:var(--acc)}}
+/* Formulario «Añadir / Editar especie» en móvil: pantalla completa y botones siempre a la vista */
+@media (max-width:700px){
+ #dlg{width:100%;max-width:none;height:100dvh;max-height:100dvh;margin:0;border:0;border-radius:0;padding:16px 16px 0}
+ #dlg h2{font-size:1.4rem}
+ #dlg .acts{position:sticky;bottom:0;z-index:5;margin:16px -16px 0;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));background:var(--panel);border-top:1px solid var(--line)}
+ #dlg .acts button{flex:1;padding:12px}
+ #dlg .g2{gap:0 8px}
+}
 </style>
 </head>
 <body>
@@ -343,7 +361,7 @@ body.ficha-abierta .ficha{margin-top:0}
 <dialog id="dlg">
  <h2 style="margin-top:0" id="dtitle">Añadir especie</h2>
  <label for="f-foto">Fotos</label>
- <input type="file" id="f-foto" accept="image/*" multiple>
+ <label for="f-foto" class="filebtn">📷 Elegir fotos</label><input type="file" id="f-foto" class="vh" accept="image/*" multiple>
  <p class="hint">Puedes elegir varias (hasta 8). La primera es la portada; toca ★ para cambiarla o ✕ para quitar una.</p>
  <div class="thumbs" id="fthumbs"></div>
 
@@ -375,7 +393,7 @@ body.ficha-abierta .ficha{margin-top:0}
 <dialog id="dlgset">
  <h2 style="margin-top:0">⚙ Ajustes</h2>
  <label for="set-foto">Foto de usuario</label>
- <div class="pav"><span class="av big" id="set-av"></span><div><input type="file" id="set-foto" accept="image/*"><div class="acts" style="justify-content:flex-start;margin-top:8px"><button type="button" id="set-rm">Quitar foto</button></div></div></div>
+ <div class="pav"><span class="av big" id="set-av"></span><div><label for="set-foto" class="filebtn">📷 Cambiar foto</label><input type="file" id="set-foto" class="vh" accept="image/*"><div class="acts" style="justify-content:flex-start;margin-top:8px"><button type="button" id="set-rm">Quitar foto</button></div></div></div>
  <label for="set-name">Nombre de usuario</label>
  <input id="set-name" maxlength="40" autocomplete="nickname" placeholder="¿Cómo quieres que te llamemos?">
  <p class="hint" id="set-mail"></p>
@@ -1041,7 +1059,7 @@ function render(){
  const showSp=!!sp&&d===7;
  const bc=(d?['<button class="bc" data-bc="-1">Inicio</button>']:[]).concat(path.map((p,j)=>'<button class="bc" data-bc="'+j+'">'+esc(p)+'</button>')).join(' › ');
  const tail=d<7?'elige '+(LN[d]==='Filo o división'?'un filo o división':'un/a '+LN[d].toLowerCase()):'elige una especie';
- $('crumb').innerHTML=bc;
+ $('crumb').innerHTML='';
  const items=scoped();let h='';
  if(Q||onlyFav){h=data.filter(matches).map(spCard).join('')||'<p class="empty">Sin resultados.</p>'}
  else if(d<7){
