@@ -196,7 +196,7 @@ button:active,.card:active,.step:active{transform:scale(.98)}
 <section id="auth" class="authbox"><h2 style="margin-top:0">Entra a tu colección</h2><label for="em">Correo</label><input id="em" type="email" autocomplete="email"><label for="pw">Contraseña (mínimo 6 caracteres)</label><input id="pw" type="password" autocomplete="current-password"><p class="note" id="aerr" role="alert"></p><div class="acts"><button id="signup">Crear cuenta</button><button class="primary" id="login">Entrar</button></div><p class="gsep" id="gsep" hidden>— o —</p><div class="acts" id="gwrap" hidden style="justify-content:center"><button id="glogin">Entrar con Google</button></div></section>
 <div class="app" id="app" hidden>
  <nav class="steps" id="steps" aria-label="Nivel taxonómico"></nav>
- <main><div class="tools"><input id="q" type="search" placeholder="Buscar: Felidae, mono, jaguar…" aria-label="Buscar"><button id="fav">☆ Favoritas</button><button id="study">🎓 Modo estudio</button></div><p class="crumb" id="crumb"></p><div class="grid" id="grid"></div><section id="detail" hidden></section><p class="crumb" id="exbar" style="margin-top:24px">Exportar: <button id="exj">Copia completa (JSON con fotos)</button> <button id="exc">Tabla (CSV, sin fotos)</button></p></main>
+ <main><div class="tools"><input id="q" type="search" placeholder="Buscar: Felidae, mono, jaguar…" aria-label="Buscar"><button id="fav">☆ Favoritas</button><button id="study">🎓 Modo estudio</button></div><p class="crumb" id="crumb"></p><div class="grid" id="grid"></div><section id="detail" hidden></section><p class="crumb" id="exbar" style="margin-top:24px">Exportar: <button id="exj">Copia completa (JSON con fotos)</button> <button id="exc">Tabla (CSV, sin fotos)</button> · Importar: <button id="imj">⬆ Cargar copia (JSON)</button><input type="file" id="imf" accept="application/json,.json" hidden></p></main>
 </div>
 
 <dialog id="dlg">
@@ -1140,6 +1140,52 @@ async function exportData(kind){
  saveFile('pokedex-taxonomica-'+d+'.csv','﻿'+[cols.map(q).join(',')].concat(data.map(r=>cols.map(c=>q(c==='rasgos'?rasgosTxt(r):r[c])).join(','))).join('\r\n'),'text/csv');
 }
 $('exj').onclick=()=>exportData('json');$('exc').onclick=()=>exportData('csv');
+
+/* ---------- Importar (JSON de «Copia completa») ---------- */
+async function importData(file){
+ const b=$('imj'),txt0=b.textContent;
+ try{
+  let arr=JSON.parse(await file.text());
+  if(!Array.isArray(arr))arr=[arr];
+  const valid=[];let bad=0;
+  for(const x of arr){
+   if(!x||typeof x!=='object'||!LV.every(k=>typeof x[k]==='string'&&x[k].trim())||!(REINOS.Bacteria.concat(REINOS.Eukarya).includes(x.reino))){bad++;continue}
+   valid.push(x);
+  }
+  if(!valid.length){alert('El archivo no tiene fichas válidas. Usa un JSON creado con «Copia completa».');return}
+  const have=new Set(data.map(s=>s.id)),dups=valid.filter(x=>x.id&&have.has(x.id)).length;
+  let over=false;
+  if(dups)over=confirm(dups+' de '+valid.length+' fichas ya existen en tu colección.\n\nAceptar = sobrescribirlas con las del archivo.\nCancelar = omitirlas y añadir solo las nuevas.');
+  const todo=valid.filter(x=>over||!(x.id&&have.has(x.id)));
+  if(!todo.length){alert('No hay fichas nuevas que importar.');return}
+  if(!confirm('Se importarán '+todo.length+' fichas. ¿Continuar?'))return;
+  b.disabled=true;let n=0;
+  for(const x of todo){
+   b.textContent='⬆ '+(++n)+' / '+todo.length+'…';
+   let fotos=Array.isArray(x.fotos)?x.fotos.filter(f=>typeof f==='string'&&f):(x.foto?[x.foto]:[]);
+   fotos=fotos.slice(0,MAXF);
+   const refs=[];
+   for(const f of fotos){
+    if(/^data:/.test(f)&&GDRIVE_ON){
+     try{const bl=await (await fetch(f)).blob(),ref='loc:'+crypto.randomUUID();await dbPut('fotos',bl,ref);refs.push(ref)}catch(_){}
+    }else refs.push(f);
+   }
+   const row={id:over&&x.id&&have.has(x.id)||!have.has(x.id)&&x.id?x.id:crypto.randomUUID(),comun:x.comun||'',caracteristicas:x.car||x.caracteristicas||'',
+    rasgos:x.rasgos&&typeof x.rasgos==='object'?x.rasgos:{},distribucion:x.dist||x.distribucion,creado:x.creado||new Date().toISOString(),fotos:refs,foto:refs[0]||''};
+   LV.forEach(k=>row[k]=x[k].trim());
+   const o=fromRow(row);
+   if(have.has(o.id)){const p=data.find(s=>s.id===o.id);if(p)(await ensureFotos(p)).filter(r=>/^gd:/.test(r)&&!refs.includes(r)).forEach(gdTrash)}
+   await persist(o);
+   const i=data.findIndex(s=>s.id===o.id);if(i>=0)data[i]=o;else data.push(o);
+   have.add(o.id);
+  }
+  byC(data);fix();render();
+  alert('Importadas '+todo.length+' fichas'+(bad?' ('+bad+' omitidas por estar incompletas)':'')+'.'+(flush.err?'\n\nQuedaron guardadas en el dispositivo, pero aún no se subieron: '+flush.err:''));
+ }catch(e){alert('No se pudo importar: '+(e.message||e))}
+ finally{b.disabled=false;b.textContent=txt0}
+}
+$('imj').onclick=()=>$('imf').click();
+$('imf').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)importData(f)};
 
 /* ---------- Sesión ---------- */
 async function auth(m){
