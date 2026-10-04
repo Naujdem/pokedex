@@ -245,14 +245,6 @@ main{display:contents}
  .step{flex:0 0 auto;min-width:92px;align-items:flex-start;text-align:left;padding:7px 14px;background:#2C2C2E;border:1px solid var(--line);border-left:4px solid var(--c);border-radius:14px}
  .step.on{background:rgba(0,168,132,.2);border-color:var(--acc);border-left-color:var(--c)}
 }
-@media (max-width:560px){
- .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
- .card .ph{aspect-ratio:1/1;font-size:2.4rem}
- .rtag{top:auto;bottom:8px;left:8px;font-size:.6rem;padding:5px 8px}
- .cact{top:8px;right:8px;gap:6px}
- .cact button{width:32px;height:32px;font-size:.85rem}
- .cap{padding:10px 12px 12px}.cap b{font-size:.95rem}
-}
 
 /* Tarjetas de especie */
 .card{background:var(--panel);border-radius:16px}
@@ -261,9 +253,9 @@ main{display:contents}
 .cap i{color:var(--lnk)}
 .cardw{position:relative}
 .rtag,.ktag{display:inline-block;font:700 .7rem/1 "Bricolage Grotesque",system-ui,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#7ee8cb;background:rgba(2,48,38,.78);padding:6px 10px;border-radius:999px}
-.rtag{position:absolute;left:10px;top:10px;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.rtag{position:absolute;left:10px;top:10px;background:rgba(2,48,38,.9)}
 .cact{position:absolute;right:10px;top:10px;display:flex;gap:8px}
-.cact button{width:38px;height:38px;padding:0;border:0;border-radius:50%;background:rgba(30,30,30,.7);color:#fff;font-size:1rem;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.cact button{width:38px;height:38px;padding:0;border:0;border-radius:50%;background:rgba(30,30,30,.82);color:#fff;font-size:1rem}
 @media (hover:hover){.cact button:hover{background:rgba(60,60,60,.9)}}
 
 /* Ficha */
@@ -282,13 +274,15 @@ main{display:contents}
 .btns .danger{color:var(--dng);border-color:var(--dng)}
 /* Fotos: caja fija, la imagen se recorta (no estira la tarjeta ni la galería) */
 .slide{position:relative;overflow:hidden}
-.slide img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.slide{background:#0c0c0c}
+.slide img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
 @media (max-width:700px){.slide{max-height:42vh}}
 .card{display:flex;flex-direction:column;justify-content:flex-start;text-align:left}
 .cardw{display:flex}
 .cardw .card{flex:1;min-width:0}
 .card .ph{flex:none;width:100%;overflow:hidden}
-.card .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.card .ph{background:#0c0c0c}
+.card .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
 /* La ficha no pega a la barra de arriba y cabe sin hacer scroll */
 body.ficha-abierta #detail{padding-top:18px;padding-bottom:40px}
 body.ficha-abierta .ficha{margin-top:0}
@@ -299,6 +293,14 @@ body.ficha-abierta .ficha{margin-top:0}
 .wtx{display:flex;flex-direction:column;min-width:0;line-height:1.25}
 .wtx b{font-size:.95rem}.wtx small{color:var(--mut);font-size:.8rem;overflow-wrap:anywhere}
 .pav{display:flex;align-items:center;gap:16px;margin:6px 0 4px}
+@media (max-width:560px){
+ .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+ .card .ph{aspect-ratio:1/1;font-size:2.4rem}
+ .rtag{top:auto;bottom:8px;left:8px;font-size:.6rem;padding:5px 8px}
+ .cact{top:8px;right:8px;gap:6px}
+ .cact button{width:32px;height:32px;font-size:.85rem}
+ .cap{padding:10px 12px 12px}.cap b{font-size:.95rem}
+}
 </style>
 </head>
 <body>
@@ -1040,7 +1042,7 @@ function render(){
  const showSp=!!sp&&d===7;
  const bc=(d?['<button class="bc" data-bc="-1">Inicio</button>']:[]).concat(path.map((p,j)=>'<button class="bc" data-bc="'+j+'">'+esc(p)+'</button>')).join(' › ');
  const tail=d<7?'elige '+(LN[d]==='Filo o división'?'un filo o división':'un/a '+LN[d].toLowerCase()):'elige una especie';
- $('crumb').innerHTML=showSp?bc:bc+(d?' — ':'')+tail;
+ $('crumb').innerHTML=bc;
  const items=scoped();let h='';
  if(Q||onlyFav){h=data.filter(matches).map(spCard).join('')||'<p class="empty">Sin resultados.</p>'}
  else if(d<7){
@@ -1060,7 +1062,7 @@ function render(){
  $('detail').innerHTML=ver
   ?'<button id="back">← Volver a las especies</button>'
    +'<div class="ficha">'+galHTML(sp)
-   +'<div class="finfo"><h2 class="deskonly">'+esc(sp.comun||sci(sp))+'</h2><p class="sci deskonly">'+esc(sci(sp))+'</p>'
+   +'<div class="finfo"><h2>'+esc(sp.comun||sci(sp))+'</h2><p class="sci">'+esc(sci(sp))+'</p>'
    +sumHTML(sp)+'<ol class="lin deskonly">'+linHTML(sp)+'</ol>'
    +'<div class="btns"><button id="favb">'+(fav(sp)?'★ Favorito':'☆ Favorito')+'</button><button id="shr">↗ Compartir</button><button id="edit">Editar ficha</button><button class="danger" id="del">🗑 Eliminar</button></div></div>'
    +'<div class="ficha-car">'+distBlock(sp)+rgHTML(sp)
@@ -1075,7 +1077,6 @@ function galHTML(sp){
  const list=sp.fotos||(sp.foto?[sp.foto]:[]),n=list.length;
  const slides=n?list.map(s=>'<div class="slide">'+IMG(s)+'</div>').join(''):'<div class="slide"><span aria-hidden="true">'+(EMO[sp.reino]||'🧬')+'</span></div>';
  return '<div class="galw'+(sp.fotos===undefined?' ld':'')+'"><div class="gal" id="gal">'+slides+'</div>'
-  +'<div class="gov mobonly"><span class="ktag">Reino: '+esc(sp.reino)+'</span><h2>'+esc(sp.comun||sci(sp))+'</h2><p>'+esc(sci(sp))+'</p></div>'
   +(n>1?'<button class="gnav prev" id="gprev" aria-label="Foto anterior">‹</button><button class="gnav next" id="gnext" aria-label="Foto siguiente">›</button><span class="gcount" id="gcount">1 / '+n+'</span>':'')+'</div>';
 }
 const SM=()=>window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth';
