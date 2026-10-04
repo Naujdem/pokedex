@@ -50,6 +50,10 @@ main{padding:20px;min-width:0}
 .ficha .ph{border-radius:12px;overflow:hidden;font-size:5rem;border:1px solid var(--line)}
 .ficha h2{margin:0;font-size:2rem;line-height:1.15}
 .ficha .sci{font-style:italic;font-size:1.3rem;color:var(--mut);margin:4px 0 0}
+body.ficha-abierta #crumb,body.ficha-abierta #back{display:none}
+body.ficha-abierta .ficha{margin-top:0}
+.ficha .lin{margin:16px 0 0;font-size:.95rem}
+.ficha .lin li span{min-width:110px}
 .ficha-car{grid-column:1/-1}
 .ficha-car h3{margin:18px 0 6px;font-size:1.05rem}
 .ficha-car h3:first-child{margin-top:0}
@@ -307,11 +311,13 @@ function render(){
  }
  $('grid').innerHTML=h;
  const ver=!!sp&&d===7;
+ document.body.classList.toggle('ficha-abierta',ver);
  $('grid').hidden=ver;$('exbar').hidden=ver;$('detail').hidden=!ver;
  $('detail').innerHTML=ver
   ?'<button id="back">← Volver a las especies</button>'
    +'<div class="ficha">'+galHTML(sp)
    +'<div><h2>'+esc(sp.comun||sci(sp))+'</h2><p class="sci">'+esc(sci(sp))+'</p>'
+   +'<ol class="lin">'+LV.map((k,i)=>'<li style="--c:'+COL[i]+'"><span>'+LN[i]+'</span> '+esc(sp[k])+'</li>').join('')+'</ol>'
    +'<div class="btns"><button id="edit">Editar ficha</button><button class="danger" id="del">Eliminar</button></div></div>'
    +'<div class="ficha-car">'+rgHTML(sp)
    +(sp.car?'<h3>Notas</h3><p style="margin:0 0 8px;white-space:pre-line">'+esc(sp.car)+'</p>':'')
