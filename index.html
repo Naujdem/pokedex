@@ -695,6 +695,17 @@ async function flush(){
    let error;
    if(j.op==='delete')({error}=await SB.from('especies').delete().eq('id',j.id));
    else{const o=await dbGet('especies',j.id);if(!o){await dbDel('cola',j.id);continue}if(!(await subirFotos(o)))continue;({error}=await SB.from('especies').upsert(toRow(o)))}
+   if(error&&j.op!=='delete'&&/row-level security/i.test(error.message)){
+    /* El id pertenece a otra cuenta (p. ej. ficha importada de otra copia): se le da un id nuevo y se reintenta una vez */
+    const o=await dbGet('especies',j.id);
+    if(o&&!o.reid){
+     const old=o.id;o.id=crypto.randomUUID();o.reid=1;
+     await dbPut('especies',o);await dbDel('especies',old);await dbDel('cola',old);
+     await dbPut('cola',{id:o.id,op:'upsert',ts:j.ts,trash:j.trash||[]});
+     const m=data.find(x=>x.id===old);if(m)m.id=o.id;if(sel===old)sel=o.id;
+     flush.again=true;continue;
+    }
+   }
    if(error){flush.err=error.message+(/distribucion|rasgos|fotos/i.test(error.message)?' (Falta ejecutar distribucion.sql en Supabase).':'');break}
    for(const r of (j.trash||[]))await gdTrash(r);
    await dbDel('cola',j.id);n++;
@@ -1170,7 +1181,7 @@ async function importData(file){
      try{const bl=await (await fetch(f)).blob(),ref='loc:'+crypto.randomUUID();await dbPut('fotos',bl,ref);refs.push(ref)}catch(_){}
     }else refs.push(f);
    }
-   const row={id:over&&x.id&&have.has(x.id)||!have.has(x.id)&&x.id?x.id:crypto.randomUUID(),comun:x.comun||'',caracteristicas:x.car||x.caracteristicas||'',
+   const row={id:over&&x.id&&have.has(x.id)?x.id:crypto.randomUUID(),comun:x.comun||'',caracteristicas:x.car||x.caracteristicas||'',
     rasgos:x.rasgos&&typeof x.rasgos==='object'?x.rasgos:{},distribucion:x.dist||x.distribucion,creado:x.creado||new Date().toISOString(),fotos:refs,foto:refs[0]||''};
    LV.forEach(k=>row[k]=x[k].trim());
    const o=fromRow(row);
