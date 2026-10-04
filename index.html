@@ -41,7 +41,7 @@ main{padding:20px;min-width:0}
 @media (hover:hover){.card:hover{border-color:var(--acc)}}
 .card.sel{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc)}
 .ph{aspect-ratio:1/1;background:var(--soft);display:grid;place-items:center;font-size:2.6rem}
-.ph img{width:100%;height:100%;object-fit:cover;display:block}
+.ph img{width:100%;height:100%;object-fit:cover;display:block}img[data-ref]:not([src]){opacity:0}img.nodrive{opacity:0}#gdb.off{border-color:var(--dng);color:var(--dng)}.gsep{text-align:center;color:var(--mut);margin:14px 0 6px;font-size:.85rem}
 .cap{padding:10px 12px}
 .cap b{display:block;font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:1rem}
 .cap i{color:var(--mut);font-size:.88rem}
@@ -191,9 +191,9 @@ button:active,.card:active,.step:active{transform:scale(.98)}
 <body>
 <header>
  <h1><span class="lens" aria-hidden="true"></span>Pokédex Taxonómica</h1>
- <div id="top" hidden style="display:flex;align-items:center;gap:10px"><span class="sans cl" id="net" hidden></span><button id="sync" title="Descargar fichas y fotos para usar sin conexión">⬇ Sincronizar</button><span class="sans cl on" id="who"></span><button id="out">Salir</button><button class="primary" id="add">+ Añadir especie</button></div>
+ <div id="top" hidden style="display:flex;align-items:center;gap:10px"><span class="sans cl" id="net" hidden></span><button id="gdb" hidden title="Conexión con tu Google Drive (donde se guardan las fotos)">☁ Drive</button><button id="sync" title="Descargar fichas y fotos para usar sin conexión">⬇ Sincronizar</button><span class="sans cl on" id="who"></span><button id="out">Salir</button><button class="primary" id="add">+ Añadir especie</button></div>
 </header>
-<section id="auth" class="authbox"><h2 style="margin-top:0">Entra a tu colección</h2><label for="em">Correo</label><input id="em" type="email" autocomplete="email"><label for="pw">Contraseña (mínimo 6 caracteres)</label><input id="pw" type="password" autocomplete="current-password"><p class="note" id="aerr" role="alert"></p><div class="acts"><button id="signup">Crear cuenta</button><button class="primary" id="login">Entrar</button></div></section>
+<section id="auth" class="authbox"><h2 style="margin-top:0">Entra a tu colección</h2><label for="em">Correo</label><input id="em" type="email" autocomplete="email"><label for="pw">Contraseña (mínimo 6 caracteres)</label><input id="pw" type="password" autocomplete="current-password"><p class="note" id="aerr" role="alert"></p><div class="acts"><button id="signup">Crear cuenta</button><button class="primary" id="login">Entrar</button></div><p class="gsep" id="gsep" hidden>— o —</p><div class="acts" id="gwrap" hidden style="justify-content:center"><button id="glogin">Entrar con Google</button></div></section>
 <div class="app" id="app" hidden>
  <nav class="steps" id="steps" aria-label="Nivel taxonómico"></nav>
  <main><div class="tools"><input id="q" type="search" placeholder="Buscar: Felidae, mono, jaguar…" aria-label="Buscar"><button id="fav">☆ Favoritas</button><button id="study">🎓 Modo estudio</button></div><p class="crumb" id="crumb"></p><div class="grid" id="grid"></div><section id="detail" hidden></section><p class="crumb" id="exbar" style="margin-top:24px">Exportar: <button id="exj">Copia completa (JSON con fotos)</button> <button id="exc">Tabla (CSV, sin fotos)</button></p></main>
@@ -245,6 +245,7 @@ button:active,.card:active,.step:active{transform:scale(.98)}
 <dialog id="tview" aria-label="Visor de término"><div class="tvh"><button type="button" id="tv-x">← Cerrar</button><b id="tv-t"></b><a id="tv-ext" target="_blank" rel="noopener"></a></div><div id="tv-b"></div></dialog>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <script>
 const SB=window.supabase?supabase.createClient('https://amybwsnzxmfdvaomkopm.supabase.co','sb_publishable_DVidqeawdNUHxd46TWgfbg_xfDGda_z'):null;
 const LV=['dominio','reino','filo','clase','orden','familia','genero','especie'];
@@ -505,8 +506,176 @@ async function loadImgs(q,body){
 $('tv-x').onclick=()=>tview.close();
 tview.addEventListener('close',()=>{imgTok++;$('tv-b').innerHTML=''});
 
+/* ---------- Google Drive: almacenamiento de las fotos ----------
+   Supabase guarda SOLO una referencia de texto por foto:
+     gd:<fileId>   foto en el Drive del usuario
+     data:...      foto antigua (base64) — se sigue mostrando igual
+     loc:<uuid>    foto nueva aún no subida (solo existe en el dispositivo, nunca llega a Supabase) */
+const GCLIENT='1051206554875-tmlvl2prc4vhppl81vkrs3pd3ikoieuv.apps.googleusercontent.com';  
+const GSCOPE='https://www.googleapis.com/auth/drive.file';   // solo ve los archivos que crea esta app
+const GFOLDER='Pokédex Taxonómica',FOTO_MAX=1024,FOTO_Q=.8,GDRIVE_ON=!!GCLIENT;
+const API='https://www.googleapis.com/drive/v3',UP='https://www.googleapis.com/upload/drive/v3';
+const isLoc=s=>/^loc:/.test(s||''),isGd=s=>/^gd:/.test(s||''),isUrl=s=>/^(data:|https?:|blob:)/.test(s||'');
+const IMG=(s,x)=>'<img '+(isUrl(s)?'src':'data-ref')+'="'+esc(s)+'" alt=""'+(x||'')+'>';
+const ls=k=>{try{return localStorage.getItem(k)||''}catch(_){return ''}},lsSet=(k,v)=>{try{localStorage.setItem(k,v)}catch(_){}},lsDel=k=>{try{localStorage.removeItem(k)}catch(_){}};
+
+/* --- Token de acceso: la app se lo pide a TU función de Supabase «drive-token».
+   La función guarda en el servidor el permiso permanente (refresh token) y entrega tokens de 1 h sin ventanas. --- */
+let gTok=null,folderP=null,tokP=null;
+try{gTok=JSON.parse(ls('pk_gtok')||'null')}catch(_){}
+const gdValid=()=>!!(gTok&&gTok.t&&gTok.exp>Date.now()+60000);
+function gdSet(t,secs){gTok={t,exp:Date.now()+(+secs||3600)*1000};lsSet('pk_gtok',JSON.stringify(gTok));gdUI()}
+function gdForget(){gTok=null;folderP=null;['pk_gtok','pk_gfolder','pk_ptok'].forEach(lsDel);gdUI()}
+async function gdFn(body){
+ let r;try{r=await SB.functions.invoke('drive-token',{body})}catch(_){throw new Error('NOTOKEN')}
+ if(r.error||!r.data)throw new Error('NOTOKEN');
+ return r.data;
+}
+function gisCode(){
+ return new Promise((ok,ko)=>{
+  if(!(window.google&&google.accounts&&google.accounts.oauth2))return ko(new Error('Google no cargó (¿sin internet?)'));
+  google.accounts.oauth2.initCodeClient({client_id:GCLIENT,scope:GSCOPE,ux_mode:'popup',
+   callback:r=>r.error?ko(new Error(r.error_description||r.error)):ok(r.code),
+   error_callback:e=>ko(new Error((e&&e.type)||'popup'))}).requestCode();
+ });
+}
+/* Se hace UNA sola vez por cuenta (con un toque del usuario): Google da un código y la función lo cambia por el permiso permanente */
+async function gdConnect(){
+ const code=await gisCode(),d=await gdFn({action:'connect',code});
+ if(d.error)throw new Error(d.message||d.error);
+ gdSet(d.access_token,d.expires_in);
+}
+/* interactive=true solo desde un toque del usuario; si ya está conectado, nunca abre ventanas */
+async function gdToken(interactive){
+ if(!GDRIVE_ON)throw new Error('NODRIVE');
+ if(gdValid())return gTok.t;
+ if(!navigator.onLine)throw new Error('NOTOKEN');
+ if(!tokP)tokP=gdFn({action:'token'}).then(d=>{if(d.error)throw new Error(d.error);gdSet(d.access_token,d.expires_in);return d.access_token}).finally(()=>{tokP=null});
+ try{return await tokP}catch(e){
+  if(interactive&&/noconnect|reconnect/.test(e.message)){await gdConnect();return gTok.t}
+  throw new Error('NOTOKEN');
+ }
+}
+async function gd(url,opt,retry=1){
+ const t=await gdToken(false);
+ const r=await fetch(url,Object.assign({},opt,{headers:Object.assign({Authorization:'Bearer '+t},opt&&opt.headers)}));
+ if(r.status===401&&retry){gTok=null;lsDel('pk_gtok');gdUI();return gd(url,opt,0)}
+ return r;
+}
+const gdOk=async r=>{if(r.ok)return;let m='';try{m=(await r.json()).error.message}catch(_){}const e=new Error('Drive '+r.status+(m?': '+m:''));e.status=r.status;throw e};
+
+/* --- Carpeta «Pokédex Taxonómica»: se busca y, si no existe, se crea (una sola vez) --- */
+function gdFolder(){
+ return folderP||(folderP=(async()=>{
+  try{
+   let id=ls('pk_gfolder');
+   if(id){const r=await gd(API+'/files/'+id+'?fields=id,trashed');if(r.ok&&!(await r.json()).trashed)return id}
+   const q=encodeURIComponent("name='"+GFOLDER+"' and mimeType='application/vnd.google-apps.folder' and trashed=false");
+   let r=await gd(API+'/files?q='+q+'&fields=files(id)&spaces=drive');await gdOk(r);const j=await r.json();
+   if(j.files&&j.files.length)id=j.files[0].id;
+   else{r=await gd(API+'/files?fields=id',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:GFOLDER,mimeType:'application/vnd.google-apps.folder'})});await gdOk(r);id=(await r.json()).id}
+   lsSet('pk_gfolder',id);return id;
+  }catch(e){folderP=null;throw e}
+ })());
+}
+async function gdUpload(blob,name,sid,retry=1){
+ const parent=await gdFolder(),b='pk'+Math.random().toString(36).slice(2),meta={name:name+'.jpg',parents:[parent],mimeType:'image/jpeg',appProperties:{especie:sid}};
+ const body=new Blob(['--'+b+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n',JSON.stringify(meta),'\r\n--'+b+'\r\nContent-Type: image/jpeg\r\n\r\n',blob,'\r\n--'+b+'--']);
+ const r=await gd(UP+'/files?uploadType=multipart&fields=id',{method:'POST',headers:{'Content-Type':'multipart/related; boundary='+b},body});
+ if(r.status===404&&retry){folderP=null;lsDel('pk_gfolder');return gdUpload(blob,name,sid,0)}   // la carpeta fue borrada: se recrea
+ await gdOk(r);return (await r.json()).id;
+}
+const gdBlob=async id=>{const r=await gd(API+'/files/'+id+'?alt=media');await gdOk(r);return r.blob()};
+/* A la papelera de Drive (recuperable), nunca borrado definitivo. Si falla, no pasa nada. */
+async function gdTrash(ref){
+ if(!isGd(ref))return;
+ try{await gd(API+'/files/'+ref.slice(3),{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({trashed:true})})}catch(_){}
+ dbDel('fotos',ref).catch(()=>{});urlCache.delete(ref);
+}
+
+/* --- Mostrar fotos: primero la copia guardada en el dispositivo; si no hay, se baja de Drive y se guarda --- */
+const urlCache=new Map();let gq=0;const gw=[];
+const slot=()=>new Promise(ok=>{if(gq<4){gq++;ok()}else gw.push(ok)}),free=()=>{const n=gw.shift();if(n)n();else gq--};
+async function getBlob(ref){
+ let b=await dbGet('fotos',ref);if(b||isLoc(ref))return b;
+ b=await gdBlob(ref.slice(3));await dbPut('fotos',b,ref);return b;
+}
+async function resolveSrc(ref){
+ if(!ref||isUrl(ref))return ref||'';
+ if(urlCache.has(ref))return urlCache.get(ref);
+ const b=await getBlob(ref);if(!b)throw new Error('sin foto');
+ const u=URL.createObjectURL(b);urlCache.set(ref,u);return u;
+}
+async function cargarImg(img){
+ await slot();
+ try{img.src=await resolveSrc(img.dataset.ref);img.classList.remove('nodrive')}
+ catch(_){img.classList.add('nodrive');gdUI()}
+ finally{free()}
+}
+const io='IntersectionObserver' in window?new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){io.unobserve(e.target);cargarImg(e.target)}}),{rootMargin:'300px'}):null;
+function hydrate(){document.querySelectorAll('img[data-ref]:not([data-ok])').forEach(i=>{i.dataset.ok='1';io&&i.closest('.card')?io.observe(i):cargarImg(i)})}
+new MutationObserver(hydrate).observe(document.documentElement,{childList:true,subtree:true});
+const retryImgs=()=>document.querySelectorAll('img.nodrive').forEach(i=>{i.classList.remove('nodrive');cargarImg(i)});
+
+/* --- Fotos nuevas: se reducen, se guardan en el dispositivo (loc:) y se suben a Drive al guardar la ficha --- */
+function toBlob(file){return new Promise(res=>{const u=URL.createObjectURL(file),im=new Image();
+ im.onload=()=>{const k=Math.min(1,FOTO_MAX/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(res,'image/jpeg',FOTO_Q)};
+ im.onerror=()=>{URL.revokeObjectURL(u);res(null)};im.src=u})}
+async function addLocal(file){const b=await toBlob(file);if(!b)return '';const ref='loc:'+crypto.randomUUID();await dbPut('fotos',b,ref);formNew.add(ref);return ref}
+function dropLoc(ref){dbDel('fotos',ref).catch(()=>{});const u=urlCache.get(ref);if(u){URL.revokeObjectURL(u);urlCache.delete(ref)}formNew.delete(ref)}
+const fname=o=>((o.genero||'foto')+'_'+(o.especie||'')+'_'+Date.now().toString(36)).replace(/[^\w-]+/g,'_');
+/* Sube las fotos loc: de una ficha. Cada foto subida se anota enseguida, así un corte a mitad no duplica nada. */
+async function subirFotos(o){
+ const L=o.fotos;if(!L||!L.some(isLoc))return true;
+ try{
+  for(let i=0;i<L.length;i++){
+   if(!isLoc(L[i]))continue;
+   const b=await dbGet('fotos',L[i]);if(!b){L.splice(i--,1);continue}
+   const ref='gd:'+await gdUpload(b,fname(o),o.id);
+   await dbPut('fotos',b,ref);await dbDel('fotos',L[i]);
+   if(urlCache.has(L[i]))urlCache.set(ref,urlCache.get(L[i]));
+   L[i]=ref;o.foto=L[0]||'';await dbPut('especies',Object.assign({},o));
+  }
+  o.foto=L[0]||'';await dbPut('especies',Object.assign({},o));return true;
+ }catch(e){
+  flush.err=/^(NOTOKEN|NODRIVE)$/.test(e.message)?'Conecta tu Google Drive (botón «☁ Conectar Drive») para subir las fotos pendientes.':'Drive: '+(e.message||e);
+  return false;
+ }
+}
+/* «Sincronizar»: además de las fichas, guarda en el dispositivo las fotos de Drive para verlas sin conexión */
+async function cacheFotos(rows){
+ if(!GDRIVE_ON)return true;
+ for(const r of rows){
+  for(const ref of (Array.isArray(r.fotos)&&r.fotos.length?r.fotos:(r.foto?[r.foto]:[])).filter(isGd)){
+   if(await tx('fotos','readonly',o=>o.getKey(ref)))continue;
+   await slot();
+   try{await getBlob(ref)}catch(e){if(e.message==='NOTOKEN')return false}finally{free()}
+  }
+ }
+ return true;
+}
+async function toDataURL(ref){
+ if(!ref||/^data:/.test(ref))return ref;
+ try{const b=await getBlob(ref);if(!b)return ref;return await new Promise((ok,ko)=>{const f=new FileReader();f.onload=()=>ok(f.result);f.onerror=ko;f.readAsDataURL(b)})}catch(_){return ref}
+}
+
+/* --- Botón «☁ Drive» y login con Google --- */
+function gdUI(){const b=$('gdb');if(!b)return;b.hidden=!GDRIVE_ON;b.className=gdValid()?'':'off';b.textContent=gdValid()?'☁ Drive ✓':'☁ Conectar Drive'}
+setInterval(gdUI,30000);addEventListener('online',retryImgs);
+document.addEventListener('DOMContentLoaded',()=>{
+ gdUI();if(GDRIVE_ON&&SB){$('gsep').hidden=false;$('gwrap').hidden=false}
+ $('gdb').onclick=async()=>{
+  try{await gdToken(true);gdUI();await flush();retryImgs()}
+  catch(e){alert('No se pudo conectar con Google Drive: '+(e.message||e)+'\n\nSi estás en la app instalada (APK) y no se abre la ventana de Google, cierra sesión y usa «Entrar con Google».')}
+ };
+ $('glogin').onclick=async()=>{
+  const r=await SB.auth.signInWithOAuth({provider:'google',options:{scopes:GSCOPE,redirectTo:location.origin+location.pathname,queryParams:{access_type:'offline',prompt:'consent'}}});
+  if(r.error)$('aerr').textContent=r.error.message;
+ };
+});
+
 /* ---------- IndexedDB: fichas, cola de pendientes y metadatos ---------- */
-const idb=new Promise((ok,ko)=>{const r=indexedDB.open('pokedex',1);r.onupgradeneeded=()=>{const d=r.result;d.createObjectStore('especies',{keyPath:'id'});d.createObjectStore('cola',{keyPath:'id'});d.createObjectStore('meta')};r.onsuccess=()=>ok(r.result);r.onerror=()=>ko(r.error)});
+const idb=new Promise((ok,ko)=>{const r=indexedDB.open('pokedex',2);r.onupgradeneeded=()=>{const d=r.result;[['especies',{keyPath:'id'}],['cola',{keyPath:'id'}],['meta'],['fotos']].forEach(([n,o])=>{if(!d.objectStoreNames.contains(n))d.createObjectStore(n,o)})};r.onsuccess=()=>ok(r.result);r.onerror=()=>ko(r.error)});
 const tx=async(s,m,f)=>{const d=await idb;return new Promise((ok,ko)=>{const t=d.transaction(s,m);let q;try{q=f(t.objectStore(s))}catch(e){return ko(e)}t.oncomplete=()=>ok(q&&q.result);t.onerror=t.onabort=()=>ko(t.error)})};
 const dbPut=(s,v,k)=>tx(s,'readwrite',o=>o.put(v,k)),dbGet=(s,k)=>tx(s,'readonly',o=>o.get(k)),dbAll=s=>tx(s,'readonly',o=>o.getAll()),dbDel=(s,k)=>tx(s,'readwrite',o=>o.delete(k)),dbClear=s=>tx(s,'readwrite',o=>o.clear());
 let off=false;
@@ -518,21 +687,23 @@ async function netUI(){
  $('net').textContent=t;$('net').hidden=!t;$('net').className='sans cl'+(on?' on':'');
 }
 /* Guarda primero en el dispositivo y deja la ficha en la cola; sube si hay red */
-async function persist(o){o.pend=true;await dbPut('especies',Object.assign({},o));await dbPut('cola',{id:o.id,op:'upsert',ts:Date.now()});netUI();return flush()}
+async function persist(o,trash){o.pend=true;await dbPut('especies',Object.assign({},o));const prev=await dbGet('cola',o.id),tr=[...((prev&&prev.trash)||[]),...(trash||[])];await dbPut('cola',{id:o.id,op:'upsert',ts:Date.now(),trash:tr});netUI();return flush()}
 async function flush(){
- if(!SB||!navigator.onLine||flush.busy)return;flush.busy=true;flush.err='';let n=0;
+ if(!SB||!navigator.onLine)return;if(flush.busy){flush.again=true;return}flush.busy=true;flush.err='';let n=0;
  try{
   for(const j of (await dbAll('cola')).sort((a,b)=>a.ts-b.ts)){
    let error;
    if(j.op==='delete')({error}=await SB.from('especies').delete().eq('id',j.id));
-   else{const o=await dbGet('especies',j.id);if(!o){await dbDel('cola',j.id);continue}({error}=await SB.from('especies').upsert(toRow(o)))}
+   else{const o=await dbGet('especies',j.id);if(!o){await dbDel('cola',j.id);continue}if(!(await subirFotos(o)))continue;({error}=await SB.from('especies').upsert(toRow(o)))}
    if(error){flush.err=error.message+(/distribucion|rasgos|fotos/i.test(error.message)?' (Falta ejecutar distribucion.sql en Supabase).':'');break}
+   for(const r of (j.trash||[]))await gdTrash(r);
    await dbDel('cola',j.id);n++;
    const o=await dbGet('especies',j.id);if(o){delete o.pend;await dbPut('especies',o)}
-   const m=data.find(x=>x.id===j.id);if(m)delete m.pend;
+   const m=data.find(x=>x.id===j.id);if(m){delete m.pend;if(o&&o.fotos){m.fotos=o.fotos;m.foto=o.foto}}
   }
  }catch(e){flush.err=String(e.message||e)}
  flush.busy=false;netUI();if(n&&!$('app').hidden)render();
+ if(flush.again){flush.again=false;return flush()}
 }
 async function reconcile(rows,prune){
  const loc=Object.fromEntries((await dbAll('especies')).map(x=>[x.id,x])),q=new Set((await dbAll('cola')).map(j=>j.id)),seen=new Set();
@@ -544,15 +715,15 @@ async function loadLocal(){data=byC(await dbAll('especies'));fix();render();$('c
 async function descargar(){
  const b=$('sync');if(!SB||!navigator.onLine)return alert('Necesitas conexión para descargar las fichas.');
  if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();
- b.disabled=true;await flush();let n=0;
+ b.disabled=true;if(GDRIVE_ON&&!gdValid())await gdToken(true).catch(()=>{});await flush();let n=0,fotosOk=true;
  try{
   for(let from=0;;from+=15){
    const {data:rows,error}=await SB.from('especies').select(COLS+',fotos').order('creado').range(from,from+14);
    if(error)throw error;
-   await reconcile(rows,false);n+=rows.length;b.textContent='⬇ '+n+'…';if(rows.length<15)break;
+   await reconcile(rows,false);if(fotosOk)fotosOk=await cacheFotos(rows);n+=rows.length;b.textContent='⬇ '+n+'…';if(rows.length<15)break;
   }
   await dbPut('meta',Date.now(),'ultima');data=byC(await dbAll('especies'));fix();render();
-  alert('Listo: '+n+' fichas con sus fotos guardadas en este dispositivo.');
+  alert(fotosOk?'Listo: '+n+' fichas con sus fotos guardadas en este dispositivo.':'Fichas descargadas ('+n+'), pero faltan fotos: toca «☁ Conectar Drive» y vuelve a sincronizar.');
  }catch(e){alert('No se pudo descargar: '+(e.message||e))}
  b.disabled=false;b.textContent='⬇ Sincronizar';
 }
@@ -615,7 +786,7 @@ function distBlock(sp){
 function wireDist(sp){if(!distN(sp))return;loadWorld().then(()=>{const h=$('fmap');if(!h||sel!==sp.id)return;const d={nativo:new Set(sp.dist.nativo),invasor:new Set(sp.dist.invasor)},m=mkMap(h,{get:()=>d});m.paint();m.fitSel()}).catch(()=>{})}
 const sci=s=>s.genero+' '+s.especie;
 const scoped=()=>data.filter(s=>path.every((v,i)=>s[LV[i]]===v));
-const photo=(src,r)=>src?'<img src="'+esc(src)+'" alt="" loading="lazy">':'<span class="nophoto" aria-hidden="true">'+(EMO[r]||'🧬')+'<small>Sin foto</small></span>';
+const photo=(src,r)=>src?IMG(src,' loading="lazy"'):'<span class="nophoto" aria-hidden="true">'+(EMO[r]||'🧬')+'<small>Sin foto</small></span>';
 const COLS='id,creado,comun,caracteristicas,foto,rasgos,distribucion,'+LV.join(',');
 const MAXF=8;
 // fotos === undefined significa "todavía no cargadas" (la lista solo trae la portada)
@@ -737,7 +908,7 @@ function render(){
 }
 function galHTML(sp){
  const list=sp.fotos||(sp.foto?[sp.foto]:[]),n=list.length;
- const slides=n?list.map(s=>'<div class="slide"><img src="'+esc(s)+'" alt=""></div>').join(''):'<div class="slide"><span aria-hidden="true">'+(EMO[sp.reino]||'🧬')+'</span></div>';
+ const slides=n?list.map(s=>'<div class="slide">'+IMG(s)+'</div>').join(''):'<div class="slide"><span aria-hidden="true">'+(EMO[sp.reino]||'🧬')+'</span></div>';
  return '<div class="galw'+(sp.fotos===undefined?' ld':'')+'"><div class="gal" id="gal">'+slides+'</div>'
   +(n>1?'<button class="gnav prev" id="gprev" aria-label="Foto anterior">‹</button><button class="gnav next" id="gnext" aria-label="Foto siguiente">›</button><span class="gcount" id="gcount">1 / '+n+'</span>':'')+'</div>';
 }
@@ -779,7 +950,8 @@ $('delno').onclick=()=>dlgdel.close();
 $('delok').onclick=async()=>{
  const id=sel;if(!id)return dlgdel.close();
  $('delok').disabled=true;
- await dbDel('especies',id);await dbPut('cola',{id,op:'delete',ts:Date.now()});netUI();flush();
+ const dsp=data.find(x=>x.id===id),dph=dsp?(await ensureFotos(dsp)).filter(r=>/^gd:/.test(r)):[];
+ await dbDel('especies',id);await dbPut('cola',{id,op:'delete',ts:Date.now(),trash:dph});netUI();flush();
  $('delok').disabled=false;
  data=data.filter(s=>s.id!==id);sel=null;fix();dlgdel.close();render();
 };
@@ -895,7 +1067,7 @@ $('f-reino').onchange=()=>{
 $('add').onclick=()=>{
  editId=null;legOn=false;distLoad(null);
  $('dtitle').textContent='Añadir especie';$('save').textContent='Guardar especie';
- formFotos=[];drawThumbs();
+ formFotos=[];formOrig=[];formNew=new Set();formSaved=false;drawThumbs();
  $('err').textContent='';$('f-foto').value='';$('f-comun').value='';$('f-car').value='';
  LV.forEach((k,i)=>{$('f-'+k).value=path[i]||(i<2?$('f-'+k).options[0].value:'')});
  buildRasgos();fillRasgos({});
@@ -904,7 +1076,7 @@ $('add').onclick=()=>{
 };
 async function openEdit(sp){
  editId=sp.id;legOn=!!(sp.rasgos&&sp.rasgos.pl_tolerancia);distLoad(sp.dist);
- formFotos=(await ensureFotos(sp)).slice();drawThumbs();
+ formFotos=(await ensureFotos(sp)).slice();formOrig=formFotos.slice();formNew=new Set();formSaved=false;drawThumbs();
  $('dtitle').textContent='Editar especie';$('save').textContent='Guardar cambios';
  $('err').textContent='';$('f-foto').value='';$('f-comun').value=sp.comun;$('f-car').value=sp.car;
  LV.forEach(k=>{$('f-'+k).value=sp[k]});
@@ -913,15 +1085,16 @@ async function openEdit(sp){
  dlg.showModal();
 }
 $('cancel').onclick=()=>dlg.close();
-let formFotos=[];
+let formFotos=[],formOrig=[],formNew=new Set(),formSaved=false;
+dlg.addEventListener('close',()=>{if(!formSaved)[...formNew].forEach(dropLoc);formNew=new Set()});
 function drawThumbs(){
- $('fthumbs').innerHTML=formFotos.map((s,i)=>'<div class="th'+(i===0?' cover':'')+'"><img src="'+esc(s)+'" alt="">'
+ $('fthumbs').innerHTML=formFotos.map((s,i)=>'<div class="th'+(i===0?' cover':'')+'">'+IMG(s)
   +(i?'<button type="button" class="st" data-st="'+i+'" title="Hacer portada">★</button>':'')
   +'<button type="button" class="rm" data-rm="'+i+'" title="Quitar">✕</button></div>').join('');
 }
 $('fthumbs').onclick=e=>{
  const b=e.target.closest('button');if(!b)return;
- if(b.dataset.rm!==undefined)formFotos.splice(+b.dataset.rm,1);
+ if(b.dataset.rm!==undefined){const [x]=formFotos.splice(+b.dataset.rm,1);if(formNew.has(x))dropLoc(x)}
  else if(b.dataset.st!==undefined){const [x]=formFotos.splice(+b.dataset.st,1);formFotos.unshift(x)}
  drawThumbs();
 };
@@ -930,7 +1103,7 @@ $('f-foto').onchange=async e=>{
  $('err').textContent='';
  for(const f of files){
   if(formFotos.length>=MAXF){$('err').textContent='Máximo '+MAXF+' fotos por especie.';break}
-  const s=await resize(f);if(s)formFotos.push(s);
+  const s=GDRIVE_ON?await addLocal(f):await resize(f);if(s)formFotos.push(s);
  }
  drawThumbs();
 };
@@ -941,11 +1114,14 @@ $('save').onclick=async()=>{
  const miss=LV.filter(k=>!rec[k]).map(k=>LN[LV.indexOf(k)].toLowerCase());
  if(miss.length){$('err').textContent='Falta: '+miss.join(', ')+'.';return}
  rec.fotos=formFotos.slice();rec.foto=formFotos[0]||'';
+ const trash=formOrig.filter(r=>/^gd:/.test(r)&&!formFotos.includes(r));
+ if(GDRIVE_ON&&formFotos.some(isLoc)&&navigator.onLine&&!gdValid())await gdToken(true).catch(()=>{});
  rec.distribucion={nativo:[...edist.nativo],invasor:[...edist.invasor]};
  $('save').disabled=true;
  const prev=editId&&data.find(x=>x.id===editId);
  const o=fromRow(Object.assign({},rec,{id:editId||crypto.randomUUID(),creado:prev&&prev.creado||new Date().toISOString()}));
- await persist(o);
+ formSaved=true;formNew.clear();
+ await persist(o,trash);
  $('save').disabled=false;
  if(editId)data=data.map(x=>x.id===editId?o:x);else data.push(o);
  path=LV.slice(0,7).map(k=>o[k]);sel=o.id;dlg.close();render();
@@ -959,7 +1135,7 @@ async function exportData(kind){
  if(!data.length){alert('Aún no hay especies para exportar.');return}
  if(kind==='json')await Promise.all(data.map(ensureFotos));
  const d=new Date().toISOString().slice(0,10);
- if(kind==='json')return saveFile('pokedex-taxonomica-'+d+'.json',JSON.stringify(data,null,1),'application/json');
+ if(kind==='json'){const out=[];for(const sp of data){const c=Object.assign({},sp);c.fotos=await Promise.all((sp.fotos||[]).map(toDataURL));c.foto=c.fotos[0]||'';out.push(c)}return saveFile('pokedex-taxonomica-'+d+'.json',JSON.stringify(out,null,1),'application/json')}
  const cols=LV.concat(['comun','car','rasgos']),q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
  saveFile('pokedex-taxonomica-'+d+'.csv','﻿'+[cols.map(q).join(',')].concat(data.map(r=>cols.map(c=>q(c==='rasgos'?rasgosTxt(r):r[c])).join(','))).join('\r\n'),'text/csv');
 }
@@ -975,14 +1151,14 @@ async function auth(m){
 $('login').onclick=()=>auth('in');$('signup').onclick=()=>auth('up');$('out').onclick=async()=>{
  if(!SB)return;await flush();
  if((await dbAll('cola')).length&&!confirm('Hay fichas sin subir que se perderán si sales ahora. ¿Salir de todos modos?'))return;
- off=false;await dbClear('especies');await dbClear('cola');await dbClear('meta');SB.auth.signOut();
+ off=false;await dbClear('especies');await dbClear('cola');await dbClear('meta');await dbClear('fotos');gdForget();SB.auth.signOut();
 };
 SB&&SB.auth.onAuthStateChange(async(_e,sess)=>{
  const u=sess&&sess.user;if(!u&&off)return;
- if(u){off=false;const m=await dbGet('meta','uid');if(m&&m!==u.id){await dbClear('especies');await dbClear('cola')}await dbPut('meta',u.id,'uid');await dbPut('meta',u.email,'email')}
+ if(u){off=false;const m=await dbGet('meta','uid');if(m&&m!==u.id){await dbClear('especies');await dbClear('cola');await dbClear('fotos');gdForget()}await dbPut('meta',u.id,'uid');await dbPut('meta',u.email,'email');if(_e==='SIGNED_IN'&&sess.provider_token&&GDRIVE_ON&&sess.provider_token!==ls('pk_ptok')){lsSet('pk_ptok',sess.provider_token);gdSet(sess.provider_token,3500);if(sess.provider_refresh_token)gdFn({action:'store',refresh_token:sess.provider_refresh_token}).catch(()=>{})}}
 
  $('auth').hidden=!!u;$('app').hidden=!u;$('top').hidden=!u;$('who').innerHTML=u?'<span class="av" title="'+esc(u.email)+'">'+esc(u.email[0].toUpperCase())+'</span>':'';
- if(u&&u.id!==uid){uid=u.id;loadData()}
+ gdUI();if(u&&u.id!==uid){uid=u.id;loadData()}
  if(!u){uid=null;data=[];path=[];sel=null}
 });
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
