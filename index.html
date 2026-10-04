@@ -245,7 +245,14 @@ main{display:contents}
  .step{flex:0 0 auto;min-width:92px;align-items:flex-start;text-align:left;padding:7px 14px;background:#2C2C2E;border:1px solid var(--line);border-left:4px solid var(--c);border-radius:14px}
  .step.on{background:rgba(0,168,132,.2);border-color:var(--acc);border-left-color:var(--c)}
 }
-@media (max-width:560px){.grid{grid-template-columns:1fr}}
+@media (max-width:560px){
+ .grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+ .card .ph{aspect-ratio:1/1;font-size:2.4rem}
+ .rtag{top:auto;bottom:8px;left:8px;font-size:.6rem;padding:5px 8px}
+ .cact{top:8px;right:8px;gap:6px}
+ .cact button{width:32px;height:32px;font-size:.85rem}
+ .cap{padding:10px 12px 12px}.cap b{font-size:.95rem}
+}
 
 /* Tarjetas de especie */
 .card{background:var(--panel);border-radius:16px}
@@ -262,7 +269,7 @@ main{display:contents}
 /* Ficha */
 #back{margin-top:16px;border-radius:999px}
 .ficha{gap:20px 32px}
-@media (min-width:901px){.ficha{grid-template-columns:minmax(280px,440px) minmax(0,1fr)}}
+@media (min-width:901px){.ficha{grid-template-columns:minmax(260px,380px) minmax(0,1fr)}}
 .ficha .galw{border-radius:18px}
 .gcount{top:10px;bottom:auto;right:10px}
 .gnav{top:42%}
@@ -270,9 +277,28 @@ main{display:contents}
 .ficha .gov h2{margin:10px 0 0;font-size:1.7rem;color:#fff}
 .gov p{margin:2px 0 0;font-style:italic;font-weight:600;font-size:1.1rem;color:#7ee8cb}
 @media (max-width:700px){.slide{aspect-ratio:4/3}}
-#detail .btns{position:sticky;bottom:0;z-index:20;display:flex;flex-wrap:nowrap;gap:8px;margin:24px calc(var(--pad)*-1) 0;padding:12px var(--pad) calc(12px + env(safe-area-inset-bottom,0px));background:rgba(30,30,30,.96);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border-top:1px solid var(--line)}
-#detail .btns button{flex:1 1 0;min-width:0;padding:12px 6px;font-size:.9rem;white-space:nowrap;border-radius:12px}
-#detail .btns .danger{color:var(--dng);border-color:var(--dng)}
+.btns{margin-top:18px}
+.btns button{border-radius:12px}
+.btns .danger{color:var(--dng);border-color:var(--dng)}
+/* Fotos: caja fija, la imagen se recorta (no estira la tarjeta ni la galería) */
+.slide{position:relative;overflow:hidden}
+.slide img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+@media (max-width:700px){.slide{max-height:42vh}}
+.card{display:flex;flex-direction:column;justify-content:flex-start;text-align:left}
+.cardw{display:flex}
+.cardw .card{flex:1;min-width:0}
+.card .ph{flex:none;width:100%;overflow:hidden}
+.card .ph img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+/* La ficha no pega a la barra de arriba y cabe sin hacer scroll */
+body.ficha-abierta #detail{padding-top:18px;padding-bottom:40px}
+body.ficha-abierta .ficha{margin-top:0}
+/* Perfil */
+.av{overflow:hidden;flex:none}
+.av img{width:100%;height:100%;object-fit:cover;display:block}
+.av.big{width:96px;height:96px;font-size:2.4rem}
+.wtx{display:flex;flex-direction:column;min-width:0;line-height:1.25}
+.wtx b{font-size:.95rem}.wtx small{color:var(--mut);font-size:.8rem;overflow-wrap:anywhere}
+.pav{display:flex;align-items:center;gap:16px;margin:6px 0 4px}
 </style>
 </head>
 <body>
@@ -285,6 +311,7 @@ main{display:contents}
    <button type="button" id="mnu" aria-haspopup="true" aria-expanded="false" aria-label="Ajustes">⋮</button>
    <div id="menu" hidden role="menu" aria-label="Ajustes">
     <div class="mhead"><span class="sans cl on" id="who"></span></div>
+    <button id="setb">⚙ Ajustes</button>
     <button id="gdb" hidden title="Conexión con tu Google Drive (donde se guardan las fotos)">☁ Drive</button>
     <button id="sync" title="Descargar fichas y fotos para usar sin conexión">⬇ Sincronizar</button>
     <hr>
@@ -342,6 +369,18 @@ main{display:contents}
  <textarea id="f-car" rows="3" placeholder="Cualquier otro dato que quieras guardar"></textarea>
  <p class="note" id="err" role="alert"></p>
  <div class="acts"><button id="cancel">Cancelar</button><button class="primary" id="save">Guardar especie</button></div>
+</dialog>
+
+<dialog id="dlgset">
+ <h2 style="margin-top:0">⚙ Ajustes</h2>
+ <label for="set-foto">Foto de usuario</label>
+ <div class="pav"><span class="av big" id="set-av"></span><div><input type="file" id="set-foto" accept="image/*"><div class="acts" style="justify-content:flex-start;margin-top:8px"><button type="button" id="set-rm">Quitar foto</button></div></div></div>
+ <label for="set-name">Nombre de usuario</label>
+ <input id="set-name" maxlength="40" autocomplete="nickname" placeholder="¿Cómo quieres que te llamemos?">
+ <p class="hint" id="set-mail"></p>
+ <p class="hint">El nombre se sincroniza con tu cuenta. La foto se guarda en este dispositivo.</p>
+ <p class="note" id="set-err" role="alert"></p>
+ <div class="acts"><button id="set-cancel">Cancelar</button><button class="primary" id="set-save">Guardar</button></div>
 </dialog>
 
 <dialog id="dlgst"><h2 style="margin-top:0">🎓 Modo estudio</h2><label for="stlv">Quiero recordar…</label><select id="stlv"><option value="familia">La familia</option><option value="orden">El orden</option><option value="clase">La clase</option><option value="filo">El filo</option><option value="azar">Al azar</option></select><div id="stbody"></div><div class="acts"><button id="stx">Cerrar</button></div></dialog>
@@ -1022,10 +1061,10 @@ function render(){
   ?'<button id="back">← Volver a las especies</button>'
    +'<div class="ficha">'+galHTML(sp)
    +'<div class="finfo"><h2 class="deskonly">'+esc(sp.comun||sci(sp))+'</h2><p class="sci deskonly">'+esc(sci(sp))+'</p>'
-   +sumHTML(sp)+'<ol class="lin deskonly">'+linHTML(sp)+'</ol></div>'
+   +sumHTML(sp)+'<ol class="lin deskonly">'+linHTML(sp)+'</ol>'
+   +'<div class="btns"><button id="favb">'+(fav(sp)?'★ Favorito':'☆ Favorito')+'</button><button id="shr">↗ Compartir</button><button id="edit">Editar ficha</button><button class="danger" id="del">🗑 Eliminar</button></div></div>'
    +'<div class="ficha-car">'+distBlock(sp)+rgHTML(sp)
    +'</div></div>'
-   +'<div class="btns" role="toolbar" aria-label="Acciones de la ficha"><button id="favb">'+(fav(sp)?'★ Favorito':'☆ Favorito')+'</button><button id="shr">↗ Compartir</button><button id="edit">✎ Editar</button><button class="danger" id="del">🗑 Eliminar</button></div>'
   :'';
  if(ver){
   wireGal();wireDist(sp);
@@ -1324,6 +1363,38 @@ $('imj').onclick=()=>$('imf').click();
 $('imf').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)importData(f)};
 
 /* ---------- Sesión ---------- */
+/* ---------- Perfil: nombre y foto de usuario ---------- */
+let prof={name:'',foto:'',email:'',uid:''},setFoto=null;
+const profIni=n=>String(n||prof.name||prof.email||'?').trim()[0].toUpperCase();
+const avHTML=(f,n,big)=>'<span class="av'+(big?' big':'')+'">'+(f?'<img alt="" referrerpolicy="no-referrer" src="'+esc(f)+'">':esc(profIni(n)))+'</span>';
+function drawWho(){
+ const w=$('who');if(!w)return;
+ w.innerHTML=prof.email?avHTML(prof.foto)+'<span class="wtx"><b>'+esc(prof.name||prof.email.split('@')[0])+'</b><small>'+esc(prof.email)+'</small></span>':'';
+}
+async function loadProf(email,uid,meta){
+ meta=meta||{};
+ let f='';try{f=(await dbGet('meta','avatar_'+uid))||''}catch(_){}
+ prof={email,uid,name:meta.nombre_perfil||ls('pk_pn_'+uid)||meta.full_name||meta.name||'',foto:f==='none'?'':(f||meta.avatar_url||meta.picture||'')};
+ drawWho();
+}
+const dlgset=$('dlgset');
+function setPrev(){$('set-av').outerHTML=avHTML(setFoto===null?prof.foto:setFoto,$('set-name').value,1).replace('class="av big"','class="av big" id="set-av"')}
+function avatarFrom(file){return new Promise(res=>{const u=URL.createObjectURL(file),im=new Image();
+ im.onload=()=>{const S=256,c=document.createElement('canvas');c.width=c.height=S;const m=Math.min(im.width,im.height);c.getContext('2d').drawImage(im,(im.width-m)/2,(im.height-m)/2,m,m,0,0,S,S);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',.85))};
+ im.onerror=()=>{URL.revokeObjectURL(u);res('')};im.src=u})}
+$('setb').onclick=()=>{setFoto=null;$('set-name').value=prof.name;$('set-mail').textContent=prof.email;$('set-err').textContent='';$('set-foto').value='';setPrev();dlgset.showModal()};
+$('set-name').oninput=()=>{if((setFoto===null?prof.foto:setFoto)==='')setPrev()};
+$('set-foto').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const d=await avatarFrom(f);if(!d){$('set-err').textContent='No se pudo leer esa imagen.';return}$('set-err').textContent='';setFoto=d;setPrev()};
+$('set-rm').onclick=()=>{setFoto='';setPrev()};
+$('set-cancel').onclick=()=>dlgset.close();
+$('set-save').onclick=async()=>{
+ const name=$('set-name').value.trim().slice(0,40);
+ prof.name=name;lsSet('pk_pn_'+prof.uid,name);
+ if(setFoto!==null){prof.foto=setFoto;await dbPut('meta',setFoto||'none','avatar_'+prof.uid)}
+ drawWho();dlgset.close();
+ if(SB&&navigator.onLine){try{const r=await SB.auth.updateUser({data:{nombre_perfil:name}});if(r.error)alert('El nombre quedó guardado en este dispositivo, pero no se pudo sincronizar: '+r.error.message)}catch(_){}}
+};
+
 $('out').onclick=async()=>{
  if(!SB)return;await flush();
  if((await dbAll('cola')).length&&!confirm('Hay fichas sin subir que se perderán si sales ahora. ¿Salir de todos modos?'))return;
@@ -1333,7 +1404,7 @@ SB&&SB.auth.onAuthStateChange(async(_e,sess)=>{
  const u=sess&&sess.user;if(!u&&off)return;
  if(u){off=false;const m=await dbGet('meta','uid');if(m&&m!==u.id){await dbClear('especies');await dbClear('cola');await dbClear('fotos');gdForget()}await dbPut('meta',u.id,'uid');await dbPut('meta',u.email,'email');if(_e==='SIGNED_IN'&&sess.provider_token&&GDRIVE_ON&&sess.provider_token!==ls('pk_ptok')){lsSet('pk_ptok',sess.provider_token);gdSet(sess.provider_token,3500);if(sess.provider_refresh_token)gdFn({action:'store',refresh_token:sess.provider_refresh_token}).catch(()=>{})}}
 
- $('auth').hidden=!!u;$('app').hidden=!u;$('top').hidden=!u;$('who').innerHTML=u?'<span class="av" title="'+esc(u.email)+'">'+esc(u.email[0].toUpperCase())+'</span><span class="wem">'+esc(u.email)+'</span>':'';
+ $('auth').hidden=!!u;$('app').hidden=!u;$('top').hidden=!u;if(u)await loadProf(u.email,u.id,u.user_metadata);else{prof.email='';drawWho()}
  gdUI();if(u&&u.id!==uid){uid=u.id;loadData()}
  if(!u){uid=null;data=[];path=[];sel=null}
 });
@@ -1396,7 +1467,7 @@ $('gb').onclick=async()=>{
  if(m&&(!navigator.onLine||!SB)){
   off=true;uid=m;const em=(await dbGet('meta','email'))||'?';
   $('auth').hidden=true;$('app').hidden=false;$('top').hidden=false;
-  $('who').innerHTML='<span class="av" title="'+esc(em)+'">'+esc(em[0].toUpperCase())+'</span><span class="wem">'+esc(em)+'</span>';
+  await loadProf(em,m,{});
   await loadLocal();
  }
  netUI();flush();
