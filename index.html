@@ -157,12 +157,23 @@ button:active,.card:active,.step:active{transform:scale(.98)}
 .tgrid a{display:block;aspect-ratio:1/1;border-radius:8px;overflow:hidden;background:var(--soft)}
 .tgrid img{width:100%;height:100%;object-fit:cover;display:block}
 @media (max-width:700px){#tview{width:100%;height:100%;border:0;border-radius:0}}
+
+/* ---------- Mapa de distribución + offline ---------- */
+:root{--wm:#c3cfc7}@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--wm:#34473c}}:root[data-theme="dark"]{--wm:#34473c}
+.mapbox{position:relative;height:min(52vh,420px);border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel);margin-top:8px}
+.mapbox svg{width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+.mapbox path{fill:var(--wm);stroke:var(--panel);stroke-width:.35}.mapbox path.n{fill:#2f9e5f}.mapbox path.i{fill:#c8372d}
+.mz{position:absolute;right:8px;top:8px;display:grid;gap:6px}.mz button{width:38px;height:38px;padding:0;font-size:1.2rem}
+.mname{position:absolute;left:8px;bottom:8px;background:rgba(0,0,0,.72);color:#fff;font:.85rem "Bricolage Grotesque",system-ui,sans-serif;padding:4px 10px;border-radius:99px;pointer-events:none}
+.mode{display:flex;gap:8px;margin:8px 0 0}.mode button{flex:1;padding:10px}
+#m-n.on{background:#2f9e5f;color:#fff;border-color:#2f9e5f}#m-i.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+#m-sum{font-size:.85rem;margin-top:8px}
 </style>
 </head>
 <body>
 <header>
  <h1><span class="lens" aria-hidden="true"></span>Pokédex Taxonómica</h1>
- <div id="top" hidden style="display:flex;align-items:center;gap:10px"><span class="sans cl on" id="who"></span><button id="out">Salir</button><button class="primary" id="add">+ Añadir especie</button></div>
+ <div id="top" hidden style="display:flex;align-items:center;gap:10px"><span class="sans cl" id="net" hidden></span><button id="sync" title="Descargar fichas y fotos para usar sin conexión">⬇ Sincronizar</button><span class="sans cl on" id="who"></span><button id="out">Salir</button><button class="primary" id="add">+ Añadir especie</button></div>
 </header>
 <section id="auth" class="authbox"><h2 style="margin-top:0">Entra a tu colección</h2><label for="em">Correo</label><input id="em" type="email" autocomplete="email"><label for="pw">Contraseña (mínimo 6 caracteres)</label><input id="pw" type="password" autocomplete="current-password"><p class="note" id="aerr" role="alert"></p><div class="acts"><button id="signup">Crear cuenta</button><button class="primary" id="login">Entrar</button></div></section>
 <div class="app" id="app" hidden>
@@ -191,6 +202,11 @@ button:active,.card:active,.step:active{transform:scale(.98)}
  </details>
 
  <details><summary>Datos de campo (opcional)</summary><div id="rg-c"></div></details>
+ <details id="dist-d"><summary>🌎 Distribución geográfica (opcional)</summary>
+  <div class="row"><div><label for="m-cont">Ir a la región</label><select id="m-cont"><option value="">Mundo</option><option value="NC">América del Norte y Central</option><option value="SA">América del Sur</option><option value="EU">Europa</option><option value="AF">África</option><option value="AS">Asia</option><option value="OC">Oceanía</option></select></div><div><label for="m-q">Buscar país</label><input id="m-q" list="m-dl" autocomplete="off" placeholder="Ej: Colombia"><datalist id="m-dl"></datalist></div></div>
+  <div class="mode"><button type="button" id="m-n" class="on">🟢 Nativo</button><button type="button" id="m-i">🔴 Invasor</button></div>
+  <div class="mapbox" id="m-map"></div><p class="hint">Toca un país para marcarlo y vuelve a tocarlo para quitarlo. Arrastra para mover; pellizca o usa ＋/－ para acercar.</p><div id="m-sum"></div>
+ </details>
  <label for="f-car">Notas adicionales</label>
  <textarea id="f-car" rows="3" placeholder="Cualquier otro dato que quieras guardar"></textarea>
  <p class="note" id="err" role="alert"></p>
@@ -212,7 +228,7 @@ button:active,.card:active,.step:active{transform:scale(.98)}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const SB=supabase.createClient('https://amybwsnzxmfdvaomkopm.supabase.co','sb_publishable_DVidqeawdNUHxd46TWgfbg_xfDGda_z');
+const SB=window.supabase?supabase.createClient('https://amybwsnzxmfdvaomkopm.supabase.co','sb_publishable_DVidqeawdNUHxd46TWgfbg_xfDGda_z'):null;
 const LV=['dominio','reino','filo','clase','orden','familia','genero','especie'];
 const LN=['Dominio','Reino','Filo o división','Clase','Orden','Familia','Género','Especie'];
 const COL=['#4da3ff','#3fd6dc','#3fd99b','#5cd94f','#a9d94f','#e6d93f','#f0a04f','#d9884f'];
@@ -459,13 +475,122 @@ async function loadImgs(q,body){
 }
 $('tv-x').onclick=()=>tview.close();
 tview.addEventListener('close',()=>{imgTok++;$('tv-b').innerHTML=''});
+
+/* ---------- IndexedDB: fichas, cola de pendientes y metadatos ---------- */
+const idb=new Promise((ok,ko)=>{const r=indexedDB.open('pokedex',1);r.onupgradeneeded=()=>{const d=r.result;d.createObjectStore('especies',{keyPath:'id'});d.createObjectStore('cola',{keyPath:'id'});d.createObjectStore('meta')};r.onsuccess=()=>ok(r.result);r.onerror=()=>ko(r.error)});
+const tx=async(s,m,f)=>{const d=await idb;return new Promise((ok,ko)=>{const t=d.transaction(s,m);let q;try{q=f(t.objectStore(s))}catch(e){return ko(e)}t.oncomplete=()=>ok(q&&q.result);t.onerror=t.onabort=()=>ko(t.error)})};
+const dbPut=(s,v,k)=>tx(s,'readwrite',o=>o.put(v,k)),dbGet=(s,k)=>tx(s,'readonly',o=>o.get(k)),dbAll=s=>tx(s,'readonly',o=>o.getAll()),dbDel=(s,k)=>tx(s,'readwrite',o=>o.delete(k)),dbClear=s=>tx(s,'readwrite',o=>o.clear());
+let off=false;
+const normDist=d=>({nativo:Array.isArray(d&&d.nativo)?d.nativo:[],invasor:Array.isArray(d&&d.invasor)?d.invasor:[]});
+const byC=a=>a.sort((x,y)=>String(x.creado||'').localeCompare(String(y.creado||'')));
+const toRow=o=>{const r={id:o.id,comun:o.comun,caracteristicas:o.car,rasgos:o.rasgos,distribucion:o.dist};if(o.creado)r.creado=o.creado;if(o.foto!==undefined)r.foto=o.foto;if(o.fotos)r.fotos=o.fotos;LV.forEach(k=>r[k]=o[k]);return r};
+async function netUI(){
+ const n=(await dbAll('cola')).length,on=navigator.onLine,t=(on?'':'Sin conexión')+(n?(on?'':' · ')+'⏳ '+n+(n>1?' pendientes':' pendiente'):'');
+ $('net').textContent=t;$('net').hidden=!t;$('net').className='sans cl'+(on?' on':'');
+}
+/* Guarda primero en el dispositivo y deja la ficha en la cola; sube si hay red */
+async function persist(o){o.pend=true;await dbPut('especies',Object.assign({},o));await dbPut('cola',{id:o.id,op:'upsert',ts:Date.now()});netUI();return flush()}
+async function flush(){
+ if(!SB||!navigator.onLine||flush.busy)return;flush.busy=true;flush.err='';let n=0;
+ try{
+  for(const j of (await dbAll('cola')).sort((a,b)=>a.ts-b.ts)){
+   let error;
+   if(j.op==='delete')({error}=await SB.from('especies').delete().eq('id',j.id));
+   else{const o=await dbGet('especies',j.id);if(!o){await dbDel('cola',j.id);continue}({error}=await SB.from('especies').upsert(toRow(o)))}
+   if(error){flush.err=error.message+(/distribucion|rasgos|fotos/i.test(error.message)?' (Falta ejecutar distribucion.sql en Supabase).':'');break}
+   await dbDel('cola',j.id);n++;
+   const o=await dbGet('especies',j.id);if(o){delete o.pend;await dbPut('especies',o)}
+   const m=data.find(x=>x.id===j.id);if(m)delete m.pend;
+  }
+ }catch(e){flush.err=String(e.message||e)}
+ flush.busy=false;netUI();if(n&&!$('app').hidden)render();
+}
+async function reconcile(rows,prune){
+ const loc=Object.fromEntries((await dbAll('especies')).map(x=>[x.id,x])),q=new Set((await dbAll('cola')).map(j=>j.id)),seen=new Set();
+ for(const r of rows){seen.add(r.id);if(q.has(r.id))continue;const o=fromRow(r),l=loc[r.id];if(l&&l.fotos&&o.fotos===undefined&&l.foto===o.foto)o.fotos=l.fotos;await dbPut('especies',o)}
+ if(prune)for(const id in loc)if(!seen.has(id)&&!q.has(id))await dbDel('especies',id);
+}
+async function loadLocal(){data=byC(await dbAll('especies'));fix();render();$('crumb').textContent=data.length?$('crumb').textContent:'No hay fichas guardadas en este dispositivo. Conéctate y pulsa «⬇ Sincronizar».'}
+/* Botón «Sincronizar»: descarga fichas y fotos completas a IndexedDB */
+async function descargar(){
+ const b=$('sync');if(!SB||!navigator.onLine)return alert('Necesitas conexión para descargar las fichas.');
+ if(navigator.storage&&navigator.storage.persist)navigator.storage.persist();
+ b.disabled=true;await flush();let n=0;
+ try{
+  for(let from=0;;from+=15){
+   const {data:rows,error}=await SB.from('especies').select(COLS+',fotos').order('creado').range(from,from+14);
+   if(error)throw error;
+   await reconcile(rows,false);n+=rows.length;b.textContent='⬇ '+n+'…';if(rows.length<15)break;
+  }
+  await dbPut('meta',Date.now(),'ultima');data=byC(await dbAll('especies'));fix();render();
+  alert('Listo: '+n+' fichas con sus fotos guardadas en este dispositivo.');
+ }catch(e){alert('No se pudo descargar: '+(e.message||e))}
+ b.disabled=false;b.textContent='⬇ Sincronizar';
+}
+$('sync').onclick=descargar;
+addEventListener('offline',netUI);
+addEventListener('online',async()=>{netUI();await flush();if(off&&SB){const {data:{session}}=await SB.auth.getSession();if(session){off=false;loadData()}}});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)flush()});
+
+/* ---------- Mapa de distribución (SVG local, sin internet) ---------- */
+let WORLD=null,edist={nativo:new Set(),invasor:new Set()},emap=null,emode='nativo',NM={};
+const loadWorld=()=>WORLD?Promise.resolve(WORLD):fetch('world.svg').then(r=>{if(!r.ok)throw 0;return r.text()}).then(t=>WORLD=t.slice(t.indexOf('<svg')));
+const DN=(()=>{try{return new Intl.DisplayNames(['es'],{type:'region'})}catch(_){return null}})();
+const cname=c=>{try{return DN.of(c)||c}catch(_){return c}};
+const CONT={'':[0,20,2000,837],NC:[90,30,640,460],SA:[520,410,280,450],EU:[905,100,360,210],AF:[930,270,360,460],AS:[1120,60,670,500],OC:[1560,480,440,330]};
+function mkMap(host,opt){
+ host.innerHTML=WORLD+'<div class="mname" hidden></div><div class="mz"><button type="button" data-z="1" aria-label="Acercar">＋</button><button type="button" data-z="-1" aria-label="Alejar">－</button></div>';
+ const svg=host.querySelector('svg'),lab=host.querySelector('.mname'),st={vb:CONT[''].slice()},P=new Map();let d0=null,pd=0;
+ const setVB=v=>{st.vb=v;svg.setAttribute('viewBox',v.join(' '))};
+ const fitBox=b=>{let [x,y,w,h]=b;const r=svg.getBoundingClientRect(),ar=r.width&&r.height?r.width/r.height:1.5,cx=x+w/2,cy=y+h/2;if(w/h<ar)w=h*ar;else h=w/ar;setVB([cx-w/2,cy-h/2,w,h])};
+ const zoomBy=f=>{const v=st.vb,w=Math.min(2200,Math.max(50,v[2]*f)),h=v[3]*w/v[2];setVB([v[0]+v[2]/2-w/2,v[1]+v[3]/2-h/2,w,h])};
+ const sc=()=>{const r=svg.getBoundingClientRect();return Math.max(st.vb[2]/r.width,st.vb[3]/r.height)};
+ const d2=()=>{const [a,b]=[...P.values()];return Math.hypot(a.x-b.x,a.y-b.y)};
+ const show=c=>{const d=opt.get();lab.hidden=false;lab.textContent=cname(c)+(d.nativo.has(c)?' · 🟢 Nativo':d.invasor.has(c)?' · 🔴 Invasor':'')};
+ svg.addEventListener('pointerdown',e=>{svg.setPointerCapture(e.pointerId);P.set(e.pointerId,{x:e.clientX,y:e.clientY});if(P.size===1)d0={t:Date.now(),m:0};else{d0=null;pd=d2()}});
+ svg.addEventListener('pointermove',e=>{const p=P.get(e.pointerId);if(!p)return;const dx=e.clientX-p.x,dy=e.clientY-p.y;p.x=e.clientX;p.y=e.clientY;
+  if(P.size===1){if(d0)d0.m+=Math.abs(dx)+Math.abs(dy);if(!d0||d0.m>8){const s=sc(),v=st.vb.slice();v[0]-=dx*s;v[1]-=dy*s;setVB(v)}}
+  else if(P.size===2){const n=d2();if(pd)zoomBy(pd/n);pd=n}});
+ svg.addEventListener('pointerup',e=>{const tap=d0&&P.size===1&&d0.m<8&&Date.now()-d0.t<500;P.delete(e.pointerId);if(P.size<2)pd=0;
+  if(tap){const el=document.elementFromPoint(e.clientX,e.clientY),p=el&&el.closest&&el.closest('path[data-i]');if(p){if(opt.edit)opt.tap(p.dataset.i);show(p.dataset.i)}}
+  if(!P.size)d0=null});
+ svg.addEventListener('pointercancel',e=>{P.delete(e.pointerId);d0=null;pd=0});
+ svg.addEventListener('wheel',e=>{e.preventDefault();zoomBy(e.deltaY>0?1.2:1/1.2)},{passive:false});
+ host.querySelector('.mz').onclick=e=>{const b=e.target.closest('button');if(b)zoomBy(b.dataset.z==='1'?1/1.5:1.5)};
+ fitBox(CONT['']);
+ return{show,
+  paint(){const d=opt.get();svg.querySelectorAll('path').forEach(p=>{const c=p.dataset.i;p.classList.toggle('n',d.nativo.has(c));p.classList.toggle('i',d.invasor.has(c))})},
+  zoom:k=>fitBox(CONT[k||'']),
+  fitSel(){const ps=[...svg.querySelectorAll('path.n,path.i')];if(!ps.length)return;let x1=1e9,y1=1e9,x2=-1e9,y2=-1e9;ps.forEach(p=>{const b=p.getBBox();x1=Math.min(x1,b.x);y1=Math.min(y1,b.y);x2=Math.max(x2,b.x+b.width);y2=Math.max(y2,b.y+b.height)});const mx=Math.max(25,(x2-x1)*.15),my=Math.max(25,(y2-y1)*.15);fitBox([x1-mx,y1-my,x2-x1+2*mx,y2-y1+2*my])}};
+}
+function setMode(m){emode=m;$('m-n').classList.toggle('on',m==='nativo');$('m-i').classList.toggle('on',m==='invasor')}
+function esum(){const L=(a,e)=>a.size?'<div>'+e+' '+esc([...a].map(cname).sort().join(', '))+'</div>':'';$('m-sum').innerHTML=L(edist.nativo,'🟢')+L(edist.invasor,'🔴')||'<span class="hint">Aún sin países marcados.</span>'}
+function etoggle(c){const a=edist[emode],b=edist[emode==='nativo'?'invasor':'nativo'];if(a.has(c))a.delete(c);else{a.add(c);b.delete(c)}emap.paint();esum()}
+function distLoad(d){
+ d=normDist(d);edist={nativo:new Set(d.nativo),invasor:new Set(d.invasor)};setMode('nativo');$('m-cont').value='';esum();
+ loadWorld().then(()=>{
+  if(!emap){emap=mkMap($('m-map'),{edit:1,get:()=>edist,tap:etoggle});
+   const cs=[...new Set((WORLD.match(/data-i="[A-Z]{2}"/g)||[]).map(x=>x.slice(8,10)))];
+   cs.forEach(c=>NM[tnorm(cname(c))]=c);$('m-dl').innerHTML=cs.map(c=>'<option value="'+esc(cname(c))+'">').join('')}
+  emap.paint();emap.zoom('');
+ }).catch(()=>{$('m-map').textContent='No se pudo cargar world.svg (¿está subido al repositorio?).'});
+}
+$('m-n').onclick=()=>setMode('nativo');$('m-i').onclick=()=>setMode('invasor');
+$('m-cont').onchange=()=>emap&&emap.zoom($('m-cont').value);
+$('m-q').onchange=e=>{const c=NM[tnorm(e.target.value)];if(c&&emap){etoggle(c);emap.show(c)}e.target.value=''};
+const distN=sp=>sp.dist.nativo.length+sp.dist.invasor.length;
+function distBlock(sp){
+ if(!distN(sp))return '';const L=(a,e)=>a.length?'<p class="hint">'+e+' '+esc(a.map(cname).sort().join(', '))+'</p>':'';
+ return '<details class="acc" open><summary>🌎 Distribución<small>'+distN(sp)+(distN(sp)===1?' país':' países')+'</small></summary><div class="accb"><div class="mapbox" id="fmap"></div>'+L(sp.dist.nativo,'🟢 Nativo:')+L(sp.dist.invasor,'🔴 Invasor / introducido:')+'</div></details>';
+}
+function wireDist(sp){if(!distN(sp))return;loadWorld().then(()=>{const h=$('fmap');if(!h||sel!==sp.id)return;const d={nativo:new Set(sp.dist.nativo),invasor:new Set(sp.dist.invasor)},m=mkMap(h,{get:()=>d});m.paint();m.fitSel()}).catch(()=>{})}
 const sci=s=>s.genero+' '+s.especie;
 const scoped=()=>data.filter(s=>path.every((v,i)=>s[LV[i]]===v));
 const photo=(src,r)=>src?'<img src="'+esc(src)+'" alt="" loading="lazy">':'<span class="nophoto" aria-hidden="true">'+(EMO[r]||'🧬')+'<small>Sin foto</small></span>';
-const COLS='id,creado,comun,caracteristicas,foto,rasgos,'+LV.join(',');
+const COLS='id,creado,comun,caracteristicas,foto,rasgos,distribucion,'+LV.join(',');
 const MAXF=8;
 // fotos === undefined significa "todavía no cargadas" (la lista solo trae la portada)
-const fromRow=r=>{const o={id:r.id,comun:r.comun||'',car:r.caracteristicas||'',foto:r.foto||'',rasgos:r.rasgos&&typeof r.rasgos==='object'?r.rasgos:{}};
+const fromRow=r=>{const o={id:r.id,comun:r.comun||'',car:r.caracteristicas||'',foto:r.foto||'',rasgos:r.rasgos&&typeof r.rasgos==='object'?r.rasgos:{},creado:r.creado,dist:normDist(r.distribucion)};
  if(r.fotos!==undefined)o.fotos=Array.isArray(r.fotos)&&r.fotos.length?r.fotos:(o.foto?[o.foto]:[]);
  LV.forEach(k=>o[k]=r[k]);return o};
 async function ensureFotos(sp){
@@ -481,9 +606,11 @@ async function ensureFotos(sp){
 function fix(){if(sel&&!data.find(x=>x.id===sel))sel=null;while(path.length>2&&!scoped().length)path.pop()}
 async function loadData(){
  $('grid').innerHTML='<div class="card sk"><div class="ph"></div><div class="cap"><b>&nbsp;</b><small>&nbsp;</small></div></div>'.repeat(8);
+ if(!SB||!navigator.onLine)return loadLocal();
+ await flush();
  const {data:rows,error}=await SB.from('especies').select(COLS).order('creado');
- if(error){alert('No se pudieron cargar tus especies: '+error.message);return}
- data=rows.map(fromRow);fix();render();
+ if(error){if((await dbAll('especies')).length)return loadLocal();alert('No se pudieron cargar tus especies: '+error.message);return}
+ await reconcile(rows,true);data=byC(await dbAll('especies'));fix();render();
  if(!data.length)$('crumb').textContent='Aún no tienes especies. Toca "+ Añadir especie" para empezar.';
 }
 
@@ -515,7 +642,7 @@ function rgHTML(sp){
  return cl+(body||'<p class="empty">Aún no hay características. Toca «Editar ficha» para añadirlas.</p>');
 }
 const fav=s=>!!(s.rasgos&&s.rasgos._fav);
-const spCard=s=>'<button class="card'+(s.id===sel?' sel':'')+'" data-id="'+s.id+'"><div class="ph">'+photo(s.foto,s.reino)+'</div><div class="cap"><b>'+(fav(s)?'★ ':'')+esc(s.comun||sci(s))+'</b><i>'+esc(sci(s))+'</i></div></button>';
+const spCard=s=>'<button class="card'+(s.id===sel?' sel':'')+'" data-id="'+s.id+'"><div class="ph">'+photo(s.foto,s.reino)+'</div><div class="cap"><b>'+(s.pend?'⏳ ':'')+(fav(s)?'★ ':'')+esc(s.comun||sci(s))+'</b><i>'+esc(sci(s))+'</i></div></button>';
 const norm=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 const hay=s=>norm([].concat(LV.map(k=>s[k]),[s.comun,s.car],Object.values(s.rasgos||{}).filter(v=>typeof v==='string')).join(' '));
 const matches=s=>(!onlyFav||fav(s))&&(!Q||hay(s).includes(norm(Q)));
@@ -556,11 +683,11 @@ function render(){
    +'<div><h2>'+esc(sp.comun||sci(sp))+'</h2><p class="sci">'+esc(sci(sp))+'</p>'
    +sumHTML(sp)+'<ol class="lin deskonly">'+LV.map((k,i)=>'<li style="--c:'+COL[i]+'"><span>'+LN[i]+'</span> '+esc(sp[k])+'</li>').join('')+'</ol>'
    +'<div class="btns"><button id="favb">'+(fav(sp)?'★ Favorito':'☆ Favorito')+'</button><button id="shr">↗ Compartir</button><button id="edit">Editar ficha</button><button class="danger" id="del">🗑 Eliminar</button></div></div>'
-   +'<div class="ficha-car">'+rgHTML(sp)
+   +'<div class="ficha-car">'+distBlock(sp)+rgHTML(sp)
    +'</div></div>'
   :'';
  if(ver){
-  wireGal();
+  wireGal();wireDist(sp);
   if(sp.fotos===undefined)ensureFotos(sp).then(()=>{if(sel===sp.id&&sp.fotos.length>1)render()});
  }
 }
@@ -608,9 +735,8 @@ $('delno').onclick=()=>dlgdel.close();
 $('delok').onclick=async()=>{
  const id=sel;if(!id)return dlgdel.close();
  $('delok').disabled=true;
- const {error}=await SB.from('especies').delete().eq('id',id);
+ await dbDel('especies',id);await dbPut('cola',{id,op:'delete',ts:Date.now()});netUI();flush();
  $('delok').disabled=false;
- if(error){$('delerr').textContent='No se pudo eliminar: '+error.message;return}
  data=data.filter(s=>s.id!==id);sel=null;fix();dlgdel.close();render();
 };
 
@@ -670,7 +796,7 @@ $('f-reino').onchange=()=>{
 };
 
 $('add').onclick=()=>{
- editId=null;
+ editId=null;distLoad(null);
  $('dtitle').textContent='Añadir especie';$('save').textContent='Guardar especie';
  formFotos=[];drawThumbs();
  $('err').textContent='';$('f-foto').value='';$('f-comun').value='';$('f-car').value='';
@@ -680,7 +806,7 @@ $('add').onclick=()=>{
  dlg.showModal();
 };
 async function openEdit(sp){
- editId=sp.id;
+ editId=sp.id;distLoad(sp.dist);
  formFotos=(await ensureFotos(sp)).slice();drawThumbs();
  $('dtitle').textContent='Editar especie';$('save').textContent='Guardar cambios';
  $('err').textContent='';$('f-foto').value='';$('f-comun').value=sp.comun;$('f-car').value=sp.car;
@@ -718,14 +844,15 @@ $('save').onclick=async()=>{
  const miss=LV.filter(k=>!rec[k]).map(k=>LN[LV.indexOf(k)].toLowerCase());
  if(miss.length){$('err').textContent='Falta: '+miss.join(', ')+'.';return}
  rec.fotos=formFotos.slice();rec.foto=formFotos[0]||'';
+ rec.distribucion={nativo:[...edist.nativo],invasor:[...edist.invasor]};
  $('save').disabled=true;
- const q=editId?SB.from('especies').update(rec).eq('id',editId).select().single():SB.from('especies').insert(rec).select().single();
- const {data:row,error}=await q;
+ const prev=editId&&data.find(x=>x.id===editId);
+ const o=fromRow(Object.assign({},rec,{id:editId||crypto.randomUUID(),creado:prev&&prev.creado||new Date().toISOString()}));
+ await persist(o);
  $('save').disabled=false;
- if(error){$('err').textContent='No se pudo guardar: '+error.message+(/rasgos|fotos/i.test(error.message)?' (Falta crear una columna nueva en Supabase: ejecuta rasgos.sql y fotos.sql en el SQL Editor).':'');return}
- const o=fromRow(row);
  if(editId)data=data.map(x=>x.id===editId?o:x);else data.push(o);
  path=LV.slice(0,7).map(k=>o[k]);sel=o.id;dlg.close();render();
+ if(flush.err)alert('La ficha quedó guardada en el dispositivo, pero no se pudo subir: '+flush.err);
 };
 
 /* ---------- Exportar ---------- */
@@ -748,9 +875,15 @@ async function auth(m){
  if(r.error)$('aerr').textContent=r.error.message;
  else if(m==='up'&&!r.data.session)$('aerr').textContent='Cuenta creada. Revisa tu correo para confirmarla y luego entra.';
 }
-$('login').onclick=()=>auth('in');$('signup').onclick=()=>auth('up');$('out').onclick=()=>SB.auth.signOut();
-SB.auth.onAuthStateChange((_e,sess)=>{
- const u=sess&&sess.user;
+$('login').onclick=()=>auth('in');$('signup').onclick=()=>auth('up');$('out').onclick=async()=>{
+ if(!SB)return;await flush();
+ if((await dbAll('cola')).length&&!confirm('Hay fichas sin subir que se perderán si sales ahora. ¿Salir de todos modos?'))return;
+ off=false;await dbClear('especies');await dbClear('cola');await dbClear('meta');SB.auth.signOut();
+};
+SB&&SB.auth.onAuthStateChange(async(_e,sess)=>{
+ const u=sess&&sess.user;if(!u&&off)return;
+ if(u){off=false;const m=await dbGet('meta','uid');if(m&&m!==u.id){await dbClear('especies');await dbClear('cola')}await dbPut('meta',u.id,'uid');await dbPut('meta',u.email,'email')}
+
  $('auth').hidden=!!u;$('app').hidden=!u;$('top').hidden=!u;$('who').innerHTML=u?'<span class="av" title="'+esc(u.email)+'">'+esc(u.email[0].toUpperCase())+'</span>':'';
  if(u&&u.id!==uid){uid=u.id;loadData()}
  if(!u){uid=null;data=[];path=[];sel=null}
@@ -761,9 +894,7 @@ if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(
 const withFav=r=>{const p=data.find(x=>x.id===editId);if(p&&p.rasgos&&p.rasgos._fav)r._fav='1';return r};
 async function toggleFav(sp){
  const r=Object.assign({},sp.rasgos);if(r._fav)delete r._fav;else r._fav='1';
- const {error}=await SB.from('especies').update({rasgos:r}).eq('id',sp.id);
- if(error){alert('No se pudo guardar el favorito: '+error.message);return}
- sp.rasgos=r;
+ sp.rasgos=r;await persist(sp);
  const b=$('favb');if(b&&sel===sp.id)b.textContent=fav(sp)?'★ Favorito':'☆ Favorito';
 }
 async function share(sp){
@@ -803,6 +934,17 @@ $('gb').onclick=async()=>{
   o.innerHTML='<b>GBIF: '+esc(r.scientificName)+'</b> ('+(r.matchType==='EXACT'?'coincidencia exacta':'coincidencia aproximada')+')<ul class="gbl">'+['reino','filo','clase','orden','familia','genero','especie'].map(k=>{const m=$('f-'+k).value.trim(),t=x[k]||'—',ok=m.toLowerCase()===String(t).toLowerCase();return '<li class="'+(ok?'ok':'no')+'"><span>'+LN[LV.indexOf(k)]+'</span> '+esc(t)+' '+(ok?'✓':'≠ lo tuyo: '+esc(m||'vacío'))+'</li>'}).join('')+'</ul><p class="hint">GBIF puede usar otra clasificación que tu libro: compara, no corrijas a ciegas.</p>';
  }catch(err){o.textContent='No pude consultar GBIF (¿sin internet?).'}
 };
+/* ---------- Arranque sin conexión ---------- */
+(async()=>{
+ const m=await dbGet('meta','uid');
+ if(m&&(!navigator.onLine||!SB)){
+  off=true;uid=m;const em=(await dbGet('meta','email'))||'?';
+  $('auth').hidden=true;$('app').hidden=false;$('top').hidden=false;
+  $('who').innerHTML='<span class="av" title="'+esc(em)+'">'+esc(em[0].toUpperCase())+'</span>';
+  await loadLocal();
+ }
+ netUI();flush();
+})();
 </script>
 </body>
 </html>
