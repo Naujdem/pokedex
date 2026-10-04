@@ -26,7 +26,7 @@ button.primary{background:var(--acc);color:var(--acc-ink);border-color:var(--acc
 button.danger{border-color:var(--acc);color:var(--acc)}
 button.danger.solid{background:var(--acc);color:var(--acc-ink)}
 button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.card:focus-visible,summary:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
-.app{display:grid;grid-template-columns:180px minmax(0,1fr) 320px;min-height:calc(100vh - 62px)}
+.app{display:grid;grid-template-columns:180px minmax(0,1fr);min-height:calc(100vh - 62px)}
 .steps{border-right:1px solid var(--line);display:flex;flex-direction:column}
 .step{flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:6px;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent;padding:10px 6px;text-align:center}
 .step:disabled{cursor:default;opacity:.55}
@@ -35,6 +35,7 @@ button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-vis
 .step{border-left:5px solid var(--c)}.step.on{background:var(--soft)}
 main{padding:20px;min-width:0}
 .crumb{color:var(--mut);margin:0 0 14px;font-size:.95rem}
+.crumb button.bc{border:0;background:none;padding:0;margin:0;font:inherit;color:var(--ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer;border-radius:3px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
 .card{border:1px solid var(--line);background:var(--panel);border-radius:10px;overflow:hidden;cursor:pointer;text-align:left;padding:0;display:block;width:100%;color:inherit}
 .card:hover{border-color:var(--acc)}
@@ -45,14 +46,16 @@ main{padding:20px;min-width:0}
 .cap b{display:block;font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:1rem}
 .cap i{color:var(--mut);font-size:.88rem}
 .cap small{color:var(--mut);font-size:.8rem}
-aside{border-left:1px solid var(--line);padding:20px;background:var(--panel)}
-aside .ph{border-radius:10px;overflow:hidden;font-size:4rem;border:1px solid var(--line)}
-aside h2{margin:14px 0 0;font-size:1.4rem}
-aside .sci{font-style:italic;font-size:1.1rem;color:var(--mut);margin:0 0 12px}
-aside h3{margin:16px 0 4px;font-size:1rem}
+.ficha{display:grid;grid-template-columns:minmax(200px,320px) minmax(0,1fr);gap:22px 32px;align-items:start;margin-top:14px}
+.ficha .ph{border-radius:12px;overflow:hidden;font-size:5rem;border:1px solid var(--line)}
+.ficha h2{margin:0;font-size:2rem;line-height:1.15}
+.ficha .sci{font-style:italic;font-size:1.3rem;color:var(--mut);margin:4px 0 0}
+.ficha-car{grid-column:1/-1}
+.ficha-car h3{margin:18px 0 6px;font-size:1.05rem}
+.ficha-car h3:first-child{margin-top:0}
 .lin{font-size:.88rem;color:var(--mut);margin:0 0 14px;padding:0;list-style:none}.lin li{border-left:4px solid var(--c);padding:1px 0 1px 8px;margin-bottom:2px}.lin li span{display:inline-block;min-width:92px}
-.rg{list-style:none;margin:0 0 8px;padding:0}
-.rg li{border-top:1px solid var(--line);padding:6px 0;font-size:.92rem;white-space:pre-line}
+.rg{list-style:none;margin:0 0 8px;padding:0;columns:2 300px;column-gap:32px}
+.rg li{border-top:1px solid var(--line);padding:6px 0;font-size:.95rem;white-space:pre-line;break-inside:avoid}
 .rg li b{display:block;font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:.76rem;font-weight:500;color:var(--mut)}
 .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:18px}
 .cl{font-size:.85rem;color:var(--mut)}.cl:before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--mut);margin-right:6px}.cl.on:before{background:#2f9e5f}.empty{color:var(--mut)}
@@ -69,10 +72,12 @@ summary{cursor:pointer;padding:10px 0;font-weight:700;font-size:.95rem}
 .acts{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
 .note{font-size:.8rem;color:var(--mut);margin-top:16px}
 @media (max-width:900px){
- .app{grid-template-columns:1fr}
- .steps{flex-direction:row;overflow-x:auto;border-right:0;border-bottom:1px solid var(--line)}
- .step{flex:0 0 100px;border-bottom:0;border-right:1px solid var(--line);padding:8px 4px}
- aside{border-left:0;border-top:1px solid var(--line)}
+ .app{grid-template-columns:minmax(0,1fr)}
+ .steps{display:none}
+ header{flex-wrap:wrap;padding:12px 14px}
+ main{padding:14px}
+ .ficha{grid-template-columns:1fr}
+ .ficha .ph{max-width:360px}
 }
 [hidden]{display:none!important}.authbox{max-width:380px;margin:40px auto;padding:20px}.authbox label{display:block;font-size:.85rem;margin:10px 0 3px;color:var(--mut)}.authbox input{width:100%;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font-size:1rem}
 </style>
@@ -85,8 +90,7 @@ summary{cursor:pointer;padding:10px 0;font-weight:700;font-size:.95rem}
 <section id="auth" class="authbox"><h2 style="margin-top:0">Entra a tu colección</h2><label for="em">Correo</label><input id="em" type="email" autocomplete="email"><label for="pw">Contraseña (mínimo 6 caracteres)</label><input id="pw" type="password" autocomplete="current-password"><p class="note" id="aerr" role="alert"></p><div class="acts"><button id="signup">Crear cuenta</button><button class="primary" id="login">Entrar</button></div></section>
 <div class="app" id="app" hidden>
  <nav class="steps" id="steps" aria-label="Nivel taxonómico"></nav>
- <main><p class="crumb" id="crumb"></p><div class="grid" id="grid"></div><p class="crumb" id="exbar" style="margin-top:24px">Exportar: <button id="exj">Copia completa (JSON con fotos)</button> <button id="exc">Tabla (CSV, sin fotos)</button></p></main>
- <aside id="detail"></aside>
+ <main><p class="crumb" id="crumb"></p><div class="grid" id="grid"></div><section id="detail" hidden></section><p class="crumb" id="exbar" style="margin-top:24px">Exportar: <button id="exj">Copia completa (JSON con fotos)</button> <button id="exc">Tabla (CSV, sin fotos)</button></p></main>
 </div>
 
 <dialog id="dlg">
@@ -252,7 +256,10 @@ function render(){
   const val=i<d?path[i]:(i===7&&sp?sci(sp):'—');
   return '<button class="step'+(i===cur?' on':'')+'" style="--c:'+COL[i]+'" data-i="'+i+'"'+(i>d?' disabled':'')+'><span class="lv">'+LN[i]+'</span><span class="val">'+esc(val)+'</span></button>';
  }).join('');
- $('crumb').textContent=(d?path.join(' › ')+' — ':'')+(d<7?'elige '+(LN[d]==='Filo o división'?'un filo o división':'un/a '+LN[d].toLowerCase()):'elige una especie');
+ const showSp=!!sp&&d===7;
+ const bc=(d?['<button class="bc" data-bc="-1">Inicio</button>']:[]).concat(path.map((p,j)=>'<button class="bc" data-bc="'+j+'">'+esc(p)+'</button>')).join(' › ');
+ const tail=d<7?'elige '+(LN[d]==='Filo o división'?'un filo o división':'un/a '+LN[d].toLowerCase()):'elige una especie';
+ $('crumb').innerHTML=showSp?bc:bc+(d?' — ':'')+tail;
  const items=scoped();let h='';
  if(d<7){
   let keys=d===0?DOM:d===1?(REINOS[path[0]]||[]):[...new Set(items.map(s=>s[LV[d]]))];
@@ -264,13 +271,19 @@ function render(){
   h=items.map(s=>'<button class="card'+(s.id===sel?' sel':'')+'" data-id="'+s.id+'"><div class="ph">'+photo(s.foto,s.reino)+'</div><div class="cap"><b>'+esc(s.comun||sci(s))+'</b><i>'+esc(sci(s))+'</i></div></button>').join('');
  }
  $('grid').innerHTML=h;
- $('detail').innerHTML=sp
-  ?'<div class="ph">'+photo(sp.foto,sp.reino)+'</div><h2>'+esc(sp.comun||sci(sp))+'</h2><p class="sci">'+esc(sci(sp))+'</p><ol class="lin">'+LV.slice(0,7).map((k,i)=>'<li style="--c:'+COL[i]+'"><span>'+LN[i]+'</span> '+esc(sp[k])+'</li>').join('')+'</ol>'
-   +rgHTML(sp)
+ const ver=!!sp&&d===7;
+ $('grid').hidden=ver;$('exbar').hidden=ver;$('detail').hidden=!ver;
+ $('detail').innerHTML=ver
+  ?'<button id="back">← Volver a las especies</button>'
+   +'<div class="ficha"><div class="ph">'+photo(sp.foto,sp.reino)+'</div>'
+   +'<div><h2>'+esc(sp.comun||sci(sp))+'</h2><p class="sci">'+esc(sci(sp))+'</p>'
+   +'<div class="btns"><button id="edit">Editar ficha</button><button class="danger" id="del">Eliminar</button></div></div>'
+   +'<div class="ficha-car">'+rgHTML(sp)
    +(sp.car?'<h3>Notas</h3><p style="margin:0 0 8px;white-space:pre-line">'+esc(sp.car)+'</p>':'')
-   +'<div class="btns"><button id="edit">Editar ficha</button><button class="danger" id="del">Eliminar</button></div>'
-  :'<p class="empty">Baja por los niveles hasta una especie para ver su ficha: foto, nombre común, nombre científico, clasificación completa y características.</p>';
+   +'</div></div>'
+  :'';
 }
+$('crumb').onclick=e=>{const b=e.target.closest('.bc');if(!b)return;path=path.slice(0,+b.dataset.bc+1);sel=null;render()};
 $('steps').onclick=e=>{const b=e.target.closest('.step');if(!b||b.disabled)return;path=path.slice(0,+b.dataset.i);sel=null;render()};
 $('grid').onclick=e=>{const c=e.target.closest('.card');if(!c)return;if(c.dataset.id)sel=c.dataset.id;else{path.push(c.dataset.k);sel=null}render()};
 
@@ -278,6 +291,7 @@ $('grid').onclick=e=>{const c=e.target.closest('.card');if(!c)return;if(c.datase
 const dlgdel=$('dlgdel');
 $('detail').onclick=e=>{
  const sp=data.find(x=>x.id===sel);if(!sp)return;
+ if(e.target.id==='back'){sel=null;render()}
  if(e.target.id==='edit')openEdit(sp);
  if(e.target.id==='del'){
   $('delerr').textContent='';
