@@ -372,6 +372,21 @@ body.selmode main{padding-bottom:90px}
 .cmpth img:hover{border-color:var(--acc)}
 .pcm{color:var(--mut);font-size:.7rem;overflow-wrap:anywhere}
 .lnkb{background:none;border:0;padding:0;color:var(--lnk);text-decoration:underline;font:inherit;cursor:pointer}
+/* ---------- v3.4 · Cuadro informativo del nivel taxonómico ---------- */
+#lvinfo{grid-column:2;padding:0 var(--pad);order:3}
+#lvinfo:empty{display:none}
+#lvinfo .lvbox{margin:0 0 10px}
+.lvbox{border-radius:12px;margin:0 0 12px}
+.lvbox>summary{min-height:0;padding:10px 14px;font-size:.9rem;font-weight:600}
+.lvbox>summary>span{min-width:0;overflow-wrap:anywhere}
+.lvbox>summary small{padding-left:8px}
+.lvbox .accb{padding:2px 14px 12px}
+.lvbox .lvt{margin:0 0 4px;font-size:.95rem;line-height:1.55}
+.lvbox .wk{margin:8px 0 0;font-weight:700;font-size:.9rem}
+.lvbox .wk a{color:var(--lnk);text-decoration:none}
+.lvbox .wk a:hover{text-decoration:underline}
+.ficha-car>.lvbox{margin-bottom:14px}
+@media (max-width:900px){#lvinfo{grid-column:1}}
 </style>
 </head>
 <body>
@@ -409,7 +424,7 @@ body.selmode main{padding-bottom:90px}
 </section>
 <div class="app" id="app" hidden>
  <nav class="steps" id="steps" aria-label="Nivel taxonómico"></nav>
- <main><div class="tools"><input id="q" type="search" placeholder="Buscar: Felidae, mono, jaguar…" aria-label="Buscar"><button id="fav">☆ Favoritas</button><button id="study">🎓 Modo estudio</button><button id="selb">☑ Seleccionar</button></div><p class="crumb" id="crumb"></p><div class="grid" id="grid"></div><section id="detail" hidden></section></main>
+ <main><div class="tools"><input id="q" type="search" placeholder="Buscar: Felidae, mono, jaguar…" aria-label="Buscar"><button id="fav">☆ Favoritas</button><button id="study">🎓 Modo estudio</button><button id="selb">☑ Seleccionar</button></div><p class="crumb" id="crumb"></p><div id="lvinfo"></div><div class="grid" id="grid"></div><section id="detail" hidden></section></main>
 </div>
 
 <div id="selbar" hidden><b id="selcount"></b><button type="button" id="selall">Todas / ninguna</button><button type="button" class="primary" id="selbulk">Editar en lote</button><button type="button" id="selx">Cancelar</button></div>
@@ -449,7 +464,7 @@ body.selmode main{padding-bottom:90px}
   <div id="rg-e"></div>
  </details>
 
- <details id="tx-d"><summary>🧬 Rasgos taxonómicos: género · familia · orden (opcional)</summary><div id="rg-t"></div></details>
+ <details id="tx-d"><summary>🧬 Descripción de cada nivel taxonómico (opcional)</summary><div id="rg-t"></div></details>
  <p class="hint" id="tx-msg" role="status"></p>
  <details><summary>Datos de campo (opcional)</summary><div id="rg-c"></div></details>
  <details id="dist-d"><summary>🌎 Distribución geográfica (opcional)</summary>
@@ -1078,12 +1093,14 @@ async function loadData(){
 }
 
 const CAMPO=[T('c_fecha','Fecha de la observación','AAAA-MM-DD o AAAA-MM-DD HH:MM'),T('c_lugar','Lugar de la observación','Municipio, vereda…'),T('c_salida','Salida / diario de campo','Ej: Salida a Chingaza · 12 mar'),T('c_lat','Latitud (GPS)','Ej: 4.711000'),T('c_lon','Longitud (GPS)','Ej: -74.072100'),A('c_nota','Nota personal')];
-const TAXR=[A('tx_genero','Rasgos del género','Rasgos más característicos del género…'),A('tx_familia','Rasgos de la familia','Rasgos más característicos de la familia…'),A('tx_orden','Rasgos del orden','Rasgos más característicos del orden…')];
+// v3.4 · una descripción por cada nivel (incluye los opcionales subphylum y suborden)
+const TXN=[['dominio','dominio','del dominio'],['reino','reino','del reino'],['filo','filo o división','del filo o división'],['subphylum','subphylum','del subphylum'],['clase','clase','de la clase'],['orden','orden','del orden'],['suborden','suborden','del suborden'],['familia','familia','de la familia'],['genero','género','del género'],['especie','especie','de la especie']];
+const TAXR=TXN.map(n=>A('tx_'+n[0],'Descripción '+n[2],'Qué caracteriza '+n[2].replace(/^de(l| la)? /,(m,a)=>a==='l'?'al ':'a la ')+'…'));
 // v3.3 · descripción por órgano (Plantae)
 const PLORG=[A('pl_d_flor','Flor · descripción','Color, forma, número de pétalos…'),A('pl_d_hoja','Hoja · descripción','Forma, borde, disposición…'),A('pl_d_fruto','Fruto · descripción','Forma, color, tamaño…')];
 ESP.Plantae.push(...PLORG);PLORG.concat([CAMPO[2]]).forEach(f=>{FD[f.key]=f});
 Object.assign(LABEL,{pl_d_flor:'Flor · descripción',pl_d_hoja:'Hoja · descripción',pl_d_fruto:'Fruto · descripción',c_salida:'Salida / diario de campo',_fo:'Órgano de cada foto'});
-Object.assign(LABEL,{tx_genero:'Rasgos del género',tx_familia:'Rasgos de la familia',tx_orden:'Rasgos del orden',_adv:'Advertencia'});
+TXN.forEach(n=>{LABEL['tx_'+n[0]]='Descripción '+n[2]});LABEL._adv='Advertencia';
 /* ---------- Ficha ---------- */
 const SUMK={Animalia:['an_dieta','an_actividad','ciclo','peligro'],Plantae:['pl_habito','pl_uso','ciclo','peligro'],Fungi:['fu_comestibilidad','fu_nutricion','peligro'],Protista:['pr_nutricion','pr_locomocion','pr_rol'],Monera:['mo_morfologia','mo_efecto','mo_oxigeno']};
 function sumHTML(sp){
@@ -1161,6 +1178,7 @@ function render(){
  if((Q||onlyFav)&&!showSp){const n=data.filter(matches).length;$('crumb').textContent=n+(n===1?' resultado':' resultados')+(Q?' para «'+Q+'»':'')+(onlyFav?' · solo favoritas':'')}
  const ver=!!sp&&d===7;
  document.body.classList.toggle('ficha-abierta',ver);
+ $('lvinfo').innerHTML=(!ver&&!Q&&!onlyFav&&d>=1)?lvInfoHTML():'';
  $('grid').hidden=ver;$('detail').hidden=!ver;
  $('detail').innerHTML=ver
   ?'<button id="back">← Volver a las especies</button>'
@@ -1168,7 +1186,7 @@ function render(){
    +'<div class="finfo"><h2>'+esc(sp.comun||sci(sp))+'</h2><p class="sci">'+esc(sci(sp))+'</p>'
    +advLine(sp)+sumHTML(sp)+'<ol class="lin deskonly">'+linHTML(sp)+'</ol>'
    +'<div class="btns"><button id="favb">'+(fav(sp)?'★ Favorito':'☆ Favorito')+'</button><button id="shr">↗ Compartir</button><button id="cmpb">🔍 Comparar con iNaturalist</button><button id="edit">Editar ficha</button><button class="danger" id="del">🗑 Eliminar</button></div><div id="cmpbox"></div></div>'
-   +'<div class="ficha-car">'+distBlock(sp)+rgHTML(sp)+taxHTML(sp)
+   +'<div class="ficha-car">'+lvBox('Especie',sci(sp),(sp.rasgos||{}).tx_especie||'',sci(sp))+distBlock(sp)+rgHTML(sp)
    +'</div></div>'
   :'';
  if(ver){
@@ -1547,15 +1565,14 @@ async function exifFill(files){
    Al elegir un género, familia u orden ya registrado en otra especie, el
    texto se autocompleta (solo si el campo está vacío; sigue editable).
    ====================================================================== */
-const TXN=[['genero','género','del género'],['familia','familia','de la familia'],['orden','orden','del orden']];
 function txLabels(){
- TXN.forEach(n=>{const l=$('l-tx_'+n[0]),v=$('f-'+n[0]).value.trim();if(l)l.textContent='Rasgos '+n[2]+(v?' «'+v+'»':'')});
+ TXN.forEach(n=>{const l=$('l-tx_'+n[0]),v=tval(n[0]).trim();if(l)l.textContent='Descripción '+n[2]+(v?' «'+v+'»':'')});
 }
 function txFind(k,name){                                                   // el texto más reciente registrado para ese taxón
  const n=norm(name);if(!n)return '';
  for(let i=data.length-1;i>=0;i--){
   const s=data[i];
-  if(s.id!==editId&&norm(s[k])===n){const t=(s.rasgos||{})['tx_'+k];if(t&&t.trim())return t}
+  if(s.id!==editId&&norm(lvVal(s,k))===n){const t=(s.rasgos||{})['tx_'+k];if(t&&t.trim())return t}
  }
  return '';
 }
@@ -1564,27 +1581,55 @@ function txSync(){
  const done=[];
  TXN.forEach(n=>{
   const el=$('r-tx_'+n[0]);if(!el||el.value.trim())return;
-  const t=txFind(n[0],$('f-'+n[0]).value);
+  const t=n[0]==='especie'?'':txFind(n[0],tval(n[0]));
   if(t){el.value=t;done.push(n[1])}
  });
  if(done.length)$('tx-msg').textContent='↺ Rasgos autocompletados desde otra especie ya registrada ('+done.join(', ')+'). Puedes editarlos.';
 }
 // Al cambiar género/familia/orden a mano (o al pulsar «Usar este» del reconocimiento con IA)
-dlg.addEventListener('change',e=>{if(/^f-(genero|familia|orden)$/.test(e.target.id||''))txSync()});
+dlg.addEventListener('change',e=>{if(/^(f-(dominio|reino|filo|clase|orden|familia|genero)|r-(subphylum|suborden))$/.test(e.target.id||''))txSync()});
 dlg.addEventListener('close',()=>{$('exifmsg').textContent='';$('tx-msg').textContent=''});
 
 const wikiUrl=n=>'https://es.wikipedia.org/wiki/'+encodeURIComponent(String(n).trim().replace(/\s+/g,'_'));
-// Recuadro desplegable de la ficha: rasgos de género/familia/orden + enlace a Wikipedia
-function taxHTML(sp){
- const r=sp.rasgos||{},rows=TXN.filter(n=>sp[n[0]]);
- const li=rows.map(n=>{
-  const t=r['tx_'+n[0]];
-  return '<li><b>'+n[1].charAt(0).toUpperCase()+n[1].slice(1)+' · <a href="'+wikiUrl(sp[n[0]])+'" target="_blank" rel="noopener">'+esc(sp[n[0]])+' ↗</a></b>'
-   +(t?termHTML(t,'tx_'+n[0]):'<span style="color:var(--mut)">Aún sin rasgos. Toca «Editar ficha» para añadirlos.</span>')+'</li>';
- }).join('');
- const k=rows.filter(n=>r['tx_'+n[0]]).length;
- return '<details class="acc tax"><summary>🧬 Rasgos taxonómicos<small>'+k+'</small></summary><div class="accb"><ul class="rg">'+li+'</ul>'
-  +'<p class="wk"><a href="'+wikiUrl(sci(sp))+'" target="_blank" rel="noopener">Ver más en Wikipedia ↗</a></p></div></details>';
+/* v3.4 · Cuadro informativo del nivel taxonómico (arriba de la lista de cada nivel)
+   Texto = descripción escrita en alguna ficha («Descripción del …»); si no hay, se usa una básica
+   para dominios y reinos. «Saber más» abre Wikipedia con el nombre del nivel. */
+const LVDEF={
+ dominio:{
+  Eukarya:'El dominio Eukarya agrupa a todos los organismos formados por células eucariotas, las cuales se caracterizan por tener un núcleo verdadero que protege el material genético.',
+  Bacteria:'El dominio Bacteria reúne organismos unicelulares procariotas, sin núcleo verdadero y con pared celular de peptidoglicano. Viven en prácticamente todos los ambientes del planeta.',
+  Archaea:'El dominio Archaea agrupa organismos unicelulares procariotas, genética y bioquímicamente distintos de las bacterias. Muchos habitan ambientes extremos (muy salinos, ácidos o calientes), aunque también se encuentran en suelos y océanos.'
+ },
+ reino:{
+  Animalia:'El reino Animalia reúne organismos eucariotas multicelulares y heterótrofos, que obtienen su alimento de otros seres vivos, carecen de pared celular y, en su mayoría, se mueven en alguna etapa de su vida.',
+  Plantae:'El reino Plantae agrupa organismos eucariotas multicelulares, en su mayoría fotosintéticos, con pared celular de celulosa y cloroplastos. Son los principales productores de los ecosistemas terrestres.',
+  Fungi:'El reino Fungi incluye eucariotas heterótrofos que absorben nutrientes del medio, con pared celular de quitina. Son descomponedores, simbiontes o parásitos y se reproducen por esporas.',
+  Protista:'El reino Protista agrupa eucariotas en su mayoría unicelulares (algas, protozoos y mohos mucilaginosos). Es un conjunto muy diverso que habita ambientes acuáticos o húmedos.',
+  Monera:'El reino Monera reúne organismos procariotas unicelulares, sin núcleo verdadero. Incluye a las bacterias y a las arqueas.'
+ }
+};
+const tval=k=>{const el=$((k==='subphylum'||k==='suborden'?'r-':'f-')+k);return el?el.value:''};
+const lvVal=(s,k)=>{const r=s.rasgos||{};return k==='subphylum'?(r.subphylum||r.pl_subphylum||''):k==='suborden'?(r.suborden||r.an_suborden||''):s[k]};
+const wikiGo=n=>'https://es.wikipedia.org/w/index.php?title=Especial:Buscar&go=Ir&search='+encodeURIComponent(String(n).trim());
+function lvText(k,name){
+ const n=norm(name);
+ for(let i=data.length-1;i>=0;i--){
+  const x=data[i];
+  if(norm(lvVal(x,k))===n){const t=(x.rasgos||{})['tx_'+k];if(t&&t.trim())return t}
+ }
+ return (LVDEF[k]&&LVDEF[k][name])||'';
+}
+function lvBox(lbl,name,text,wiki){
+ return '<details class="acc lvbox"><summary><span>ℹ️ '+esc(name)+'</span><small>'+esc(lbl)+'</small></summary><div class="accb">'
+  +(text?'<p class="lvt">'+termHTML(text,'')+'</p>':'<p class="hint">Aún sin descripción. Puedes añadirla en «Editar ficha» → «Descripción de cada nivel taxonómico».</p>')
+  +'<p class="wk"><a href="'+wikiGo(wiki||name)+'" target="_blank" rel="noopener">Saber más ↗</a></p></div></details>';
+}
+function lvInfoHTML(){
+ const d=path.length,k=LV[d-1],name=path[d-1],sc=scoped();
+ let h=lvBox(LN[d-1],name,lvText(k,name));
+ const sx={filo:'subphylum',orden:'suborden'}[k];
+ if(sx)[...new Set(sc.map(x=>lvVal(x,sx)).filter(Boolean))].sort().forEach(v=>{h+=lvBox(LABEL[sx],v,lvText(sx,v))});
+ return h;
 }
 
 /* ======================================================================
