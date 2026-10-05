@@ -387,6 +387,11 @@ body.selmode main{padding-bottom:90px}
 .lvbox .wk a:hover{text-decoration:underline}
 .ficha-car>.lvbox{margin-bottom:14px}
 @media (max-width:900px){#lvinfo{grid-column:1}}
+.step.sub{cursor:default;min-height:56px;padding-top:8px;padding-bottom:8px;border-left-style:dashed;opacity:.85}
+.step.sub .val{font-size:.85rem}
+@media (min-width:901px){.step.sub{flex:.7 1 auto;min-height:56px}}
+@media (hover:hover){.step.sub:hover{background:transparent}}
+.step.sub:active{transform:none}
 </style>
 </head>
 <body>
@@ -399,6 +404,10 @@ body.selmode main{padding-bottom:90px}
    <button type="button" id="mnu" aria-haspopup="true" aria-expanded="false" aria-label="Ajustes">⋮</button>
    <div id="menu" hidden role="menu" aria-label="Ajustes">
     <div class="mhead"><span class="sans cl on" id="who"></span></div>
+    <button id="fav">☆ Favoritas</button>
+    <button id="study">🎓 Modo estudio</button>
+    <button id="selb">☑ Seleccionar</button>
+    <hr>
     <button id="setb">⚙ Ajustes</button>
     <button id="gdb" hidden title="Conexión con tu Google Drive (donde se guardan las fotos)">☁ Drive</button>
     <button id="sync" title="Descargar fichas y fotos para usar sin conexión">⬇ Sincronizar</button>
@@ -424,7 +433,7 @@ body.selmode main{padding-bottom:90px}
 </section>
 <div class="app" id="app" hidden>
  <nav class="steps" id="steps" aria-label="Nivel taxonómico"></nav>
- <main><div class="tools"><input id="q" type="search" placeholder="Buscar: Felidae, mono, jaguar…" aria-label="Buscar"><button id="fav">☆ Favoritas</button><button id="study">🎓 Modo estudio</button><button id="selb">☑ Seleccionar</button></div><p class="crumb" id="crumb"></p><div id="lvinfo"></div><div class="grid" id="grid"></div><section id="detail" hidden></section></main>
+ <main><div class="tools"><input id="q" type="search" placeholder="Buscar: Felidae, mono, jaguar…" aria-label="Buscar"></div><p class="crumb" id="crumb"></p><div id="lvinfo"></div><div class="grid" id="grid"></div><section id="detail" hidden></section></main>
 </div>
 
 <div id="selbar" hidden><b id="selcount"></b><button type="button" id="selall">Todas / ninguna</button><button type="button" class="primary" id="selbulk">Editar en lote</button><button type="button" id="selx">Cancelar</button></div>
@@ -1150,10 +1159,11 @@ const hay=s=>norm([].concat(LV.map(k=>s[k]),[s.comun,s.car],Object.values(s.rasg
 const matches=s=>(!onlyFav||fav(s))&&(!Q||hay(s).includes(norm(Q)));
 function clearF(){Q='';onlyFav=false;$('q').value='';$('fav').textContent='☆ Favoritas'}
 function render(){
- const d=path.length,cur=Math.min(d,7),sp=data.find(x=>x.id===sel);
+ const d=path.length,cur=curLv(),sp=data.find(x=>x.id===sel);
  $('steps').innerHTML=LV.map((l,i)=>{
-  const val=i<d?path[i]:(i===7&&sp?sci(sp):'—');
-  return '<button class="step'+(i===cur?' on':'')+'" style="--c:'+COL[i]+'" data-i="'+i+'"'+(i>d?' disabled':'')+'><span class="lv">'+LN[i]+'</span><span class="val">'+esc(val)+'</span></button>';
+  const insp=i===7&&sp&&d===7,val=i<d?path[i]:(insp?sci(sp):'—'),can=i<d||insp;
+  return '<button class="step'+(i===cur?' on':'')+'" style="--c:'+COL[i]+'" data-i="'+i+'"'+(can?'':' disabled')+(i===cur?' aria-current="step"':'')+'><span class="lv">'+LN[i]+'</span><span class="val">'+esc(val)+'</span></button>'
+   +(i===2?subStep('subphylum',sp,d):i===4?subStep('suborden',sp,d):'');
  }).join('');
  if(window.matchMedia&&window.matchMedia('(max-width:900px)').matches){
   const on=$('steps').querySelector('.step.on');
@@ -1217,7 +1227,17 @@ document.addEventListener('keydown',e=>{
  g.scrollBy({left:(e.key==='ArrowRight'?1:-1)*g.clientWidth,behavior:SM()});
 });
 $('crumb').onclick=e=>{const b=e.target.closest('.bc');if(!b)return;clearF();path=path.slice(0,+b.dataset.bc+1);sel=null;render()};
-$('steps').onclick=e=>{const b=e.target.closest('.step');if(!b||b.disabled)return;clearF();path=path.slice(0,+b.dataset.i);sel=null;render()};
+/* Nivel actual = el último elegido (con una especie abierta, «Especie») */
+function curLv(){const d=path.length;return d===7&&data.some(x=>x.id===sel)?7:d-1}
+/* Subfilo y suborden: opcionales, solo informativos (no son un nivel por el que se navegue) */
+function subStep(k,sp,d){
+ const nm=k==='subphylum'?'Subfilo':'Suborden',c=COL[k==='subphylum'?2:4];let v='—';
+ if(sp&&d===7)v=lvVal(sp,k)||'—';
+ else if(d>=(k==='subphylum'?3:5)){const u=[...new Set(scoped().map(x=>lvVal(x,k)).filter(Boolean))];v=u.length===1?u[0]:u.length?'Varios ('+u.length+')':'—'}
+ return '<div class="step sub" style="--c:'+c+'"><span class="lv">'+nm+'</span><span class="val">'+esc(v)+'</span></div>';
+}
+/* Tocar un nivel anterior te lleva a él; tocar el nivel actual sube uno */
+$('steps').onclick=e=>{const b=e.target.closest('.step');if(!b||b.disabled||b.dataset.i===undefined)return;const i=+b.dataset.i;clearF();path=path.slice(0,i===curLv()?i:i+1);sel=null;render()};
 $('grid').onclick=e=>{
  if(selMode&&selTap(e))return;
  const a=e.target.closest('[data-act]');
