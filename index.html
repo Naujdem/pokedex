@@ -387,11 +387,7 @@ body.selmode main{padding-bottom:90px}
 .lvbox .wk a:hover{text-decoration:underline}
 .ficha-car>.lvbox{margin-bottom:14px}
 @media (max-width:900px){#lvinfo{grid-column:1}}
-.step.sub{cursor:default;min-height:56px;padding-top:8px;padding-bottom:8px;border-left-style:dashed;opacity:.85}
-.step.sub .val{font-size:.85rem}
-@media (min-width:901px){.step.sub{flex:.7 1 auto;min-height:56px}}
-@media (hover:hover){.step.sub:hover{background:transparent}}
-.step.sub:active{transform:none}
+
 </style>
 </head>
 <body>
@@ -1072,7 +1068,30 @@ function distBlock(sp){
 }
 function wireDist(sp){if(!distN(sp))return;loadWorld().then(()=>{const h=$('fmap');if(!h||sel!==sp.id)return;const d={nativo:new Set(sp.dist.nativo),invasor:new Set(sp.dist.invasor)},m=mkMap(h,{get:()=>d});m.paint();m.fitSel()}).catch(()=>{})}
 const sci=s=>s.genero+' '+s.especie;
-const scoped=()=>data.filter(s=>path.every((v,i)=>s[LV[i]]===v));
+/* Niveles de navegación. Subfilo y suborden son opcionales: solo existen en la ruta si alguna especie
+   de la selección actual los tiene (si algunas sí y otras no, las que no, van en «Sin subfilo / suborden»). */
+const BASE=['dominio','reino','filo','subphylum','clase','orden','suborden','familia','genero'];
+const OPTL={subphylum:1,suborden:1};
+const LBL={dominio:'Dominio',reino:'Reino',filo:'Filo o división',subphylum:'Subfilo',clase:'Clase',orden:'Orden',suborden:'Suborden',familia:'Familia',genero:'Género',especie:'Especie'};
+const CIDX={dominio:0,reino:1,filo:2,subphylum:2,clase:3,orden:4,suborden:4,familia:5,genero:6,especie:7};
+function lvState(){
+ let f=data,ks=[],bi=0;
+ const skip=()=>{while(bi<BASE.length&&OPTL[BASE[bi]]&&!f.some(x=>lvVal(x,BASE[bi])))bi++};
+ for(const v of path){skip();const k=BASE[bi++];ks.push(k);f=f.filter(x=>lvVal(x,k)===v)}
+ skip();
+ return {ks,f,next:bi<BASE.length?BASE[bi]:'especie'};
+}
+const scoped=()=>lvState().f;
+function chainFor(o){
+ let f=data.filter(x=>x.id!==o.id).concat([o]),p=[];
+ for(const b of BASE){if(OPTL[b]&&!f.some(x=>lvVal(x,b)))continue;const v=lvVal(o,b);p.push(v);f=f.filter(x=>lvVal(x,b)===v)}
+ return p;
+}
+function stepSeq(st){
+ const seq=st.ks.slice();
+ if(st.next!=='especie'){seq.push(st.next);for(let b=BASE.indexOf(st.next)+1;b<BASE.length;b++)if(!OPTL[BASE[b]])seq.push(BASE[b])}
+ seq.push('especie');return seq;
+}
 const photo=(src,r)=>src?IMG(src,' loading="lazy"'):'<span class="nophoto" aria-hidden="true">'+(EMO[r]||'🧬')+'<small>Sin foto</small></span>';
 const COLS='id,creado,comun,caracteristicas,foto,rasgos,distribucion,'+LV.join(',');
 const MAXF=8;
@@ -1159,34 +1178,33 @@ const hay=s=>norm([].concat(LV.map(k=>s[k]),[s.comun,s.car],Object.values(s.rasg
 const matches=s=>(!onlyFav||fav(s))&&(!Q||hay(s).includes(norm(Q)));
 function clearF(){Q='';onlyFav=false;$('q').value='';$('fav').textContent='☆ Favoritas'}
 function render(){
- const d=path.length,cur=curLv(),sp=data.find(x=>x.id===sel);
- $('steps').innerHTML=LV.map((l,i)=>{
-  const insp=i===7&&sp&&d===7,val=i<d?path[i]:(insp?sci(sp):'—'),can=i<d||insp;
-  return '<button class="step'+(i===cur?' on':'')+'" style="--c:'+COL[i]+'" data-i="'+i+'"'+(can?'':' disabled')+(i===cur?' aria-current="step"':'')+'><span class="lv">'+LN[i]+'</span><span class="val">'+esc(val)+'</span></button>'
-   +(i===2?subStep('subphylum',sp,d):i===4?subStep('suborden',sp,d):'');
+ const st=lvState(),d=path.length,atSp=st.next==='especie',cur=curLv(st),sp=data.find(x=>x.id===sel);
+ $('steps').innerHTML=stepSeq(st).map((k,j)=>{
+  const insp=k==='especie'&&atSp&&sp,val=j<d?(path[j]||'Sin '+LBL[k].toLowerCase()):(insp?sci(sp):'—'),can=j<d||insp;
+  return '<button class="step'+(j===cur?' on':'')+'" style="--c:'+COL[CIDX[k]]+'" data-i="'+j+'"'+(can?'':' disabled')+(j===cur?' aria-current="step"':'')+'><span class="lv">'+LBL[k]+'</span><span class="val">'+esc(val)+'</span></button>';
  }).join('');
  if(window.matchMedia&&window.matchMedia('(max-width:900px)').matches){
   const on=$('steps').querySelector('.step.on');
   if(on)$('steps').scrollLeft=Math.max(0,on.offsetLeft-$('steps').offsetLeft-($('steps').clientWidth-on.offsetWidth)/2);
  }
- const showSp=!!sp&&d===7;
+ const showSp=!!sp&&atSp;
  const bc=(d?['<button class="bc" data-bc="-1">Inicio</button>']:[]).concat(path.map((p,j)=>'<button class="bc" data-bc="'+j+'">'+esc(p)+'</button>')).join(' › ');
  const tail=d<7?'elige '+(LN[d]==='Filo o división'?'un filo o división':'un/a '+LN[d].toLowerCase()):'elige una especie';
  $('crumb').innerHTML='';
  const items=scoped();let h='';
  if(Q||onlyFav){h=data.filter(matches).map(spCard).join('')||'<p class="empty">Sin resultados.</p>'}
- else if(d<7){
-  let keys=d===0?DOM.filter(k=>items.some(s=>s.dominio===k)):d===1?(REINOS[path[0]]||[]):[...new Set(items.map(s=>s[LV[d]]))];
+ else if(!atSp){const nk=st.next;
+  let keys=nk==='dominio'?DOM.filter(k=>items.some(s=>s.dominio===k)):nk==='reino'?(REINOS[path[0]]||[]):[...new Set(items.map(s=>lvVal(s,nk)))].sort((a,b)=>(a===''?1:0)-(b===''?1:0));
   h=keys.map(k=>{
-   const g=items.filter(s=>s[LV[d]]===k),ph=g.find(s=>s.foto),r=d>=1?(d===1?k:path[1]):(g[0]&&g[0].reino);
-   return '<button class="card" data-k="'+esc(k)+'"><div class="ph">'+photo(ph&&ph.foto,r)+'</div><div class="cap"><b>'+esc(k)+'</b><small>'+g.length+(g.length===1?' especie':' especies')+'</small></div></button>';
+   const g=items.filter(s=>lvVal(s,nk)===k),ph=g.find(s=>s.foto),r=nk==='dominio'?(g[0]&&g[0].reino):(nk==='reino'?k:path[1]);
+   return '<button class="card" data-k="'+esc(k)+'"><div class="ph">'+photo(ph&&ph.foto,r)+'</div><div class="cap"><b>'+esc(k||'Sin '+LBL[nk].toLowerCase())+'</b><small>'+g.length+(g.length===1?' especie':' especies')+'</small></div></button>';
   }).join('')||'<p class="empty">Aún no hay nada aquí.</p>';
  }else{
   h=items.map(spCard).join('');
  }
  $('grid').innerHTML=h;
  if((Q||onlyFav)&&!showSp){const n=data.filter(matches).length;$('crumb').textContent=n+(n===1?' resultado':' resultados')+(Q?' para «'+Q+'»':'')+(onlyFav?' · solo favoritas':'')}
- const ver=!!sp&&d===7;
+ const ver=!!sp&&atSp;
  document.body.classList.toggle('ficha-abierta',ver);
  $('lvinfo').innerHTML=(!ver&&!Q&&!onlyFav&&d>=1)?lvInfoHTML():'';
  $('grid').hidden=ver;$('detail').hidden=!ver;
@@ -1228,16 +1246,9 @@ document.addEventListener('keydown',e=>{
 });
 $('crumb').onclick=e=>{const b=e.target.closest('.bc');if(!b)return;clearF();path=path.slice(0,+b.dataset.bc+1);sel=null;render()};
 /* Nivel actual = el último elegido (con una especie abierta, «Especie») */
-function curLv(){const d=path.length;return d===7&&data.some(x=>x.id===sel)?7:d-1}
-/* Subfilo y suborden: opcionales, solo informativos (no son un nivel por el que se navegue) */
-function subStep(k,sp,d){
- const nm=k==='subphylum'?'Subfilo':'Suborden',c=COL[k==='subphylum'?2:4];let v='—';
- if(sp&&d===7)v=lvVal(sp,k)||'—';
- else if(d>=(k==='subphylum'?3:5)){const u=[...new Set(scoped().map(x=>lvVal(x,k)).filter(Boolean))];v=u.length===1?u[0]:u.length?'Varios ('+u.length+')':'—'}
- return '<div class="step sub" style="--c:'+c+'"><span class="lv">'+nm+'</span><span class="val">'+esc(v)+'</span></div>';
-}
+function curLv(st){st=st||lvState();return st.next==='especie'&&data.some(x=>x.id===sel)?path.length:path.length-1}
 /* Tocar un nivel anterior te lleva a él; tocar el nivel actual sube uno */
-$('steps').onclick=e=>{const b=e.target.closest('.step');if(!b||b.disabled||b.dataset.i===undefined)return;const i=+b.dataset.i;clearF();path=path.slice(0,i===curLv()?i:i+1);sel=null;render()};
+$('steps').onclick=e=>{const b=e.target.closest('.step');if(!b||b.disabled||b.dataset.i===undefined)return;const j=+b.dataset.i;clearF();path=path.slice(0,j===curLv()?j:j+1);sel=null;render()};
 $('grid').onclick=e=>{
  if(selMode&&selTap(e))return;
  const a=e.target.closest('[data-act]');
@@ -1247,7 +1258,7 @@ $('grid').onclick=e=>{
   else{delId=sp.id;$('delerr').textContent='';$('deltxt').textContent='Vas a eliminar «'+(sp.comun||sci(sp))+'» ('+sci(sp)+').';dlgdel.showModal()}
   return;
  }
- const c=e.target.closest('.card');if(!c)return;if(c.dataset.id){sel=c.dataset.id;const s0=data.find(x=>x.id===sel);if(s0)path=LV.slice(0,7).map(k=>s0[k])}else{path.push(c.dataset.k);sel=null}render()};
+ const c=e.target.closest('.card');if(!c)return;if(c.dataset.id){sel=c.dataset.id;const s0=data.find(x=>x.id===sel);if(s0)path=chainFor(s0)}else{path.push(c.dataset.k);sel=null}render()};
 
 /* ---------- Eliminar (con advertencia y confirmación) ---------- */
 const dlgdel=$('dlgdel');let delId=null;
@@ -1389,8 +1400,9 @@ $('add').onclick=()=>{
  $('dtitle').textContent='Añadir especie';$('save').textContent='Guardar especie';
  formFotos=[];formOrig=[];formNew=new Set();formSaved=false;formOrg={};drawThumbs();
  $('err').textContent='';$('f-foto').value='';$('f-comun').value='';$('f-car').value='';
- LV.forEach((k,i)=>{$('f-'+k).value=path[i]||(i<2?$('f-'+k).options[0].value:'')});
+ const stA=lvState();LV.forEach((k,i)=>{const j=stA.ks.indexOf(k);$('f-'+k).value=(j>=0?path[j]:'')||(i<2?$('f-'+k).options[0].value:'')});
  buildRasgos();fillRasgos({});drawThumbs();
+ ['subphylum','suborden'].forEach(k=>{const j=stA.ks.indexOf(k);if(j>=0&&$('r-'+k))$('r-'+k).value=path[j]});
  dlg.querySelectorAll('details').forEach(d=>d.open=false);
  txSync();
  dlg.showModal();
@@ -1451,7 +1463,7 @@ $('save').onclick=async()=>{
  await persist(o,trash);
  $('save').disabled=false;
  if(editId)data=data.map(x=>x.id===editId?o:x);else data.push(o);
- path=LV.slice(0,7).map(k=>o[k]);sel=o.id;dlg.close();render();
+ path=chainFor(o);sel=o.id;dlg.close();render();
  if(flush.err)alert('La ficha quedó guardada en el dispositivo, pero no se pudo subir: '+flush.err);
 };
 
@@ -1645,11 +1657,8 @@ function lvBox(lbl,name,text,wiki){
   +'<p class="wk"><a href="'+wikiGo(wiki||name)+'" target="_blank" rel="noopener">Saber más ↗</a></p></div></details>';
 }
 function lvInfoHTML(){
- const d=path.length,k=LV[d-1],name=path[d-1],sc=scoped();
- let h=lvBox(LN[d-1],name,lvText(k,name));
- const sx={filo:'subphylum',orden:'suborden'}[k];
- if(sx)[...new Set(sc.map(x=>lvVal(x,sx)).filter(Boolean))].sort().forEach(v=>{h+=lvBox(LABEL[sx],v,lvText(sx,v))});
- return h;
+ const k=lvState().ks[path.length-1],name=path[path.length-1];
+ return name?lvBox(LBL[k]||k,name,lvText(k,name)):'';
 }
 
 /* ======================================================================
