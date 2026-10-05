@@ -1,0 +1,15 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Conectando con iNaturalist…</title></head>
+<body style="font-family:system-ui,sans-serif;padding:24px;text-align:center">
+<p id="m">Conectando con iNaturalist…</p>
+<script>
+(function(){
+ var q=new URLSearchParams(location.search),m=document.getElementById('m');
+ try{
+  localStorage.setItem('inat_cb',JSON.stringify({code:q.get('code')||'',st:q.get('state')||'',err:q.get('error')||'',t:Date.now()}));
+  m.textContent='Listo. Puedes cerrar esta ventana y volver a la app.';
+  setTimeout(function(){window.close()},300);
+ }catch(e){m.textContent='No se pudo completar la conexión. Cierra esta ventana e inténtalo de nuevo.'}
+})();
+</script>
+</body></html>
