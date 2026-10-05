@@ -1503,7 +1503,7 @@ $('gb').onclick=async()=>{
 const IA_CID='';
 
 const IA_SITE='https://www.inaturalist.org',IA_URL='https://api.inaturalist.org/v1/';
-let iaSeq=0,iaRef=null,iaCands=[];            // iaSeq: descarta respuestas "viejas"
+let iaSeq=0,iaRef=null,iaCands=[],iaManualRes=null;            // iaSeq: descarta respuestas "viejas"
 const IA_RANGO={species:'especie',subspecies:'subespecie',variety:'variedad',form:'forma',hybrid:'híbrido',genus:'género'};
 // iNaturalist → tus 5 reinos
 const IA_KR={Bacteria:'Monera',Archaea:'Monera',Protozoa:'Protista',Chromista:'Protista'};
@@ -1519,7 +1519,7 @@ const IA_ERR={
 /* ---- Utilidades de interfaz ---- */
 function iaMsg(t,err){const m=$('iamsg');m.innerHTML=t;m.style.color=err?'var(--dng)':''}   // t = HTML ya escapado
 function iaBusy(on){const b=$('ia');b.disabled=on;b.textContent=on?'⏳ Analizando…':'🔍 Analizar con IA'}
-function iaClear(){iaSeq++;iaCands=[];iaRef=formFotos[0]||null;$('iares').innerHTML='';iaMsg('');iaBusy(false)}
+function iaClear(){iaSeq++;if(iaManualRes)iaManualRes('');iaCands=[];iaRef=formFotos[0]||null;$('iares').innerHTML='';iaMsg('');iaBusy(false)}
 
 /* Si la foto de portada (la primera) cambia, o se abre/cierra el formulario, se limpia el panel.
    Se engancha a drawThumbs() sin tocar su código. */
@@ -1548,11 +1548,30 @@ function iaSaveTokens(j,rtOld){
  iaSave('inat_oauth',o);return o;
 }
 
-/* Modo antiguo (sin Client ID): pegar el JWT a mano */
+/* Modo antiguo (sin Client ID): pegar el JWT a mano.
+   Panel dentro del formulario (no un prompt) para poder tener un enlace pulsable. */
 function iaManual(){
- const x=prompt('Para identificar con iNaturalist necesito tu token (JWT, caduca cada 24 h).\n\n1) Entra en inaturalist.org con tu cuenta.\n2) Abre https://www.inaturalist.org/users/api_token\n3) Copia el valor de "api_token" y pégalo aquí.')||'';
- const m=x.match(/eyJ[\w-]+\.[\w-]+\.[\w-]+/),t=m?m[0]:'';
- if(t)iaSaveJwt(t);return t;
+ return new Promise(ok=>{
+  if(iaManualRes)iaManualRes('');
+  const box=$('iares');
+  const fin=v=>{iaManualRes=null;box.innerHTML='';ok(v)};
+  iaManualRes=fin;
+  box.innerHTML='<div class="iac" style="flex-direction:column;align-items:stretch">'
+   +'<div><b>Necesito tu token de iNaturalist</b> (caduca cada 24 h):</div>'
+   +'<ol style="margin:6px 0 4px;padding-left:20px">'
+   +'<li>Abre <a href="https://www.inaturalist.org/users/api_token" target="_blank" rel="noopener" style="color:var(--lnk,var(--acc));font-weight:700">inaturalist.org/users/api_token</a> (con tu sesión iniciada).</li>'
+   +'<li>Copia todo el texto que aparece (o solo el valor de «api_token»).</li>'
+   +'<li>Vuelve aquí y pégalo:</li></ol>'
+   +'<input id="iatok" placeholder="Pega aquí el token" autocomplete="off" autocapitalize="off" spellcheck="false">'
+   +'<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px"><button type="button" id="iatok-no">Cancelar</button><button type="button" class="primary" id="iatok-ok">Continuar</button></div></div>';
+  $('iatok-ok').onclick=()=>{
+   const m=$('iatok').value.match(/eyJ[\w-]+\.[\w-]+\.[\w-]+/);
+   if(!m){iaMsg('No encuentro un token válido en lo que pegaste (debe empezar por «eyJ»).',1);return}
+   iaMsg('');iaSaveJwt(m[0]);fin(m[0]);
+  };
+  $('iatok-no').onclick=()=>fin('');
+  $('iatok').focus();
+ });
 }
 
 /* Renovar el token OAuth si iNaturalist entregó refresh_token (si no, devuelve null) */
