@@ -325,6 +325,53 @@ dialog label.filebtn:focus-within,.vh:focus-visible + *{outline:3px solid var(--
  #dlg .acts button{flex:1;padding:12px}
  #dlg .g2{gap:0 8px}
 }
+/* ---------- v3.2 ---------- */
+/* Advertencia de ficha incompleta: círculo amarillo sutil, esquina superior izquierda de la foto */
+.adv{position:absolute;left:10px;top:10px;z-index:2;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:rgba(242,193,78,.88);color:#3a2b00;font:800 .8rem/1 system-ui,sans-serif;box-shadow:0 1px 4px rgba(0,0,0,.35)}
+.adv+.rtag{left:40px}
+@media (max-width:560px){.adv{left:8px;top:8px}.adv+.rtag{left:8px}}
+.advline{margin:6px 0 0;font-size:.85rem;color:#f2c14e}
+#dlgwarn ul{margin:2px 0 4px;padding-left:20px}
+#dlgwarn .acts{flex-wrap:wrap}
+/* Rasgos taxonómicos y Wikipedia */
+.tax a{color:var(--lnk);text-decoration:none}.tax a:hover{text-decoration:underline}
+.tax .wk{margin:12px 0 0;font-weight:700}
+/* ---------- v3.3 ---------- */
+/* 4) Fotos por órgano (solo Plantae) */
+.th .po{top:auto;bottom:2px;left:2px;right:2px;width:auto;height:18px;border-radius:9px;font-size:.62rem;padding:0 4px;white-space:nowrap;overflow:hidden}
+.th .po.on{background:var(--acc);color:var(--acc-ink)}
+.otabs{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 8px}
+.otabs button{padding:6px 12px;font-size:.8rem;border-radius:999px;border:1px solid var(--line);background:var(--panel);color:var(--ink)}
+.otabs button.on{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
+.otag{position:absolute;left:8px;top:8px;z-index:2;padding:5px 10px;border-radius:999px;background:rgba(2,48,38,.85);color:#7ee8cb;font:700 .72rem/1 system-ui,sans-serif}
+.slide[hidden]{display:none}
+.gnav[hidden],.gcount[hidden]{display:none!important}
+/* 5) Sugerencia de foto */
+.fh{color:#f2c14e;font-size:.85rem}.fh[hidden]{display:none}
+@media (prefers-reduced-motion:no-preference){.nudge{animation:nudge 1.1s ease 1}}
+@keyframes nudge{0%,100%{box-shadow:0 0 0 0 rgba(242,193,78,0)}35%{box-shadow:0 0 0 6px rgba(242,193,78,.55)}}
+/* 6a) Selección múltiple */
+#selbar{position:fixed;left:0;right:0;bottom:0;z-index:30;display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:var(--panel);border-top:1px solid var(--line)}
+#selbar[hidden]{display:none}
+#selbar b{flex:1;min-width:120px}
+body.selmode main{padding-bottom:90px}
+.selmode .cact{display:none}
+.chk{position:absolute;right:8px;top:8px;z-index:3;width:26px;height:26px;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.45);color:#fff;display:grid;place-items:center;font-weight:800;font-size:.85rem}
+.card.picked{outline:3px solid var(--acc);outline-offset:-3px}
+.card.picked .chk{background:var(--acc);border-color:var(--acc)}
+.btoast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(24px + env(safe-area-inset-bottom,0px));z-index:60;background:#2C2C2E;color:#fff;padding:10px 16px;border-radius:999px;box-shadow:0 4px 16px rgba(0,0,0,.45);font-size:.9rem;max-width:90vw;text-align:center}
+#dlgbulk label.ck{display:flex;align-items:center;gap:8px;margin-top:14px}
+#dlgbulk label.ck input{width:auto;margin:0}
+/* 6b) Comparación con iNaturalist */
+.cmp{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.cmpc{min-width:0;display:flex;flex-direction:column;gap:6px}
+.cmpi{aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:var(--soft);display:grid;place-items:center;font-size:2.4rem}
+.cmpi img{width:100%;height:100%;object-fit:cover;display:block}
+.cmpth{display:flex;gap:6px;overflow-x:auto}
+.cmpth img{width:44px;height:44px;border-radius:8px;object-fit:cover;flex:none;cursor:pointer;border:2px solid transparent}
+.cmpth img:hover{border-color:var(--acc)}
+.pcm{color:var(--mut);font-size:.7rem;overflow-wrap:anywhere}
+.lnkb{background:none;border:0;padding:0;color:var(--lnk);text-decoration:underline;font:inherit;cursor:pointer}
 </style>
 </head>
 <body>
@@ -346,7 +393,7 @@ dialog label.filebtn:focus-within,.vh:focus-visible + *{outline:3px solid var(--
     <button id="imj">⬆ Importar copia (JSON)</button><input type="file" id="imf" accept="application/json,.json" hidden>
     <hr>
     <button id="out" class="mout">Salir</button>
-    <div class="mfoot">Biotaxo dex · v3.1</div>
+    <div class="mfoot">Biotaxo dex · v3.3</div>
    </div>
   </div>
  </div>
@@ -362,8 +409,22 @@ dialog label.filebtn:focus-within,.vh:focus-visible + *{outline:3px solid var(--
 </section>
 <div class="app" id="app" hidden>
  <nav class="steps" id="steps" aria-label="Nivel taxonómico"></nav>
- <main><div class="tools"><input id="q" type="search" placeholder="Buscar: Felidae, mono, jaguar…" aria-label="Buscar"><button id="fav">☆ Favoritas</button><button id="study">🎓 Modo estudio</button></div><p class="crumb" id="crumb"></p><div class="grid" id="grid"></div><section id="detail" hidden></section></main>
+ <main><div class="tools"><input id="q" type="search" placeholder="Buscar: Felidae, mono, jaguar…" aria-label="Buscar"><button id="fav">☆ Favoritas</button><button id="study">🎓 Modo estudio</button><button id="selb">☑ Seleccionar</button></div><p class="crumb" id="crumb"></p><div class="grid" id="grid"></div><section id="detail" hidden></section></main>
 </div>
+
+<div id="selbar" hidden><b id="selcount"></b><button type="button" id="selall">Todas / ninguna</button><button type="button" class="primary" id="selbulk">Editar en lote</button><button type="button" id="selx">Cancelar</button></div>
+
+<dialog id="dlgbulk">
+ <h2 style="margin-top:0">✏️ Edición en lote</h2>
+ <p class="hint" id="bulkn"></p>
+ <label for="b-fecha">Fecha de la observación</label><input id="b-fecha" placeholder="AAAA-MM-DD">
+ <label for="b-lugar">Lugar de la observación</label><input id="b-lugar" placeholder="Municipio, vereda…">
+ <label for="b-salida">Salida / diario de campo</label><input id="b-salida" placeholder="Ej: Salida a Chingaza · 12 mar">
+ <label class="ck"><input type="checkbox" id="b-over"> Reemplazar si la ficha ya tiene un valor</label>
+ <p class="hint">Solo se cambian los campos que escribas aquí; los que dejes vacíos no se tocan. Si no marcas la casilla, solo se rellenan las fichas que lo tengan vacío.</p>
+ <p class="note" id="b-err" role="alert"></p>
+ <div class="acts"><button type="button" id="b-no">Cancelar</button><button type="button" class="primary" id="b-ok">Aplicar</button></div>
+</dialog>
 
 <dialog id="dlg">
  <h2 style="margin-top:0" id="dtitle">Añadir especie</h2>
@@ -371,6 +432,8 @@ dialog label.filebtn:focus-within,.vh:focus-visible + *{outline:3px solid var(--
  <label for="f-foto" class="filebtn">📷 Elegir fotos</label><input type="file" id="f-foto" class="vh" accept="image/*" multiple>
  <p class="hint">Puedes elegir varias (hasta 8). La primera es la portada; toca ★ para cambiarla o ✕ para quitar una.</p>
  <div class="thumbs" id="fthumbs"></div>
+<p class="hint" id="exifmsg" role="status"></p>
+<p class="hint fh" id="fotohint" role="status" hidden>📷 Sugerencia: añade al menos una foto; te ayuda a reconocer la especie y se verá en la tarjeta.</p>
 <button type="button" id="ia" style="margin-top:10px">🔍 Analizar con IA</button><div id="iares"></div><div class="hint" id="iamsg" role="status"></div>
 
  <div class="g2" id="fields"></div>
@@ -386,6 +449,8 @@ dialog label.filebtn:focus-within,.vh:focus-visible + *{outline:3px solid var(--
   <div id="rg-e"></div>
  </details>
 
+ <details id="tx-d"><summary>🧬 Rasgos taxonómicos: género · familia · orden (opcional)</summary><div id="rg-t"></div></details>
+ <p class="hint" id="tx-msg" role="status"></p>
  <details><summary>Datos de campo (opcional)</summary><div id="rg-c"></div></details>
  <details id="dist-d"><summary>🌎 Distribución geográfica (opcional)</summary>
   <div class="row"><div><label for="m-cont">Ir a la región</label><select id="m-cont"><option value="">Mundo</option><option value="NC">América del Norte y Central</option><option value="SA">América del Sur</option><option value="EU">Europa</option><option value="AF">África</option><option value="AS">Asia</option><option value="OC">Oceanía</option></select></div><div><label for="m-q">Buscar país</label><input id="m-q" list="m-dl" autocomplete="off" placeholder="Ej: Colombia"><datalist id="m-dl"></datalist></div></div>
@@ -396,6 +461,13 @@ dialog label.filebtn:focus-within,.vh:focus-visible + *{outline:3px solid var(--
  <textarea id="f-car" rows="3" placeholder="Cualquier otro dato que quieras guardar"></textarea>
  <p class="note" id="err" role="alert"></p>
  <div class="acts"><button id="cancel">Cancelar</button><button class="primary" id="save">Guardar especie</button></div>
+</dialog>
+
+<dialog id="dlgwarn">
+ <h2 style="margin-top:0">⚠️ Faltan datos</h2>
+ <p>La especie se añadirá con una advertencia, debido a que no se han llenado todos los espacios</p>
+ <p class="hint" style="margin:8px 0 2px">Falta:</p><ul id="warnlist"></ul>
+ <div class="acts"><button type="button" id="warncancel">Cancelar</button><button type="button" class="primary" id="warnyes">Añadir con advertencia</button><button type="button" id="warnno">Añadir sin advertencia</button></div>
 </dialog>
 
 <dialog id="dlgset">
@@ -1005,7 +1077,13 @@ async function loadData(){
  if(!data.length)$('crumb').textContent='Aún no tienes especies. Toca "+ Añadir especie" para empezar.';
 }
 
-const CAMPO=[T('c_fecha','Fecha de la observación','AAAA-MM-DD'),T('c_lugar','Lugar de la observación','Municipio, vereda, coordenadas…'),A('c_nota','Nota personal')];
+const CAMPO=[T('c_fecha','Fecha de la observación','AAAA-MM-DD o AAAA-MM-DD HH:MM'),T('c_lugar','Lugar de la observación','Municipio, vereda…'),T('c_salida','Salida / diario de campo','Ej: Salida a Chingaza · 12 mar'),T('c_lat','Latitud (GPS)','Ej: 4.711000'),T('c_lon','Longitud (GPS)','Ej: -74.072100'),A('c_nota','Nota personal')];
+const TAXR=[A('tx_genero','Rasgos del género','Rasgos más característicos del género…'),A('tx_familia','Rasgos de la familia','Rasgos más característicos de la familia…'),A('tx_orden','Rasgos del orden','Rasgos más característicos del orden…')];
+// v3.3 · descripción por órgano (Plantae)
+const PLORG=[A('pl_d_flor','Flor · descripción','Color, forma, número de pétalos…'),A('pl_d_hoja','Hoja · descripción','Forma, borde, disposición…'),A('pl_d_fruto','Fruto · descripción','Forma, color, tamaño…')];
+ESP.Plantae.push(...PLORG);PLORG.concat([CAMPO[2]]).forEach(f=>{FD[f.key]=f});
+Object.assign(LABEL,{pl_d_flor:'Flor · descripción',pl_d_hoja:'Hoja · descripción',pl_d_fruto:'Fruto · descripción',c_salida:'Salida / diario de campo',_fo:'Órgano de cada foto'});
+Object.assign(LABEL,{tx_genero:'Rasgos del género',tx_familia:'Rasgos de la familia',tx_orden:'Rasgos del orden',_adv:'Advertencia'});
 /* ---------- Ficha ---------- */
 const SUMK={Animalia:['an_dieta','an_actividad','ciclo','peligro'],Plantae:['pl_habito','pl_uso','ciclo','peligro'],Fungi:['fu_comestibilidad','fu_nutricion','peligro'],Protista:['pr_nutricion','pr_locomocion','pr_rol'],Monera:['mo_morfologia','mo_efecto','mo_oxigeno']};
 function sumHTML(sp){
@@ -1048,7 +1126,7 @@ function rgHTML(sp){
  return cl+(body||'<p class="empty">Aún no hay características. Toca «Editar ficha» para añadirlas.</p>');
 }
 const fav=s=>!!(s.rasgos&&s.rasgos._fav);
-const spCard=s=>'<div class="cardw"><button class="card'+(s.id===sel?' sel':'')+'" data-id="'+s.id+'"><div class="ph">'+photo(s.foto,s.reino)+'<span class="rtag">'+esc(s.reino)+'</span></div><div class="cap"><b>'+(s.pend?'⏳ ':'')+(fav(s)?'★ ':'')+esc(s.comun||sci(s))+'</b><i>'+esc(sci(s))+'</i></div></button>'
+const spCard=s=>'<div class="cardw"><button class="card'+(s.id===sel?' sel':'')+(selSet.has(s.id)?' picked':'')+'" data-id="'+s.id+'"><div class="ph">'+photo(s.foto,s.reino)+advBadge(s)+chkHTML(s)+'<span class="rtag">'+esc(s.reino)+'</span></div><div class="cap"><b>'+(s.pend?'⏳ ':'')+(fav(s)?'★ ':'')+esc(s.comun||sci(s))+'</b><i>'+esc(sci(s))+'</i></div></button>'
  +'<span class="cact"><button type="button" data-act="edit" data-id="'+s.id+'" aria-label="Editar '+esc(s.comun||sci(s))+'">✎</button><button type="button" data-act="del" data-id="'+s.id+'" aria-label="Eliminar '+esc(s.comun||sci(s))+'">🗑</button></span></div>';
 const norm=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 const hay=s=>norm([].concat(LV.map(k=>s[k]),[s.comun,s.car],Object.values(s.rasgos||{}).filter(v=>typeof v==='string')).join(' '));
@@ -1071,7 +1149,7 @@ function render(){
  const items=scoped();let h='';
  if(Q||onlyFav){h=data.filter(matches).map(spCard).join('')||'<p class="empty">Sin resultados.</p>'}
  else if(d<7){
-  let keys=d===0?DOM:d===1?(REINOS[path[0]]||[]):[...new Set(items.map(s=>s[LV[d]]))];
+  let keys=d===0?DOM.filter(k=>items.some(s=>s.dominio===k)):d===1?(REINOS[path[0]]||[]):[...new Set(items.map(s=>s[LV[d]]))];
   h=keys.map(k=>{
    const g=items.filter(s=>s[LV[d]]===k),ph=g.find(s=>s.foto),r=d>=1?(d===1?k:path[1]):(g[0]&&g[0].reino);
    return '<button class="card" data-k="'+esc(k)+'"><div class="ph">'+photo(ph&&ph.foto,r)+'</div><div class="cap"><b>'+esc(k)+'</b><small>'+g.length+(g.length===1?' especie':' especies')+'</small></div></button>';
@@ -1088,27 +1166,27 @@ function render(){
   ?'<button id="back">← Volver a las especies</button>'
    +'<div class="ficha">'+galHTML(sp)
    +'<div class="finfo"><h2>'+esc(sp.comun||sci(sp))+'</h2><p class="sci">'+esc(sci(sp))+'</p>'
-   +sumHTML(sp)+'<ol class="lin deskonly">'+linHTML(sp)+'</ol>'
-   +'<div class="btns"><button id="favb">'+(fav(sp)?'★ Favorito':'☆ Favorito')+'</button><button id="shr">↗ Compartir</button><button id="edit">Editar ficha</button><button class="danger" id="del">🗑 Eliminar</button></div></div>'
-   +'<div class="ficha-car">'+distBlock(sp)+rgHTML(sp)
+   +advLine(sp)+sumHTML(sp)+'<ol class="lin deskonly">'+linHTML(sp)+'</ol>'
+   +'<div class="btns"><button id="favb">'+(fav(sp)?'★ Favorito':'☆ Favorito')+'</button><button id="shr">↗ Compartir</button><button id="cmpb">🔍 Comparar con iNaturalist</button><button id="edit">Editar ficha</button><button class="danger" id="del">🗑 Eliminar</button></div><div id="cmpbox"></div></div>'
+   +'<div class="ficha-car">'+distBlock(sp)+rgHTML(sp)+taxHTML(sp)
    +'</div></div>'
   :'';
  if(ver){
-  wireGal();wireDist(sp);
+  wireGal();wireOrg();wireDist(sp);
   if(sp.fotos===undefined)ensureFotos(sp).then(()=>{if(sel===sp.id&&sp.fotos.length>1)render()});
  }
 }
 function galHTML(sp){
  const list=sp.fotos||(sp.foto?[sp.foto]:[]),n=list.length;
- const slides=n?list.map(s=>'<div class="slide">'+IMG(s)+'</div>').join(''):'<div class="slide"><span aria-hidden="true">'+(EMO[sp.reino]||'🧬')+'</span></div>';
- return '<div class="galw'+(sp.fotos===undefined?' ld':'')+'"><div class="gal" id="gal">'+slides+'</div>'
+ const slides=n?list.map((s,i)=>slideHTML(sp,s,i)).join(''):'<div class="slide"><span aria-hidden="true">'+(EMO[sp.reino]||'🧬')+'</span></div>';
+ return '<div class="galw'+(sp.fotos===undefined?' ld':'')+'">'+orgTabs(sp,list)+'<div class="gal" id="gal">'+slides+'</div>'
   +(n>1?'<button class="gnav prev" id="gprev" aria-label="Foto anterior">‹</button><button class="gnav next" id="gnext" aria-label="Foto siguiente">›</button><span class="gcount" id="gcount">1 / '+n+'</span>':'')+'</div>';
 }
 const SM=()=>window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches?'auto':'smooth';
 function wireGal(){
  const g=$('gal');if(!g)return;
- const n=g.children.length;
- g.addEventListener('scroll',()=>{const c=$('gcount');if(c&&g.clientWidth)c.textContent=(Math.round(g.scrollLeft/g.clientWidth)+1)+' / '+n});
+ const n=()=>[...g.children].filter(c=>!c.hidden).length;
+ g.addEventListener('scroll',()=>{const c=$('gcount');if(c&&g.clientWidth)c.textContent=(Math.round(g.scrollLeft/g.clientWidth)+1)+' / '+n()});
  const by=s=>g.scrollBy({left:s*g.clientWidth,behavior:SM()});
  if($('gprev'))$('gprev').onclick=()=>by(-1);
  if($('gnext'))$('gnext').onclick=()=>by(1);
@@ -1123,6 +1201,7 @@ document.addEventListener('keydown',e=>{
 $('crumb').onclick=e=>{const b=e.target.closest('.bc');if(!b)return;clearF();path=path.slice(0,+b.dataset.bc+1);sel=null;render()};
 $('steps').onclick=e=>{const b=e.target.closest('.step');if(!b||b.disabled)return;clearF();path=path.slice(0,+b.dataset.i);sel=null;render()};
 $('grid').onclick=e=>{
+ if(selMode&&selTap(e))return;
  const a=e.target.closest('[data-act]');
  if(a){
   const sp=data.find(x=>x.id===a.dataset.id);if(!sp)return;
@@ -1141,6 +1220,7 @@ $('detail').onclick=e=>{
  if(e.target.id==='edit')openEdit(sp);
  if(e.target.id==='favb')toggleFav(sp);
  if(e.target.id==='shr')share(sp);
+ if(e.target.id==='cmpb')cmpInat(sp);
  if(e.target.id==='del'){
   $('delerr').textContent='';
   $('deltxt').textContent='Vas a eliminar «'+(sp.comun||sci(sp))+'» ('+sci(sp)+').';
@@ -1181,6 +1261,7 @@ function buildRasgos(){
  const r=$('f-reino').value;
  $('rg-u').innerHTML=UNIV.map(fHTML).join('');
  $('rg-c').innerHTML=CAMPO.map(fHTML).join('');
+ $('rg-t').innerHTML=TAXR.map(fHTML).join('');txLabels();
  $('rg-e').innerHTML=(ESP[r]||[]).concat(legOn&&r==='Plantae'?[LEGP]:[]).map(fHTML).join('');
  $('rg-et').textContent='Características específicas · '+(ESPN[r]||r)+' (opcional)';
 }
@@ -1262,34 +1343,36 @@ $('f-reino').onchange=()=>{
  const m=$('f-reino').value==='Monera';
  if(m&&$('f-dominio').value==='Eukarya')$('f-dominio').value='Bacteria';
  if(!m)$('f-dominio').value='Eukarya';
- const keep=collectRasgos();buildRasgos();fillRasgos(keep);
+ const keep=collectRasgos();buildRasgos();fillRasgos(keep);drawThumbs();
 };
 
 $('add').onclick=()=>{
  editId=null;legOn=false;distLoad(null);
  $('dtitle').textContent='Añadir especie';$('save').textContent='Guardar especie';
- formFotos=[];formOrig=[];formNew=new Set();formSaved=false;drawThumbs();
+ formFotos=[];formOrig=[];formNew=new Set();formSaved=false;formOrg={};drawThumbs();
  $('err').textContent='';$('f-foto').value='';$('f-comun').value='';$('f-car').value='';
  LV.forEach((k,i)=>{$('f-'+k).value=path[i]||(i<2?$('f-'+k).options[0].value:'')});
- buildRasgos();fillRasgos({});
+ buildRasgos();fillRasgos({});drawThumbs();
  dlg.querySelectorAll('details').forEach(d=>d.open=false);
+ txSync();
  dlg.showModal();
 };
 async function openEdit(sp){
  editId=sp.id;legOn=!!(sp.rasgos&&sp.rasgos.pl_tolerancia);distLoad(sp.dist);
- formFotos=(await ensureFotos(sp)).slice();formOrig=formFotos.slice();formNew=new Set();formSaved=false;drawThumbs();
+ formFotos=(await ensureFotos(sp)).slice();formOrig=formFotos.slice();formNew=new Set();formSaved=false;formOrg=orgLoad(sp,formFotos);drawThumbs();
  $('dtitle').textContent='Editar especie';$('save').textContent='Guardar cambios';
  $('err').textContent='';$('f-foto').value='';$('f-comun').value=sp.comun;$('f-car').value=sp.car;
  LV.forEach(k=>{$('f-'+k).value=sp[k]});
- buildRasgos();fillRasgos(legacy(sp.rasgos||{}));
+ buildRasgos();fillRasgos(legacy(sp.rasgos||{}));drawThumbs();
  dlg.querySelectorAll('details').forEach(d=>d.open=false);
+ txSync();
  dlg.showModal();
 }
 $('cancel').onclick=()=>dlg.close();
 let formFotos=[],formOrig=[],formNew=new Set(),formSaved=false;
 dlg.addEventListener('close',()=>{if(!formSaved)[...formNew].forEach(dropLoc);formNew=new Set()});
 function drawThumbs(){
- $('fthumbs').innerHTML=formFotos.map((s,i)=>'<div class="th'+(i===0?' cover':'')+'">'+IMG(s)
+ $('fthumbs').innerHTML=formFotos.map((s,i)=>'<div class="th'+(i===0?' cover':'')+'">'+IMG(s)+orgBtn(s,i)
   +(i?'<button type="button" class="st" data-st="'+i+'" title="Hacer portada">★</button>':'')
   +'<button type="button" class="rm" data-rm="'+i+'" title="Quitar">✕</button></div>').join('');
 }
@@ -1301,6 +1384,7 @@ $('fthumbs').onclick=e=>{
 };
 $('f-foto').onchange=async e=>{
  const files=[...e.target.files];e.target.value='';
+ exifFill(files);
  $('err').textContent='';
  for(const f of files){
   if(formFotos.length>=MAXF){$('err').textContent='Máximo '+MAXF+' fotos por especie.';break}
@@ -1314,7 +1398,11 @@ $('save').onclick=async()=>{
  LV.forEach(k=>rec[k]=$('f-'+k).value.trim());
  const miss=LV.filter(k=>!rec[k]).map(k=>LN[LV.indexOf(k)].toLowerCase());
  if(miss.length){$('err').textContent='Falta: '+miss.join(', ')+'.';return}
+ // v3.2 · ¿faltan campos clave? → modal: cancelar / con advertencia / sin advertencia
+ const falta=faltantes(Object.assign({},rec,{car:rec.caracteristicas,fotos:formFotos}));
+ if(falta.length){const c=await askWarn(falta);if(c==='cancel')return;if(c==='warn')rec.rasgos._adv='1'}
  rec.fotos=formFotos.slice();rec.foto=formFotos[0]||'';
+ if(rec.reino==='Plantae'){const tg=formFotos.map(r=>formOrg[r]||'');if(tg.some(Boolean))rec.rasgos._fo=tg.join('|')}   // v3.3 · etiqueta Flor/Hoja/Fruto por foto
  const trash=formOrig.filter(r=>/^gd:/.test(r)&&!formFotos.includes(r));
  if(GDRIVE_ON&&formFotos.some(isLoc)&&navigator.onLine&&!gdValid())await gdToken(true).catch(()=>{});
  rec.distribucion={nativo:[...edist.nativo],invasor:[...edist.invasor]};
@@ -1328,6 +1416,380 @@ $('save').onclick=async()=>{
  path=LV.slice(0,7).map(k=>o[k]);sel=o.id;dlg.close();render();
  if(flush.err)alert('La ficha quedó guardada en el dispositivo, pero no se pudo subir: '+flush.err);
 };
+
+/* ======================================================================
+   v3.2 · 1) REGISTRO RÁPIDO CON ADVERTENCIA (campos incompletos)
+   ----------------------------------------------------------------------
+   Al guardar, si faltan campos clave se pregunta qué hacer. Si eliges
+   «con advertencia», la ficha guarda la marca rasgos._adv y su tarjeta
+   muestra un círculo amarillo en la esquina superior izquierda de la foto.
+   El círculo desaparece solo cuando ya no falta nada.
+   ====================================================================== */
+// Campos clave: [nombre que se muestra, función que dice si está lleno].
+// Añade, quita o reordena líneas a tu gusto: todo lo demás se adapta solo.
+// «o» es una ficha (comun, car, foto/fotos, rasgos y los 8 niveles taxonómicos).
+const KEYF=[
+ ['foto',o=>(o.fotos&&o.fotos.length)||o.foto],
+ ['nombre común',o=>o.comun],
+ ['descripción / notas',o=>o.car],
+ ['fecha de observación',o=>(o.rasgos||{}).c_fecha],
+ ['lugar o coordenadas',o=>{const r=o.rasgos||{};return r.c_lugar||(r.c_lat&&r.c_lon)}],
+ ['taxonomía completa',o=>LV.every(k=>o[k])]
+];
+function faltantes(o){return KEYF.filter(k=>!k[1](o)).map(k=>k[0])}
+
+// Círculo amarillo sutil (solo si la ficha fue guardada con advertencia y aún le falta algo)
+function advBadge(s){
+ if(!(s.rasgos&&s.rasgos._adv))return '';
+ const f=faltantes(s);if(!f.length)return '';
+ return '<span class="adv" role="img" aria-label="Ficha incompleta" title="Falta: '+esc(f.join(', '))+'">!</span>';
+}
+// Línea dentro de la ficha abierta
+function advLine(s){
+ if(!(s.rasgos&&s.rasgos._adv))return '';
+ const f=faltantes(s);if(!f.length)return '';
+ return '<p class="advline">⚠ Ficha incompleta · falta: '+esc(f.join(', '))+'</p>';
+}
+
+// Modal de confirmación → 'cancel' | 'warn' | 'nowarn'
+const dlgwarn=$('dlgwarn');
+function askWarn(falta){
+ return new Promise(res=>{
+  let r='cancel';                                   // Esc o cerrar = cancelar
+  $('warnlist').innerHTML=falta.map(x=>'<li>'+esc(x)+'</li>').join('');
+  const verbo=editId?'Guardar':'Añadir';
+  $('warnyes').textContent=verbo+' con advertencia';
+  $('warnno').textContent=verbo+' sin advertencia';
+  const done=v=>{r=v;dlgwarn.close()};
+  $('warncancel').onclick=()=>done('cancel');
+  $('warnyes').onclick=()=>done('warn');
+  $('warnno').onclick=()=>done('nowarn');
+  dlgwarn.onclose=()=>res(r);
+  dlgwarn.showModal();
+ });
+}
+
+/* ======================================================================
+   v3.2 · 2) EXIF: fecha/hora original y coordenadas GPS de la foto
+   ----------------------------------------------------------------------
+   Lector mínimo de EXIF en JavaScript puro (solo JPEG). Se lee el archivo
+   ORIGINAL antes de redimensionarlo, porque al redimensionar se pierden
+   los metadatos. Solo rellena campos que estén vacíos y siguen editables.
+   ====================================================================== */
+function exifRead(buf){
+ const v=new DataView(buf);
+ if(v.byteLength<4||v.getUint16(0)!==0xFFD8)return null;                  // no es JPEG
+ let p=2;
+ while(p+4<v.byteLength){
+  if(v.getUint8(p)!==0xFF)return null;
+  const mk=v.getUint8(p+1),len=v.getUint16(p+2);
+  if(mk===0xDA)return null;                                              // empieza la imagen: ya no hay metadatos
+  if(mk===0xE1&&p+10<v.byteLength&&v.getUint32(p+4)===0x45786966&&v.getUint16(p+8)===0)   // APP1 «Exif\0\0»
+   return exifTiff(v,p+10,Math.min(v.byteLength,p+2+len));
+  p+=2+len;
+ }
+ return null;
+}
+function exifTiff(v,t,end){
+ const le=v.getUint16(t)===0x4949;                                       // «II» = little-endian
+ const u16=o=>v.getUint16(t+o,le),u32=o=>v.getUint32(t+o,le);
+ if(u16(2)!==42)return null;
+ const SZ={1:1,2:1,3:2,4:4,5:8,7:1,9:4,10:8};
+ // Lee una tabla de etiquetas (IFD): {etiqueta:{type,cnt,at}}; «at» = dónde está el valor (relativo a t)
+ const ifd=off=>{
+  const r={};if(!off||t+off+2>end)return r;
+  const n=u16(off);
+  for(let i=0;i<n;i++){
+   const e=off+2+i*12;if(t+e+12>end)break;
+   const type=u16(e+2),cnt=u32(e+4),size=(SZ[type]||1)*cnt;
+   r[u16(e)]={type,cnt,at:size>4?u32(e+8):e+8};
+  }
+  return r;
+ };
+ const str=x=>{if(!x||x.type!==2)return '';let s='';for(let i=0;i<x.cnt;i++){const c=v.getUint8(t+x.at+i);if(!c)break;s+=String.fromCharCode(c)}return s.trim()};
+ const rat=(x,i)=>{const a=u32(x.at+i*8),b=u32(x.at+i*8+4);return b?a/b:0};
+ const i0=ifd(u32(4)),ex=i0[0x8769]?ifd(u32(i0[0x8769].at)):{},gp=i0[0x8825]?ifd(u32(i0[0x8825].at)):{};
+ const out={fecha:'',lat:null,lon:null};
+ // Fecha/hora original de la toma (0x9003); si no hay, fecha de creación digital (0x9004) o de archivo (0x0132)
+ const m=(str(ex[0x9003])||str(ex[0x9004])||str(i0[0x0132])).match(/^(\d{4}):(\d\d):(\d\d)[ T](\d\d):(\d\d)/);
+ if(m&&m[1]!=='0000'&&m[2]!=='00'&&m[3]!=='00')out.fecha=m[1]+'-'+m[2]+'-'+m[3]+' '+m[4]+':'+m[5];
+ // GPS: grados/minutos/segundos → decimal, con signo según N/S y E/W
+ const dms=x=>x&&x.type===5&&x.cnt>=3?rat(x,0)+rat(x,1)/60+rat(x,2)/3600:null;
+ let lat=dms(gp[2]),lon=dms(gp[4]);
+ if(lat!=null&&lon!=null){
+  if(/^S/i.test(str(gp[1])))lat=-lat;
+  if(/^W/i.test(str(gp[3])))lon=-lon;
+  if(Math.abs(lat)<=90&&Math.abs(lon)<=180&&(lat||lon)){out.lat=lat.toFixed(6);out.lon=lon.toFixed(6)}
+ }
+ return out.fecha||out.lat!=null?out:null;
+}
+// Rellena «Datos de campo» con la primera foto que traiga metadatos (solo campos vacíos)
+async function exifFill(files){
+ try{
+  for(const f of files){
+   if(!/jpe?g/i.test((f.type||'')+' '+(f.name||'')))continue;
+   const m=exifRead(await f.slice(0,262144).arrayBuffer());              // los metadatos están al inicio del archivo
+   if(!m)continue;
+   const put=(k,val)=>{const el=$('r-'+k);if(el&&val&&!el.value.trim()){el.value=val;return true}return false};
+   const got=[];
+   if(put('c_fecha',m.fecha))got.push('la fecha y hora');
+   if(m.lat!=null&&put('c_lat',m.lat)){put('c_lon',m.lon);got.push('la ubicación GPS')}
+   if(got.length)$('exifmsg').textContent='📍 Tomé '+got.join(' y ')+' de la foto. Puedes corregirlo en «Datos de campo».';
+   return;
+  }
+ }catch(_){}
+}
+
+/* ======================================================================
+   v3.2 · 3) RASGOS TAXONÓMICOS (género · familia · orden) + WIKIPEDIA
+   ----------------------------------------------------------------------
+   Se guardan por ficha en rasgos.tx_genero / tx_familia / tx_orden.
+   Al elegir un género, familia u orden ya registrado en otra especie, el
+   texto se autocompleta (solo si el campo está vacío; sigue editable).
+   ====================================================================== */
+const TXN=[['genero','género','del género'],['familia','familia','de la familia'],['orden','orden','del orden']];
+function txLabels(){
+ TXN.forEach(n=>{const l=$('l-tx_'+n[0]),v=$('f-'+n[0]).value.trim();if(l)l.textContent='Rasgos '+n[2]+(v?' «'+v+'»':'')});
+}
+function txFind(k,name){                                                   // el texto más reciente registrado para ese taxón
+ const n=norm(name);if(!n)return '';
+ for(let i=data.length-1;i>=0;i--){
+  const s=data[i];
+  if(s.id!==editId&&norm(s[k])===n){const t=(s.rasgos||{})['tx_'+k];if(t&&t.trim())return t}
+ }
+ return '';
+}
+function txSync(){
+ txLabels();
+ const done=[];
+ TXN.forEach(n=>{
+  const el=$('r-tx_'+n[0]);if(!el||el.value.trim())return;
+  const t=txFind(n[0],$('f-'+n[0]).value);
+  if(t){el.value=t;done.push(n[1])}
+ });
+ if(done.length)$('tx-msg').textContent='↺ Rasgos autocompletados desde otra especie ya registrada ('+done.join(', ')+'). Puedes editarlos.';
+}
+// Al cambiar género/familia/orden a mano (o al pulsar «Usar este» del reconocimiento con IA)
+dlg.addEventListener('change',e=>{if(/^f-(genero|familia|orden)$/.test(e.target.id||''))txSync()});
+dlg.addEventListener('close',()=>{$('exifmsg').textContent='';$('tx-msg').textContent=''});
+
+const wikiUrl=n=>'https://es.wikipedia.org/wiki/'+encodeURIComponent(String(n).trim().replace(/\s+/g,'_'));
+// Recuadro desplegable de la ficha: rasgos de género/familia/orden + enlace a Wikipedia
+function taxHTML(sp){
+ const r=sp.rasgos||{},rows=TXN.filter(n=>sp[n[0]]);
+ const li=rows.map(n=>{
+  const t=r['tx_'+n[0]];
+  return '<li><b>'+n[1].charAt(0).toUpperCase()+n[1].slice(1)+' · <a href="'+wikiUrl(sp[n[0]])+'" target="_blank" rel="noopener">'+esc(sp[n[0]])+' ↗</a></b>'
+   +(t?termHTML(t,'tx_'+n[0]):'<span style="color:var(--mut)">Aún sin rasgos. Toca «Editar ficha» para añadirlos.</span>')+'</li>';
+ }).join('');
+ const k=rows.filter(n=>r['tx_'+n[0]]).length;
+ return '<details class="acc tax"><summary>🧬 Rasgos taxonómicos<small>'+k+'</small></summary><div class="accb"><ul class="rg">'+li+'</ul>'
+  +'<p class="wk"><a href="'+wikiUrl(sci(sp))+'" target="_blank" rel="noopener">Ver más en Wikipedia ↗</a></p></div></details>';
+}
+
+/* ======================================================================
+   v3.3 · 4) CATEGORIZACIÓN BOTÁNICA (Flor · Hoja · Fruto) — solo Plantae
+   ----------------------------------------------------------------------
+   · Formulario: si el reino es Plantae, cada miniatura muestra un botón
+     que al tocarlo cambia la etiqueta: sin etiqueta → Flor → Hoja → Fruto.
+   · Se guarda en rasgos._fo como «Flor||Hoja|Fruto» (una posición por foto,
+     en el mismo orden que la galería).
+   · Ficha: cada foto muestra su etiqueta y arriba aparecen pestañas para
+     ver solo las flores, las hojas o los frutos.
+   · Además hay tres campos de texto (flor/hoja/fruto) en las
+     características específicas de Plantae.
+   ====================================================================== */
+const ORG=[['Flor','🌸'],['Hoja','🍃'],['Fruto','🍎']];
+const ORG_IC={Flor:'🌸',Hoja:'🍃',Fruto:'🍎'};
+let formOrg={};                                    // etiqueta por foto del formulario: {referencia:'Flor'|…}
+
+function orgTags(sp){return sp.reino==='Plantae'&&sp.rasgos&&sp.rasgos._fo?String(sp.rasgos._fo).split('|'):[]}
+function orgLoad(sp,list){const t=orgTags(sp),m={};list.forEach((r,i)=>{if(t[i])m[r]=t[i]});return m}
+
+// Botón de etiqueta sobre cada miniatura del formulario (solo si el reino es Plantae)
+function orgBtn(s,i){
+ if($('f-reino').value!=='Plantae')return '';
+ const t=formOrg[s];
+ return '<button type="button" class="po'+(t?' on':'')+'" data-po="'+i+'" title="Tipo de foto: toca para cambiar">'+(t?ORG_IC[t]+' '+t:'＋ Tipo')+'</button>';
+}
+$('fthumbs').addEventListener('click',e=>{
+ const b=e.target.closest('button[data-po]');if(!b)return;
+ const r=formFotos[+b.dataset.po],cur=formOrg[r]||'';
+ const nx=cur===''?'Flor':cur==='Flor'?'Hoja':cur==='Hoja'?'Fruto':'';
+ if(nx)formOrg[r]=nx;else delete formOrg[r];
+ drawThumbs();
+});
+
+// Galería de la ficha: etiqueta sobre la foto + pestañas para filtrar
+function slideHTML(sp,s,i){
+ const t=orgTags(sp)[i];
+ return '<div class="slide"'+(t?' data-o="'+esc(t)+'"':'')+'>'+IMG(s)+(t?'<span class="otag">'+(ORG_IC[t]||'')+' '+esc(t)+'</span>':'')+'</div>';
+}
+function orgTabs(sp,list){
+ const n={};orgTags(sp).slice(0,list.length).forEach(t=>{if(t)n[t]=(n[t]||0)+1});
+ if(!Object.keys(n).length)return '';
+ return '<div class="otabs" id="otabs"><button type="button" class="on" data-o="">Todas · '+list.length+'</button>'
+  +ORG.filter(o=>n[o[0]]).map(o=>'<button type="button" data-o="'+o[0]+'">'+o[1]+' '+o[0]+' · '+n[o[0]]+'</button>').join('')+'</div>';
+}
+function wireOrg(){
+ const bar=$('otabs'),g=$('gal');if(!bar||!g)return;
+ bar.onclick=e=>{
+  const b=e.target.closest('button[data-o]');if(!b)return;
+  const o=b.dataset.o;
+  bar.querySelectorAll('button').forEach(x=>x.classList.toggle('on',x===b));
+  [...g.children].forEach(sl=>{sl.hidden=!!o&&sl.dataset.o!==o});
+  g.scrollLeft=0;
+  const v=[...g.children].filter(c=>!c.hidden).length,c=$('gcount');
+  if(c)c.textContent='1 / '+v;
+  ['gprev','gnext','gcount'].forEach(id=>{const x=$(id);if(x)x.hidden=v<2});
+ };
+}
+
+/* ======================================================================
+   v3.3 · 5) INTERFAZ: sugerencia de foto
+   ----------------------------------------------------------------------
+   (Ocultar dominios vacíos está en render(): solo se listan los dominios
+   que tienen al menos una especie.)
+   Si empiezas a llenar el formulario sin haber elegido ninguna foto, aparece
+   una sugerencia (una sola vez por apertura) y el botón «Elegir fotos» pulsa
+   un instante. No bloquea nada.
+   ====================================================================== */
+let fhShown=false;
+dlg.addEventListener('focusin',e=>{
+ const t=e.target;
+ if(fhShown||formFotos.length||!t.matches||!t.matches('input,select,textarea')||t.id==='f-foto')return;
+ fhShown=true;
+ $('fotohint').hidden=false;
+ const b=dlg.querySelector('label.filebtn');
+ if(b){b.classList.remove('nudge');void b.offsetWidth;b.classList.add('nudge')}
+});
+const _drawThumbs33=drawThumbs;
+drawThumbs=function(){_drawThumbs33.apply(this,arguments);if(formFotos.length)$('fotohint').hidden=true};
+dlg.addEventListener('close',()=>{fhShown=false;$('fotohint').hidden=true});
+
+/* ======================================================================
+   v3.3 · 6a) SELECCIÓN MÚLTIPLE + EDICIÓN EN LOTE
+   ----------------------------------------------------------------------
+   «☑ Seleccionar» activa el modo: al tocar una tarjeta de especie se marca
+   (en vez de abrirla). La barra inferior permite marcar todas las visibles
+   y abrir «Editar en lote», donde se aplican a todas la misma fecha, lugar
+   o salida / diario de campo. Se guarda con persist(), igual que ★ Favorito.
+   ====================================================================== */
+let selMode=false,selSet=new Set();
+function chkHTML(s){return selMode?'<span class="chk" aria-hidden="true">'+(selSet.has(s.id)?'✓':'')+'</span>':''}
+function selBar(){
+ selSet.forEach(id=>{if(!data.some(x=>x.id===id))selSet.delete(id)});
+ const n=selSet.size;
+ $('selbar').hidden=!selMode;
+ $('selcount').textContent=n+(n===1?' seleccionada':' seleccionadas');
+ $('selbulk').disabled=!n;
+}
+function selEnter(){selMode=true;selSet.clear();sel=null;document.body.classList.add('selmode');$('selb').textContent='✕ Salir de selección';render();selBar()}
+function selExit(){selMode=false;selSet.clear();document.body.classList.remove('selmode');$('selb').textContent='☑ Seleccionar';render();selBar()}
+function selMark(c){const on=selSet.has(c.dataset.id);c.classList.toggle('picked',on);const k=c.querySelector('.chk');if(k)k.textContent=on?'✓':''}
+// Devuelve true si el toque se usó para marcar/desmarcar (las tarjetas de niveles superiores siguen navegando)
+function selTap(e){
+ const c=e.target.closest('.card[data-id]');if(!c)return false;
+ const id=c.dataset.id;
+ if(selSet.has(id))selSet.delete(id);else selSet.add(id);
+ selMark(c);selBar();return true;
+}
+$('selb').onclick=()=>selMode?selExit():selEnter();
+$('selx').onclick=selExit;
+$('selall').onclick=()=>{
+ const cs=[...$('grid').querySelectorAll('.card[data-id]')];
+ const all=cs.length>0&&cs.every(c=>selSet.has(c.dataset.id));
+ cs.forEach(c=>{if(all)selSet.delete(c.dataset.id);else selSet.add(c.dataset.id);selMark(c)});
+ selBar();
+};
+function bToast(t){const d=document.createElement('div');d.className='btoast';d.setAttribute('role','status');d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),3200)}
+
+const dlgbulk=$('dlgbulk');
+$('selbulk').onclick=()=>{
+ const n=selSet.size;if(!n)return;
+ ['b-fecha','b-lugar','b-salida'].forEach(i=>{$(i).value=''});
+ $('b-over').checked=false;$('b-err').textContent='';
+ $('bulkn').textContent='Se aplicará a '+n+(n===1?' ficha seleccionada.':' fichas seleccionadas.');
+ $('b-ok').textContent='Aplicar a '+n+(n===1?' ficha':' fichas');
+ dlgbulk.showModal();
+};
+$('b-no').onclick=()=>dlgbulk.close();
+$('b-ok').onclick=async()=>{
+ const ch={c_fecha:$('b-fecha').value.trim(),c_lugar:$('b-lugar').value.trim(),c_salida:$('b-salida').value.trim()};
+ const ks=Object.keys(ch).filter(k=>ch[k]);
+ if(!ks.length){$('b-err').textContent='Escribe al menos un dato para aplicar.';return}
+ const over=$('b-over').checked;
+ $('b-ok').disabled=true;$('b-err').textContent='';
+ let n=0;
+ try{
+  for(const id of [...selSet]){
+   const sp=data.find(x=>x.id===id);if(!sp)continue;
+   const r=Object.assign({},sp.rasgos);let cambio=false;
+   ks.forEach(k=>{if((over||!String(r[k]||'').trim())&&r[k]!==ch[k]){r[k]=ch[k];cambio=true}});
+   if(!cambio)continue;
+   sp.rasgos=r;await persist(sp);n++;
+  }
+ }catch(err){
+  $('b-err').textContent='No se pudo guardar todo: '+(err&&err.message||err);
+  $('b-ok').disabled=false;render();return;
+ }
+ $('b-ok').disabled=false;
+ dlgbulk.close();selExit();
+ bToast(n?'✓ Se actualizaron '+n+(n===1?' ficha':' fichas'):'Sin cambios: las fichas ya tenían esos datos.');
+ if(flush.err)alert('Las fichas quedaron guardadas en el dispositivo, pero no se pudieron subir: '+flush.err);
+};
+
+/* ======================================================================
+   v3.3 · 6b) COMPARAR CON INATURALIST (foto del usuario ↔ foto de referencia)
+   ----------------------------------------------------------------------
+   Consulta la API pública /v1/taxa con el nombre científico (sin token) y
+   muestra lado a lado la foto que estás viendo en la galería y las fotos de
+   referencia de iNaturalist.
+   ====================================================================== */
+const INAT='https://api.inaturalist.org/v1/';
+const okUrl=u=>/^https:\/\//.test(u||'')?u:'';
+async function cmpInat(sp){
+ const box=$('cmpbox'),b=$('cmpb'),name=sci(sp);
+ if(!navigator.onLine){box.innerHTML='<p class="note">Sin conexión: la comparación necesita internet.</p>';return}
+ b.disabled=true;b.textContent='⏳ Buscando…';box.innerHTML='';
+ try{
+  const r=await fetch(INAT+'taxa?q='+encodeURIComponent(name)+'&per_page=5&locale=es');
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  const res=(await r.json()).results||[];
+  const t=res.find(x=>norm(x.name)===norm(name));
+  if(!t){
+   box.innerHTML='<p class="note">No encontré «'+esc(name)+'» en iNaturalist.'+(res[0]?' Lo más parecido es «'+esc(res[0].name)+'».':'')+' Revisa el nombre científico.</p>';
+   return;
+  }
+  // Fotos de referencia: las de la ficha del taxón; si fallan, la principal
+  let ph=[],com=t.preferred_common_name||'';
+  try{
+   const d=await fetch(INAT+'taxa/'+t.id+'?locale=es');
+   if(d.ok){const j=((await d.json()).results||[])[0]||{};ph=(j.taxon_photos||[]).map(x=>x.photo).filter(Boolean);com=com||j.preferred_common_name||''}
+  }catch(_){}
+  if(!ph.length&&t.default_photo)ph=[t.default_photo];
+  ph=ph.filter(p=>okUrl(p.medium_url)).slice(0,6);
+  // Foto del usuario: la que se ve ahora en la galería (respeta el filtro Flor/Hoja/Fruto)
+  const g=$('gal'),vis=g?[...g.children].filter(c=>!c.hidden):[];
+  const sl=vis[g&&g.clientWidth?Math.min(vis.length-1,Math.round(g.scrollLeft/g.clientWidth)):0]||vis[0],im=sl&&sl.querySelector('img');
+  const ref=im?(im.dataset.ref||im.getAttribute('src')||''):'';
+  const mine=ref?IMG(ref):'<span class="nophoto" aria-hidden="true">'+(EMO[sp.reino]||'🧬')+'</span>';
+  const m=ph[0];
+  box.innerHTML='<div class="cmp">'
+   +'<div class="cmpc"><b>Tu foto</b><div class="cmpi">'+mine+'</div></div>'
+   +'<div class="cmpc"><b>iNaturalist</b><div class="cmpi">'+(m?'<img id="cmpref" src="'+esc(okUrl(m.medium_url))+'" alt="Foto de referencia de '+esc(t.name)+'">':'<span aria-hidden="true">🌿</span>')+'</div>'
+   +(ph.length>1?'<div class="cmpth">'+ph.map(p=>'<img src="'+esc(okUrl(p.square_url||p.medium_url))+'" data-big="'+esc(okUrl(p.medium_url))+'" data-at="'+esc(p.attribution||'')+'" alt="Otra foto de referencia">').join('')+'</div>':'')
+   +'<small class="pcm" id="cmpat">'+(m&&m.attribution?'📷 '+esc(m.attribution):'')+'</small></div></div>'
+   +'<p class="hint"><i>'+esc(t.name)+'</i>'+(com?' · '+esc(com):'')+' · <a href="https://www.inaturalist.org/taxa/'+encodeURIComponent(t.id)+'" target="_blank" rel="noopener" style="color:var(--lnk)">Ver más fotos en iNaturalist ↗</a> · <button type="button" id="cmpx" class="lnkb">Cerrar</button></p>';
+  box.onclick=e=>{
+   const th=e.target.closest&&e.target.closest('.cmpth img');
+   if(th){$('cmpref').src=th.dataset.big;$('cmpat').textContent=th.dataset.at?'📷 '+th.dataset.at:''}
+   else if(e.target.id==='cmpx')box.innerHTML='';
+  };
+ }catch(err){
+  box.innerHTML='<p class="note">'+(err instanceof TypeError?'No pude conectar con iNaturalist (¿sin internet?).':'Error al consultar iNaturalist ('+esc(err&&err.message||err)+').')+'</p>';
+ }finally{b.disabled=false;b.textContent='🔍 Comparar con iNaturalist'}
+}
 
 /* ---------- Exportar ---------- */
 function saveFile(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
@@ -1762,6 +2224,7 @@ async function iaUse(i,btn){
   $('iares').innerHTML='';iaCands=[];
   iaMsg('✓ Rellenado con <i>'+esc(c.t.name)+'</i> ('+Math.round(c.s)+'% de confianza). La IA puede equivocarse: revisa los datos.'
    +(keep.length?' Se mantuvieron tus valores en: '+esc(keep.join(', '))+'.':''));
+  txSync();
  }catch(err){
   if(my!==iaSeq)return;
   fail(err instanceof TypeError?'No pude descargar la clasificación (¿sin internet?).':'Error al leer la clasificación ('+esc(err&&err.message||err)+').');
