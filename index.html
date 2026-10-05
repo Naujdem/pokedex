@@ -128,6 +128,11 @@ body.ficha-abierta .tools{display:none}
 @keyframes sh{to{background-position:-200% 0}}@media (prefers-reduced-motion:reduce){.sk *,.galw.ld .slide{animation:none}}
 .lin li.ans{font-weight:700;background:var(--soft)}
 .gbl{list-style:none;padding:0;margin:6px 0 0}.gbl li.ok{color:#3fb97a}.gbl li.no{color:var(--dng)}.gbl span{display:inline-block;min-width:80px;color:var(--mut)}
+.ia{margin:8px 0 0}
+.iac{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:8px 0;padding:12px;border:1px solid var(--line);background:var(--panel);border-radius:12px}
+.iac .it{flex:1;min-width:0}.iac .it b{font-style:italic}
+.iac .pc{font-size:.8rem;color:var(--mut)}
+.iac button{flex:none;min-height:44px}
 
 .sum{margin:10px 0 0;font-size:1rem;font-weight:600;line-height:1.7}.sum span+span:before{content:"·";margin:0 8px;color:var(--mut)}
 .acc{padding:0;margin:0 0 12px;border-radius:12px;background:var(--panel);overflow:hidden;transition:border-color .15s}
@@ -364,6 +369,7 @@ dialog label.filebtn:focus-within,.vh:focus-visible + *{outline:3px solid var(--
  <label for="f-foto" class="filebtn">📷 Elegir fotos</label><input type="file" id="f-foto" class="vh" accept="image/*" multiple>
  <p class="hint">Puedes elegir varias (hasta 8). La primera es la portada; toca ★ para cambiarla o ✕ para quitar una.</p>
  <div class="thumbs" id="fthumbs"></div>
+<button type="button" id="ia" style="margin-top:10px">🔍 Analizar con IA</button><div id="iares"></div><div class="hint" id="iamsg" role="status"></div>
 
  <div class="g2" id="fields"></div>
  <button type="button" id="gb" style="margin-top:10px">🔎 Verificar en GBIF</button><div class="note" id="gbres" role="status"></div>
@@ -1479,6 +1485,156 @@ $('gb').onclick=async()=>{
   o.innerHTML='<b>GBIF: '+esc(r.scientificName)+'</b> ('+(r.matchType==='EXACT'?'coincidencia exacta':'coincidencia aproximada')+')<ul class="gbl">'+['reino','filo','clase','orden','familia','genero','especie'].map(k=>{const m=$('f-'+k).value.trim(),t=x[k]||'—',ok=m.toLowerCase()===String(t).toLowerCase();return '<li class="'+(ok?'ok':'no')+'"><span>'+LN[LV.indexOf(k)]+'</span> '+esc(t)+' '+(ok?'✓':'≠ lo tuyo: '+esc(m||'vacío'))+'</li>'}).join('')+'</ul><p class="hint">GBIF puede usar otra clasificación que tu libro: compara, no corrijas a ciegas.</p>';
  }catch(err){o.textContent='No pude consultar GBIF (¿sin internet?).'}
 };
+/* =====================================================================
+   🔍 Reconocimiento de especie con IA (iNaturalist Computer Vision)
+   DÓNDE PEGAR: en el <script> principal, justo DESPUÉS del manejador de
+   «Verificar en GBIF» (el que termina con `};` tras $('gb').onclick=async()=>{...})
+   y ANTES del comentario que dice «Arranque sin conexión».
+
+   Usa lo que ya existe en tu app: $, esc, LV, LN, dlg, formFotos,
+   drawThumbs, getBlob, isLoc, isGd.
+   ===================================================================== */
+
+const IA_URL='https://api.inaturalist.org/v1/',IA_KEY='inat_jwt';
+let iaSeq=0,iaRef=null,iaCands=[];            // iaSeq: descarta respuestas "viejas"
+const IA_RANGO={species:'especie',subspecies:'subespecie',variety:'variedad',form:'forma',hybrid:'híbrido',genus:'género'};
+// iNaturalist → tus 5 reinos
+const IA_KR={Bacteria:'Monera',Archaea:'Monera',Protozoa:'Protista',Chromista:'Protista'};
+
+/* ---- Utilidades de interfaz ---- */
+function iaMsg(t,err){const m=$('iamsg');m.innerHTML=t;m.style.color=err?'var(--dng)':''}   // t = HTML ya escapado
+function iaBusy(on){const b=$('ia');b.disabled=on;b.textContent=on?'⏳ Analizando…':'🔍 Analizar con IA'}
+function iaClear(){iaSeq++;iaCands=[];iaRef=formFotos[0]||null;$('iares').innerHTML='';iaMsg('');iaBusy(false)}
+
+/* Si la foto de portada (la primera) cambia, o se abre/cierra el formulario, se limpia el panel.
+   Se engancha a drawThumbs() sin tocar su código. */
+const _drawThumbs=drawThumbs;
+drawThumbs=function(){_drawThumbs.apply(this,arguments);if((formFotos[0]||null)!==iaRef)iaClear()};
+dlg.addEventListener('close',iaClear);
+
+/* ---- Token (JWT) de iNaturalist ----
+   El endpoint score_image exige un JWT. Se pide una vez, se guarda en este
+   dispositivo y se vuelve a pedir si caduca (24 h) o da 401/403. */
+function iaToken(forzar){
+ let t='';try{t=localStorage.getItem(IA_KEY)||''}catch(_){}
+ if(t&&!forzar)return t;
+ const x=prompt('Para identificar con iNaturalist necesito tu token (JWT, caduca cada 24 h).\n\n1) Entra en inaturalist.org con tu cuenta.\n2) Abre https://www.inaturalist.org/users/api_token\n3) Copia el valor de "api_token" y pégalo aquí.')||'';
+ const m=x.match(/eyJ[\w-]+\.[\w-]+\.[\w-]+/);t=m?m[0]:'';
+ try{t?localStorage.setItem(IA_KEY,t):localStorage.removeItem(IA_KEY)}catch(_){}
+ return t;
+}
+
+/* ---- Foto → Blob (loc:/gd: desde IndexedDB/Drive; data:/http: con fetch) ---- */
+async function iaBlob(ref){return (isLoc(ref)||isGd(ref))?getBlob(ref):(await fetch(ref)).blob()}
+
+/* ---- Llamada a la API ---- */
+function iaPost(blob,tok){
+ const fd=new FormData();fd.append('image',blob,'foto.jpg');fd.append('locale','es');
+ return fetch(IA_URL+'computervision/score_image',{method:'POST',headers:{Authorization:tok},body:fd});
+}
+
+/* ---- Botón «Analizar con IA» ---- */
+$('ia').onclick=async()=>{
+ const my=++iaSeq,ref=formFotos[0];
+ $('iares').innerHTML='';iaMsg('');
+ if(!ref){iaMsg('Añade primero una foto para poder analizarla.',1);return}
+ if(!navigator.onLine){iaMsg('Sin conexión: el reconocimiento con IA necesita internet.',1);return}
+ iaRef=ref;iaBusy(true);            // solo el botón cambia: el resto del formulario sigue usable
+ try{
+  const blob=await iaBlob(ref);
+  if(!blob)throw new Error('FOTO');
+  let tok=iaToken(false);
+  if(!tok){if(my===iaSeq)iaMsg('Hace falta el token de iNaturalist para analizar.',1);return}
+  let r=await iaPost(blob,tok);
+  if(r.status===401||r.status===403){          // token caducado o inválido: pedir otro y reintentar una vez
+   tok=iaToken(true);
+   if(!tok){if(my===iaSeq)iaMsg('Token de iNaturalist no válido o caducado.',1);return}
+   r=await iaPost(blob,tok);
+   if(r.status===401||r.status===403){try{localStorage.removeItem(IA_KEY)}catch(_){}if(my===iaSeq)iaMsg('iNaturalist rechazó el token. Genera uno nuevo e inténtalo otra vez.',1);return}
+  }
+  if(my!==iaSeq)return;                        // el usuario cambió de foto mientras tanto
+  if(r.status===429){iaMsg('Demasiadas consultas a iNaturalist. Espera un momento y reintenta.',1);return}
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  const j=await r.json();
+  const rs=(j.results||[]).filter(x=>x&&x.taxon);
+  // Preferir especie (o inferior); si no hay ninguna, aceptar también género, etc.
+  const sp=rs.filter(x=>/^(species|subspecies|variety|form|hybrid)$/.test(x.taxon.rank));
+  iaCands=(sp.length?sp:rs).slice(0,3).map(x=>({t:x.taxon,s:Number(x.combined_score!=null?x.combined_score:x.vision_score)||0}));
+  if(!iaCands.length){iaMsg('No se pudo identificar con suficiente confianza. Prueba con otra foto o complétala a mano.');return}
+  $('iares').innerHTML='<div class="ia">'+iaCands.map((c,i)=>
+   '<div class="iac"><div class="it"><b>'+esc(c.t.name)+'</b><br><span>'+esc(c.t.preferred_common_name||'sin nombre común')+'</span>'
+   +'<div class="pc">'+Math.round(c.s)+'% de confianza · '+esc(IA_RANGO[c.t.rank]||c.t.rank||'')+'</div></div>'
+   +'<button type="button" class="primary" data-i="'+i+'">Usar este</button></div>').join('')
+   +'<p class="hint">La IA puede equivocarse: revisa siempre el resultado.</p></div>';
+ }catch(err){
+  if(my!==iaSeq)return;
+  iaMsg(err&&err.message==='FOTO'?'No pude leer la foto (¿está solo en Drive y no hay conexión?).'
+   :err instanceof TypeError?'No pude conectar con iNaturalist (¿sin internet o bloqueado por el navegador?).'
+   :'Error de la API de iNaturalist ('+esc(err&&err.message||err)+'). Inténtalo más tarde.',1);
+ }finally{if(my===iaSeq)iaBusy(false)}
+};
+
+/* ---- Botón «Usar este» ---- */
+$('iares').onclick=e=>{const b=e.target.closest&&e.target.closest('button[data-i]');if(b)iaUse(+b.dataset.i,b)};
+
+async function iaUse(i,btn){
+ const c=iaCands[i],my=iaSeq;if(!c)return;
+ const txt=btn.textContent;btn.disabled=true;btn.textContent='Cargando…';
+ const fail=m=>{btn.disabled=false;btn.textContent=txt;iaMsg(m,1)};
+ try{
+  // La jerarquía suele venir en taxon.ancestors; si no, se pide a /taxa/{id} (endpoint público).
+  let anc=c.t.ancestors,com=c.t.preferred_common_name||'';
+  if(!Array.isArray(anc)||!anc.length){
+   const r=await fetch(IA_URL+'taxa/'+c.t.id+'?locale=es');
+   if(!r.ok)throw new Error('HTTP '+r.status);
+   const d=((await r.json()).results||[])[0]||{};
+   anc=d.ancestors||[];com=com||d.preferred_common_name||'';
+  }
+  if(my!==iaSeq)return;
+  const m={};anc.forEach(a=>{m[a.rank]=a.name});m[c.t.rank]=c.t.name;
+  const kg=m.kingdom;
+  if(!kg)return fail('iNaturalist no devolvió el reino de este taxón; complétalo a mano.');
+  const reino=IA_KR[kg]||kg;
+  if(![...$('f-reino').options].some(o=>o.value===reino))return fail('iNaturalist lo clasifica como «'+esc(kg)+'», que tu app no tiene como reino.');
+  const dom=kg==='Archaea'?'Archaea':kg==='Bacteria'?'Bacteria':'Eukarya';
+  const T={filo:m.phylum,clase:m.class,orden:m.order,familia:m.family,genero:m.genus,especie:(m.species||'').split(' ')[1]||''};
+  const cm=com?com.charAt(0).toUpperCase()+com.slice(1):'';
+  // [id del campo, etiqueta, valor nuevo]; solo los que existen y traen valor
+  const F=LV.slice(2).map(k=>['f-'+k,LN[LV.indexOf(k)],T[k]])
+   .concat([['f-comun','Nombre común',cm],['r-subphylum','Subphylum',m.subphylum],['r-suborden','Suborden',m.suborder]])
+   .filter(f=>f[2]&&$(f[0]));
+
+  // ¿Hay datos distintos ya escritos? → preguntar si sobrescribir
+  const fresh=LV.slice(2).every(k=>!$('f-'+k).value.trim());      // formulario aún sin taxonomía: reino/dominio son valores por defecto
+  const dif=F.filter(f=>{const cur=$(f[0]).value.trim();return cur&&cur.toLowerCase()!==f[2].toLowerCase()});
+  const cambiaSel=!fresh&&($('f-reino').value!==reino||$('f-dominio').value!==dom);
+  let pisar=true;
+  if(dif.length||cambiaSel){
+   pisar=confirm('Hay campos que ya tienen datos distintos:\n'
+    +(cambiaSel?'· Dominio/Reino: '+$('f-dominio').value+' / '+$('f-reino').value+' → '+dom+' / '+reino+'\n':'')
+    +dif.map(f=>'· '+f[1]+': '+$(f[0]).value.trim()+' → '+f[2]).join('\n')
+    +'\n\nAceptar = sobrescribir todo\nCancelar = rellenar solo los campos vacíos');
+  }
+  // Reino/dominio (selects)
+  if(pisar||!cambiaSel){
+   $('f-reino').value=reino;
+   if($('f-reino').onchange)$('f-reino').onchange();   // reconstruye los campos específicos del reino (y ajusta dominio)
+   $('f-dominio').value=dom;                           // después, el dominio exacto (Bacteria/Archaea/Eukarya)
+  }
+  // Campos de texto
+  const keep=[];
+  F.forEach(f=>{const el=$(f[0]);if(!el.value.trim()||pisar)el.value=f[2];else if(el.value.trim().toLowerCase()!==f[2].toLowerCase())keep.push(f[1])});
+
+  // Cerrar panel y avisar
+  $('iares').innerHTML='';iaCands=[];
+  iaMsg('✓ Rellenado con <i>'+esc(c.t.name)+'</i> ('+Math.round(c.s)+'% de confianza). La IA puede equivocarse: revisa los datos.'
+   +(keep.length?' Se mantuvieron tus valores en: '+esc(keep.join(', '))+'.':''));
+ }catch(err){
+  if(my!==iaSeq)return;
+  fail(err instanceof TypeError?'No pude descargar la clasificación (¿sin internet?).':'Error al leer la clasificación ('+esc(err&&err.message||err)+').');
+ }
+}
+
 /* ---------- Arranque sin conexión ---------- */
 (async()=>{
  const m=await dbGet('meta','uid');
