@@ -239,6 +239,7 @@ main{display:contents}
 .tools input{background:#2C2C2E;border-color:#2C2C2E;color:#fff;border-radius:12px}
 .tools input::placeholder{color:var(--mut)}
 .tools button{border-radius:12px}
+.tools select{flex:0 0 auto;padding:9px 12px;border:1px solid #2C2C2E;border-radius:12px;background:#2C2C2E;color:#fff;font-size:1rem}
 .crumb{margin:0 0 14px}
 .grid{padding-bottom:40px;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:16px}
 #detail{padding-bottom:0}
@@ -395,6 +396,8 @@ body.selmode main{padding-bottom:90px}
 #net{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #net.clk{cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px}
 @media (max-width:480px){#net.ok{display:none}}
+#net.pf{background:#f59e0b;color:#1b1200;font-weight:700;padding:6px 12px;border-radius:14px;white-space:normal;text-align:center;line-height:1.25;text-decoration:none}
+#net.pf:before{display:none}
 
 </style>
 </head>
@@ -415,12 +418,12 @@ body.selmode main{padding-bottom:90px}
     <button id="gdb" hidden title="Conexión con tu Google Drive (donde se guardan las fotos)">☁ Drive</button>
     <button id="sync" title="Descargar fichas y fotos para usar sin conexión">⬇ Sincronizar</button>
     <hr>
-    <button id="exj">⬇ Exportar copia (JSON con fotos)</button>
+    <button id="exj" title="Exporta solo las fichas (nombre, taxonomía, características). Las fotos viven en tu Google Drive y en este dispositivo.">⬇ Exportar fichas (JSON)</button>
     <button id="exc">⬇ Exportar tabla (CSV, sin fotos)</button>
-    <button id="imj">⬆ Importar copia (JSON)</button><input type="file" id="imf" accept="application/json,.json" hidden>
+    <button id="imj">⬆ Importar fichas (JSON)</button><input type="file" id="imf" accept="application/json,.json" hidden>
     <hr>
     <button id="out" class="mout">Salir</button>
-    <div class="mfoot">Biotaxo dex · v3.6</div>
+    <div class="mfoot">Biotaxo dex · v4.0</div>
    </div>
   </div>
  </div>
@@ -436,7 +439,7 @@ body.selmode main{padding-bottom:90px}
 </section>
 <div class="app" id="app" hidden>
  <nav class="steps" id="steps" aria-label="Nivel taxonómico"></nav>
- <main><div class="tools"><input id="q" type="search" placeholder="Buscar: Felidae, mono, jaguar…" aria-label="Buscar"><div class="fchips" id="fchips" role="group" aria-label="Filtros rápidos"><button type="button" data-f="all">Todas</button><button type="button" data-f="fav">★ Favoritas</button><button type="button" data-f="inc" data-t="⚠ Incompletas">⚠ Incompletas</button><button type="button" data-f="foto" data-t="📷 Con foto">📷 Con foto</button><button type="button" data-f="sinfoto" data-t="🚫 Sin foto">🚫 Sin foto</button></div></div><p class="crumb" id="crumb"></p><div id="lvinfo"></div><div class="grid" id="grid"></div><section id="detail" hidden></section></main>
+ <main><div class="tools"><input id="q" type="search" placeholder="Buscar: Felidae, mono, jaguar…" aria-label="Buscar"><select id="sortsel" aria-label="Ordenar especies"><option value="rec">Más recientes</option><option value="az">Nombre (A-Z)</option><option value="reino">Reino</option></select><div class="fchips" id="fchips" role="group" aria-label="Filtros rápidos"><button type="button" data-f="all">Todas</button><button type="button" data-f="fav">★ Favoritas</button><button type="button" data-f="inc" data-t="⚠ Incompletas">⚠ Incompletas</button><button type="button" data-f="sinfoto" data-t="🚫 Sin foto">🚫 Sin foto</button></div></div><p class="crumb" id="crumb"></p><div id="lvinfo"></div><div class="grid" id="grid"></div><section id="detail" hidden></section></main>
 </div>
 
 <div id="selbar" hidden><b id="selcount"></b><button type="button" id="selall">Todas / ninguna</button><button type="button" class="primary" id="selbulk">Editar en lote</button><button type="button" id="selx">Cancelar</button></div>
@@ -465,6 +468,7 @@ body.selmode main{padding-bottom:90px}
 
  <div class="g2" id="fields"></div>
  <button type="button" id="gb" style="margin-top:10px">🔎 Verificar en GBIF</button><div class="note" id="gbres" role="status"></div>
+ <button type="button" id="fcmpb" style="margin-top:10px">🔍 Comparar con iNaturalist</button><div id="fcmpbox"></div>
  <label for="f-comun">Nombre común</label><input id="f-comun" placeholder="Jaguar">
 
  <details>
@@ -959,7 +963,15 @@ const tx=async(s,m,f)=>{const d=await idb;return new Promise((ok,ko)=>{const t=d
 const dbPut=(s,v,k)=>tx(s,'readwrite',o=>o.put(v,k)),dbGet=(s,k)=>tx(s,'readonly',o=>o.get(k)),dbAll=s=>tx(s,'readonly',o=>o.getAll()),dbDel=(s,k)=>tx(s,'readwrite',o=>o.delete(k)),dbClear=s=>tx(s,'readwrite',o=>o.clear());
 let off=false;
 const normDist=d=>({nativo:Array.isArray(d&&d.nativo)?d.nativo:[],invasor:Array.isArray(d&&d.invasor)?d.invasor:[]});
-const byC=a=>a.sort((x,y)=>String(x.creado||'').localeCompare(String(y.creado||'')));
+/* Orden de la lista (preferencia guardada en localStorage). byC se usa en cada carga, así el orden elegido se conserva. */
+const nom=s=>String(s.comun||sci(s));
+const SORTF={
+ rec:(x,y)=>String(y.creado||'').localeCompare(String(x.creado||'')),
+ az:(x,y)=>nom(x).localeCompare(nom(y),'es',{sensitivity:'base'}),
+ reino:(x,y)=>String(x.reino||'').localeCompare(String(y.reino||''),'es')||nom(x).localeCompare(nom(y),'es',{sensitivity:'base'})
+};
+let SORT=SORTF[ls('bdx_sort')]?ls('bdx_sort'):'rec';
+const byC=a=>a.sort(SORTF[SORT]);
 const toRow=o=>{const r={id:o.id,comun:o.comun,caracteristicas:o.car,rasgos:o.rasgos,distribucion:o.dist};if(o.creado)r.creado=o.creado;if(o.foto!==undefined)r.foto=o.foto;if(o.fotos)r.fotos=o.fotos;LV.forEach(k=>r[k]=o[k]);return r};
 /* Estado de sincronización en #net: sin conexión / sincronizando / pendientes (fichas y fotos loc:) / error de Drive / todo al día */
 const driveErr=()=>/Conecta tu Google Drive/.test(flush.err||'');
@@ -968,17 +980,19 @@ async function netUI(){
  const q=await dbAll('cola'),es=await dbAll('especies');
  if(my!==netUI.s)return;                                   // llegó una actualización más nueva
  const nf=q.length,np=es.reduce((a,o)=>a+(Array.isArray(o.fotos)?o.fotos.filter(isLoc).length:0),0),on=navigator.onLine,dr=driveErr();
+ const pf=on&&np>0&&!flush.busy;netUI.pf=pf;               // fotos loc: sin subir → aviso naranja que abre «Conectar Drive»
  const pp=[];if(nf)pp.push(nf+(nf===1?' ficha':' fichas'));if(np)pp.push(np+(np===1?' foto':' fotos'));
  const pend=pp.length?'⬆ '+pp.join(' · ')+(nf+np===1?' pendiente':' pendientes'):'';
  let t,c='';
  if(!on)t='Sin conexión'+(pend?' · '+pend:'');
  else if(flush.busy){t='⬆ Sincronizando…';c=' warn'}
+ else if(pf){t='📷 '+np+(np===1?' foto pendiente':' fotos pendientes')+' · Toca para conectar Drive';c=' pf'}
  else if(flush.err){t=dr?(pend?pend+' · ':'')+'☁ Conecta Drive para subir':(pend||'⚠ Sin sincronizar')+' · error al subir';c=' bad'}
  else if(pend){t=pend;c=' warn'}
  else{t='✓ Sincronizado';c=' on ok'}
- const n=$('net');n.textContent=t;n.hidden=false;n.className='sans cl'+c+(on&&dr&&!flush.busy?' clk':'');n.title=(on&&flush.err)||'';
+ const n=$('net');n.textContent=t;n.hidden=false;n.className='sans cl'+c+((on&&dr&&!flush.busy)||pf?' clk':'');n.title=(on&&flush.err)||'';
 }
-$('net').onclick=()=>{if(driveErr()&&navigator.onLine)$('gdb').click()};
+$('net').onclick=()=>{if((driveErr()||netUI.pf)&&navigator.onLine)$('gdb').click()};
 /* Guarda primero en el dispositivo y deja la ficha en la cola; sube si hay red */
 async function persist(o,trash){o.pend=true;await dbPut('especies',Object.assign({},o));const prev=await dbGet('cola',o.id),tr=[...((prev&&prev.trash)||[]),...(trash||[])];await dbPut('cola',{id:o.id,op:'upsert',ts:Date.now(),trash:tr});netUI();return flush()}
 async function flush(){
@@ -1213,7 +1227,8 @@ function fchipsUI(){
   if(XFP[k])b.textContent=b.dataset.t+' · '+data.filter(XFP[k]).length;
  });
 }
-function clearF(){Q='';onlyFav=false;XF='';$('q').value=''}
+let qT=0;   // temporizador del retraso de búsqueda (200 ms)
+function clearF(){clearTimeout(qT);Q='';onlyFav=false;XF='';$('q').value=''}
 function render(){
  const st=lvState(),d=path.length,atSp=st.next==='especie',cur=curLv(st),sp=data.find(x=>x.id===sel);
  $('steps').innerHTML=stepSeq(st).map((k,j)=>{
@@ -1249,9 +1264,9 @@ function render(){
  $('detail').innerHTML=ver
   ?'<button id="back">← Volver a las especies</button>'
    +'<div class="ficha">'+galHTML(sp)
-   +'<div class="finfo"><h2>'+esc(sp.comun||sci(sp))+'</h2><p class="sci">'+esc(sci(sp))+'</p>'
+   +'<div class="finfo"><h2>'+esc(sp.comun||sci(sp))+'</h2><p class="sci">'+esc(sci(sp))+' <button type="button" id="cpsci" title="Copiar nombre científico" aria-label="Copiar nombre científico" style="padding:2px 8px;font-size:.85rem;margin-left:6px;vertical-align:middle;border-radius:8px">📋</button></p>'
    +advLine(sp)+sumHTML(sp)+'<ol class="lin deskonly">'+linHTML(sp)+'</ol>'
-   +'<div class="btns"><button id="favb">'+(fav(sp)?'★ Favorito':'☆ Favorito')+'</button><button id="shr">↗ Compartir</button><button id="cmpb">🔍 Comparar con iNaturalist</button><button id="edit">Editar ficha</button><button class="danger" id="del">🗑 Eliminar</button></div><div id="cmpbox"></div></div>'
+   +'<div class="btns"><button id="favb">'+(fav(sp)?'★ Favorito':'☆ Favorito')+'</button><button id="shr">↗ Compartir</button><button id="edit">Editar ficha</button><button class="danger" id="del">🗑 Eliminar</button></div></div>'
    +'<div class="ficha-car">'+distBlock(sp)+rgHTML(sp)
    +'</div></div>'
   :'';
@@ -1307,7 +1322,7 @@ $('detail').onclick=e=>{
  if(e.target.id==='edit')openEdit(sp);
  if(e.target.id==='favb')toggleFav(sp);
  if(e.target.id==='shr')share(sp);
- if(e.target.id==='cmpb')cmpInat(sp);
+ if(e.target.id==='cpsci')copySci(sp);
  if(e.target.id==='del'){
   $('delerr').textContent='';
   $('deltxt').textContent='Vas a eliminar «'+(sp.comun||sci(sp))+'» ('+sci(sp)+').';
@@ -1435,6 +1450,7 @@ $('f-reino').onchange=()=>{
 
 $('add').onclick=()=>{
  editId=null;legOn=false;distLoad(null);
+ $('fcmpb').style.display='';$('fcmpbox').innerHTML='';
  $('dtitle').textContent='Añadir especie';$('save').textContent='Guardar especie';
  formFotos=[];formOrig=[];formNew=new Set();formSaved=false;formOrg={};drawThumbs();
  $('err').textContent='';$('f-foto').value='';$('f-comun').value='';$('f-car').value='';
@@ -1447,6 +1463,7 @@ $('add').onclick=()=>{
 };
 async function openEdit(sp){
  editId=sp.id;legOn=!!(sp.rasgos&&sp.rasgos.pl_tolerancia);distLoad(sp.dist);
+ $('fcmpb').style.display='none';$('fcmpbox').innerHTML='';
  formFotos=(await ensureFotos(sp)).slice();formOrig=formFotos.slice();formNew=new Set();formSaved=false;formOrg=orgLoad(sp,formFotos);drawThumbs();
  $('dtitle').textContent='Editar especie';$('save').textContent='Guardar cambios';
  $('err').textContent='';$('f-foto').value='';$('f-comun').value=sp.comun;$('f-car').value=sp.car;
@@ -1501,6 +1518,7 @@ $('save').onclick=async()=>{
  await persist(o,trash);
  $('save').disabled=false;
  if(editId)data=data.map(x=>x.id===editId?o:x);else data.push(o);
+ byC(data);
  path=chainFor(o);sel=o.id;dlg.close();render();
  bToast('✓ Especie guardada');
  if(flush.err&&!driveErr())alert('La ficha quedó guardada en el dispositivo, pero no se pudo subir: '+flush.err);
@@ -1861,8 +1879,9 @@ $('b-ok').onclick=async()=>{
    ====================================================================== */
 const INAT='https://api.inaturalist.org/v1/';
 const okUrl=u=>/^https:\/\//.test(u||'')?u:'';
-async function cmpInat(sp){
- const box=$('cmpbox'),b=$('cmpb'),name=sci(sp);
+async function cmpInat(sp,o){
+ o=o||{};
+ const box=o.box||$('cmpbox'),b=o.btn||$('cmpb'),name=o.name||sci(sp);
  if(!navigator.onLine){box.innerHTML='<p class="note">Sin conexión: la comparación necesita internet.</p>';return}
  b.disabled=true;b.textContent='⏳ Buscando…';box.innerHTML='';
  try{
@@ -1883,9 +1902,11 @@ async function cmpInat(sp){
   if(!ph.length&&t.default_photo)ph=[t.default_photo];
   ph=ph.filter(p=>okUrl(p.medium_url)).slice(0,6);
   // Foto del usuario: la que se ve ahora en la galería (respeta el filtro Flor/Hoja/Fruto)
-  const g=$('gal'),vis=g?[...g.children].filter(c=>!c.hidden):[];
+  let ref;
+  if(o.ref!==undefined)ref=o.ref;   // desde el formulario: la portada que estás añadiendo
+  else{const g=$('gal'),vis=g?[...g.children].filter(c=>!c.hidden):[];
   const sl=vis[g&&g.clientWidth?Math.min(vis.length-1,Math.round(g.scrollLeft/g.clientWidth)):0]||vis[0],im=sl&&sl.querySelector('img');
-  const ref=im?(im.dataset.ref||im.getAttribute('src')||''):'';
+  ref=im?(im.dataset.ref||im.getAttribute('src')||''):''}
   const mine=ref?IMG(ref):'<span class="nophoto" aria-hidden="true">'+(EMO[sp.reino]||'🧬')+'</span>';
   const m=ph[0];
   box.innerHTML='<div class="cmp">'
@@ -1904,14 +1925,96 @@ async function cmpInat(sp){
  }finally{b.disabled=false;b.textContent='🔍 Comparar con iNaturalist'}
 }
 
+$('fcmpb').onclick=()=>{
+ const g=$('f-genero').value.trim(),e=$('f-especie').value.trim(),box=$('fcmpbox');
+ if(!g||!e){box.innerHTML='<p class="note">Escribe el género y la especie para comparar.</p>';return}
+ cmpInat({reino:$('f-reino').value},{box,btn:$('fcmpb'),name:g+' '+e,ref:formFotos[0]||''});
+};
+
 /* ---------- Exportar ---------- */
 function saveFile(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
 const rasgosTxt=r=>Object.entries(r.rasgos||{}).map(([k,v])=>(LABEL[k]||k)+': '+v).join(' | ');
+/* v3.7 · «Exportar copia»: el JSON lleva solo las fichas (fotos como referencia gd:/loc:), un .txt dice qué foto va con qué especie
+   y, si quieres, un .zip con las fotos sueltas (ZIP sin compresión: los JPG ya vienen comprimidos, así no hace falta librería). */
+const CRCT=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+const crc32=u=>{let c=0xFFFFFFFF;for(let i=0;i<u.length;i++)c=CRCT[(c^u[i])&255]^(c>>>8);return (c^0xFFFFFFFF)>>>0};
+async function zipStore(files){
+ const enc=new TextEncoder(),parts=[],cd=[],now=new Date();let off=0;
+ const tm=(now.getHours()<<11)|(now.getMinutes()<<5)|(now.getSeconds()>>1),dt=((now.getFullYear()-1980)<<9)|((now.getMonth()+1)<<5)|now.getDate();
+ for(const f of files){
+  const nm=enc.encode(f.name),sz=f.blob.size,crc=crc32(new Uint8Array(await f.blob.arrayBuffer()));
+  const h=new DataView(new ArrayBuffer(30));
+  h.setUint32(0,0x04034b50,true);h.setUint16(4,20,true);h.setUint16(6,0x0800,true);h.setUint16(10,tm,true);h.setUint16(12,dt,true);
+  h.setUint32(14,crc,true);h.setUint32(18,sz,true);h.setUint32(22,sz,true);h.setUint16(26,nm.length,true);
+  parts.push(h.buffer,nm,f.blob);
+  const c=new DataView(new ArrayBuffer(46));
+  c.setUint32(0,0x02014b50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);c.setUint16(8,0x0800,true);c.setUint16(12,tm,true);c.setUint16(14,dt,true);
+  c.setUint32(16,crc,true);c.setUint32(20,sz,true);c.setUint32(24,sz,true);c.setUint16(28,nm.length,true);c.setUint32(42,off,true);
+  cd.push(c.buffer,nm);
+  off+=30+nm.length+sz;
+ }
+ const cds=cd.reduce((a,x)=>a+x.byteLength,0),e=new DataView(new ArrayBuffer(22));
+ e.setUint32(0,0x06054b50,true);e.setUint16(8,files.length,true);e.setUint16(10,files.length,true);e.setUint32(12,cds,true);e.setUint32(16,off,true);
+ return new Blob(parts.concat(cd,[e.buffer]),{type:'application/zip'});
+}
+const slug=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^\w-]+/g,'_').replace(/^_+|_+$/g,'');
+const fotoName=(i,sp,k)=>String(i+1).padStart(3,'0')+'_'+slug(sci(sp))+'_'+(k+1)+'.jpg';   // nombre dentro del .zip (y en el .txt)
+function fotosTxt(d){
+ const L=['LISTADO DE FOTOS · Biotaxo dex','Exportado: '+d,'',
+  'El JSON de la copia no lleva las imágenes: cada ficha trae solo la referencia de sus fotos.',
+  '  gd:xxxx  = foto guardada en tu Google Drive (carpeta «'+GFOLDER+'»)',
+  '  loc:xxxx = foto guardada solo en este dispositivo (aún sin subir a Drive)',
+  'Después de la flecha va el nombre del archivo dentro del .zip de fotos (si lo descargaste).','',''];
+ data.forEach((sp,i)=>{
+  const fs=sp.fotos||[];
+  L.push((i+1)+'. '+sci(sp)+(sp.comun?' ('+sp.comun+')':'')+' · id '+sp.id+' · '+fs.length+(fs.length===1?' foto':' fotos'));
+  fs.forEach((r,k)=>L.push('     '+(k+1)+'. '+(/^data:/.test(r)?'(incrustada en el JSON)':r)+'  →  '+fotoName(i,sp,k)));
+  if(!fs.length)L.push('     (sin fotos)');
+  L.push('');
+ });
+ return '\uFEFF'+L.join('\r\n');
+}
 async function exportData(kind){
  if(!data.length){alert('Aún no hay especies para exportar.');return}
- if(kind==='json')await Promise.all(data.map(ensureFotos));
+ if(kind==='json'){
+  await Promise.all(data.map(ensureFotos));
+  const nLoc=data.filter(sp=>(sp.fotos||[]).some(isLoc)).length,nInc=data.filter(sp=>(sp.fotos||[]).some(f=>/^data:/.test(f))).length;
+  const aLoc=nLoc?'('+nLoc+(nLoc===1?' ficha tiene':' fichas tienen')+' fotos aún sin subir a Drive) ':'';
+  const aInc=nInc?' ('+nInc+(nInc===1?' ficha tiene':' fichas tienen')+' fotos incrustadas de versiones anteriores; el archivo será más pesado)':'';
+  if(!confirm(aLoc+'Se exportarán solo las fichas. Las fotos NO van dentro del archivo: viven en tu Google Drive y en este dispositivo. ¿Continuar?'+aInc))return;
+ }
  const d=new Date().toISOString().slice(0,10);
- if(kind==='json'){const out=[];for(const sp of data){const c=Object.assign({},sp);c.fotos=await Promise.all((sp.fotos||[]).map(toDataURL));c.foto=c.fotos[0]||'';out.push(c)}return saveFile('pokedex-taxonomica-'+d+'.json',JSON.stringify(out,null,1),'application/json')}
+ if(kind==='json'){
+  // 1) JSON: solo fichas; las fotos van como referencia (gd:… / loc:…), nunca como data URL nueva
+  const out=data.map(sp=>{const c=Object.assign({},sp);c.fotos=(sp.fotos||[]).slice();c.foto=c.fotos[0]||'';return c});
+  const pkg={_tipo:'biotaxo-dex-fichas',_version:'4.0',_nota:"Este archivo contiene solo las fichas. Las fotos referenciadas con 'gd:' viven en el Google Drive del usuario y solo se resuelven con su cuenta. Las 'loc:' solo existen en el dispositivo original y NO se pueden restaurar desde este archivo.",_fecha:new Date().toISOString(),especies:out};
+  saveFile('pokedex-taxonomica-'+d+'.json',JSON.stringify(pkg,null,1),'application/json');
+  // 2) listado de qué foto va con qué especie
+  await new Promise(r=>setTimeout(r,400));   // pausa corta: algunos navegadores bloquean descargas pegadas
+  saveFile('pokedex-taxonomica-'+d+'-fotos.txt',fotosTxt(d),'text/plain');
+  // 3) ZIP opcional con las fotos sueltas
+  const tot=data.reduce((a,s)=>a+(s.fotos||[]).length,0);
+  if(!tot||!confirm(tot>30?'Se van a empaquetar '+tot+' fotos. Puede tardar varios minutos si no están en el dispositivo. ¿Continuar?':'Se guardaron el JSON (solo fichas) y el listado de fotos.\n\n¿Quieres también un ZIP con las '+tot+(tot===1?' foto':' fotos')+' sueltas? Puede tardar si hay muchas: las que no estén en el dispositivo se bajan de Drive.'))return;
+  const tp=document.createElement('div');tp.className='btoast';tp.setAttribute('role','status');document.body.appendChild(tp);
+  const files=[];let n=0,fail=0,noTok=false;
+  try{
+   for(let i=0;i<data.length;i++)for(let k=0;k<(data[i].fotos||[]).length;k++){
+    const r=data[i].fotos[k];tp.textContent='📦 Preparando ZIP… '+(++n)+' / '+tot;
+    try{
+     let b=null;
+     if(/^data:/.test(r))b=await (await fetch(r)).blob();
+     else if(isLoc(r)||(isGd(r)&&!noTok))b=await getBlob(r);
+     if(b)files.push({name:fotoName(i,data[i],k),blob:b});else fail++;
+    }catch(e){fail++;if(e&&e.message==='NOTOKEN')noTok=true}
+   }
+   if(!files.length){alert('No se pudo incluir ninguna foto en el ZIP.'+(noTok?' Conecta tu Drive («☁ Conectar Drive») y vuelve a intentarlo.':''));return}
+   tp.textContent='📦 Armando el ZIP…';
+   saveFile('pokedex-taxonomica-'+d+'-fotos.zip',await zipStore(files),'application/zip');
+   if(fail)alert('El ZIP quedó con '+files.length+' fotos. '+fail+(fail===1?' no se pudo':' no se pudieron')+' incluir'+(noTok?' (Drive sin conectar: toca «☁ Conectar Drive» y repite)':'')+'. Siguen listadas en el .txt.');
+  }catch(e){alert('No se pudo crear el ZIP: '+(e&&e.message||e))}
+  finally{tp.remove()}
+  return;
+ }
  const cols=LV.concat(['comun','car','rasgos']),q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
  saveFile('pokedex-taxonomica-'+d+'.csv','﻿'+[cols.map(q).join(',')].concat(data.map(r=>cols.map(c=>q(c==='rasgos'?rasgosTxt(r):r[c])).join(','))).join('\r\n'),'text/csv');
 }
@@ -1922,18 +2025,27 @@ async function importData(file){
  const b=$('imj'),txt0=b.textContent;
  try{
   let arr=JSON.parse(await file.text());
+  if(arr&&!Array.isArray(arr)&&Array.isArray(arr.especies))arr=arr.especies;   // formato nuevo: {_tipo,…,especies:[…]}
   if(!Array.isArray(arr))arr=[arr];
   const valid=[];let bad=0;
   for(const x of arr){
    if(!x||typeof x!=='object'||!LV.every(k=>typeof x[k]==='string'&&x[k].trim())||!(REINOS.Bacteria.concat(REINOS.Eukarya).includes(x.reino))){bad++;continue}
    valid.push(x);
   }
-  if(!valid.length){alert('El archivo no tiene fichas válidas. Usa un JSON creado con «Copia completa».');return}
+  if(!valid.length){alert('El archivo no tiene fichas válidas. Usa un JSON creado con «Exportar fichas (JSON)».');return}
   const have=new Set(data.map(s=>s.id)),dups=valid.filter(x=>x.id&&have.has(x.id)).length;
   let over=false;
   if(dups)over=confirm(dups+' de '+valid.length+' fichas ya existen en tu colección.\n\nAceptar = sobrescribirlas con las del archivo.\nCancelar = omitirlas y añadir solo las nuevas.');
   const todo=valid.filter(x=>over||!(x.id&&have.has(x.id)));
   if(!todo.length){alert('No hay fichas nuevas que importar.');return}
+  const fotosDe=x=>(Array.isArray(x.fotos)?x.fotos:(x.foto?[x.foto]:[])).filter(f=>typeof f==='string');
+  const nLoc=todo.filter(x=>fotosDe(x).some(f=>/^loc:/.test(f))).length,nGd=todo.filter(x=>fotosDe(x).some(f=>/^gd:/.test(f))).length;
+  if(nLoc||nGd){
+   const ln=[];
+   if(nLoc)ln.push('- '+nLoc+(nLoc===1?' ficha apunta':' fichas apuntan')+' a fotos guardadas solo en el dispositivo original. Esas fotos no se podrán recuperar.');
+   if(nGd)ln.push('- '+nGd+(nGd===1?' ficha apunta':' fichas apuntan')+' a fotos en un Google Drive. Solo se verán si es tu misma cuenta.');
+   if(!confirm('Aviso sobre las fotos:\n'+ln.join('\n')+'\n¿Importar de todos modos?'))return;
+  }
   if(!confirm('Se importarán '+todo.length+' fichas. ¿Continuar?'))return;
   b.disabled=true;let n=0;
   for(const x of todo){
@@ -2025,11 +2137,19 @@ async function toggleFav(sp){
  sp.rasgos=r;await persist(sp);
  const b=$('favb');if(b&&sel===sp.id)b.textContent=fav(sp)?'★ Favorito':'☆ Favorito';
 }
+async function copySci(sp){
+ const t=sci(sp);
+ try{await navigator.clipboard.writeText(t)}
+ catch(_){try{const a=document.createElement('textarea');a.value=t;a.style.cssText='position:fixed;opacity:0';document.body.appendChild(a);a.select();const ok=document.execCommand('copy');a.remove();if(!ok)throw 0}catch(__){bToast('No se pudo copiar');return}}
+ bToast('Copiado');
+}
 async function share(sp){
  const t=(sp.comun?sp.comun+' — ':'')+sci(sp)+'\n'+LV.slice(0,7).map((k,i)=>LN[i]+': '+sp[k]).join('\n');
  try{if(navigator.share)await navigator.share({title:sci(sp),text:t});else{await navigator.clipboard.writeText(t);alert('Copiado al portapapeles.')}}catch(e){}
 }
-$('q').oninput=e=>{Q=e.target.value.trim();sel=null;render()};
+$('sortsel').value=SORT;
+$('sortsel').onchange=e=>{SORT=SORTF[e.target.value]?e.target.value:'rec';lsSet('bdx_sort',SORT);byC(data);render()};
+$('q').oninput=()=>{clearTimeout(qT);qT=setTimeout(()=>{Q=$('q').value.trim();sel=null;render()},200)};   // busca al dejar de escribir 200 ms
 function favToggle(){onlyFav=!onlyFav;sel=null;render()}
 $('fchips').onclick=e=>{
  const b=e.target.closest('button[data-f]');if(!b)return;const k=b.dataset.f;
