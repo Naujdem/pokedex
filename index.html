@@ -467,7 +467,9 @@ body.selmode main{padding-bottom:90px}
 <p class="hint" id="exifmsg" role="status"></p>
 <p class="hint fh" id="fotohint" role="status" hidden>📷 Sugerencia: añade al menos una foto; te ayuda a reconocer la especie y se verá en la tarjeta.</p>
 <button type="button" id="ia" style="margin-top:10px">🔍 Analizar con IA</button><div id="iares"></div><div class="hint" id="iamsg" role="status"></div>
-<button type="button" id="fcmpb" style="margin-top:10px">🔍 Comparar con iNaturalist</button><div id="fcmpbox"></div>
+<button type="button" id="fcmpb" style="margin-top:10px">🔍 Comparar especie</button>
+<button type="button" id="fcmpg" style="margin-top:10px">🔍 Comparar género</button>
+<div id="fcmpbox"></div>
 
  <div class="g2" id="fields"></div>
  <button type="button" id="gb" style="margin-top:10px">🔎 Verificar en GBIF</button><div class="note" id="gbres" role="status"></div>
@@ -553,7 +555,7 @@ const UNIV=[
  S('uicn','Estado de conservación (UICN)',['Preocupación Menor (LC)','Casi Amenazado (NT)','Vulnerable (VU)','En Peligro (EN)','En Peligro Crítico (CR)','Extinto en Estado Silvestre (EW)','Extinto (EX)','Datos Insuficientes (DD)']),
  Object.assign(S('origen','Origen / Endemismo',['Exótico / Introducido','Endémico']),{noOtra:1}),
  Object.assign(T('origen_lugar','Lugar de endemismo / introducción','Ej: Andes colombianos, Madagascar…'),{dep:1,lab:r=>r.origen==='Endémico'?'Endémico de':'Introducido desde'}),
- M('habitat','Hábitat',[['🏙️','Ciudades'],['🌲','Bosques'],['🍂','Bosques secos tropicales'],['🌵','Matorrales'],['🌾','Sabana'],['🏜️','Desierto'],['🦆','Humedal'],['🏖️','Costa'],['⛰️','Montaña'],['🌴','Selva'],['🛣️','Bordes de caminos'],['🚜','Antrópico / agroecosistemas']]),
+ M('habitat','Hábitat',[['🏙️','Ciudades'],['🌲','Bosques'],['🌴','Bosque húmedo tropical'],['🏔️','Bosques andinos de montaña'],['🍂','Bosques secos tropicales'],['🌵','Matorrales'],['🌾','Sabana'],['🏜️','Desierto'],['🦆','Humedal'],['🏖️','Costa'],['⛰️','Montaña'],['🕳️','Cuevas'],['🌴','Selva'],['🛣️','Bordes de caminos'],['🚜','Antrópico / agroecosistemas']]),
  M('peligro','Nivel de peligrosidad / toxicidad',[['🕊️','Inofensivo'],['☠️','Venenoso'],['🐍','Ponzoñoso'],['⚠️','Irritante'],['🦠','Patógeno']],'',{ex:'Inofensivo'}),
  T('tamano','Tamaño / dimensiones','Longitud, altura, envergadura, diámetro…'),
  T('ciclo','Ciclo de vida','Anual, bienal, perenne; fases principales…'),
@@ -584,7 +586,22 @@ const ESP={
   S('an_estrategia','Estrategia reproductiva',['K estratega','r estratega']),
   Object.assign(S('an_dimorfismo','Dimorfismo sexual',['Presente','Ausente']),{noOtra:1}),
   Object.assign(A('an_dimorfismo_dif','Diferencia entre sexos','Ej: el macho es más grande y colorido'),{dep:1}),
-  T('an_nido','Tipo de nido / refugio')
+  T('an_nido','Tipo de nido / refugio'),
+  M('anat_grupo','Grupo de artrópodo (si aplica)',[['🦗','Insecto'],['🕷️','Arácnido'],['🦂','Escorpión'],['🦀','Crustáceo'],['🪱','Miriápodo'],['🦐','Otro artrópodo']],'',{ex:1}),
+  M('anat_patas','Número de patas',[['🐍','Sin patas'],['🦩','2 patas'],['🐆','4 patas'],['🐜','6 patas'],['🕷️','8 patas'],['🦐','10 patas'],['🐛','Muchas']],'',{ex:'Sin patas'}),
+  M('anat_alas','Tipo de alas',[['🚫','Sin alas'],['🦋','Un par'],['🐝','Dos pares'],['🪲','Élitros'],['🦟','Halterios']],'',{ex:'Sin alas'}),
+  M('anat_esqueleto','Tipo de esqueleto',[['🦈','Cartilaginoso'],['🦴','Óseo'],['💧','Hidrostático'],['🪲','Quitinoso'],['🪱','Sin esqueleto']],'',{ex:'Sin esqueleto'}),
+  M('anat_cobertura','Cobertura corporal',[['🐻','Pelo'],['🪶','Plumas'],['🐍','Escamas'],['🐸','Piel desnuda'],['🦗','Quitina'],['🐚','Concha'],['🦔','Espinas']]),
+  M('anat_segmentacion','Segmentación del cuerpo',[['⚪','No segmentado'],['🐜','Cabeza-tórax-abdomen'],['🕷️','Cefalotórax-abdomen'],['🪱','Anillos'],['❓','Otros']],'',{ex:1}),
+  M('anat_bucal','Tipo de aparato bucal',[['🦗','Masticador'],['🦋','Chupador'],['🦟','Picador-suctor'],['🐝','Lamedor'],['🦪','Filtrador'],['🪰','Espongívoro']],'',{ex:1}),
+  M('anat_antenas','Número de antenas',[['🚫','Sin antenas'],['🐜','Un par'],['🦐','Dos pares']],'',{ex:'Sin antenas'}),
+  M('anat_fecundacion','Tipo de fecundación',[['🌊','Externa'],['🔒','Interna']],'',{ex:1}),
+  Object.assign(M('ar_grupo','Tipo de arácnido',[['🕷️','Araña'],['🦂','Escorpión'],['🕸️','Opilión'],['🦟','Ácaro'],['🦀','Garrapata']],'',{ex:1}),{dep:1}),
+  Object.assign(M('ar_ojos','Número de ojos',[['2','2 ojos'],['4','4 ojos'],['6','6 ojos'],['8','8 ojos'],['0','Sin ojos']],'',{ex:1}),{dep:1}),
+  Object.assign(M('ar_hileras','Hileras (glándulas de seda)',[['✅','Presentes'],['🚫','Ausentes']],'',{ex:'Ausentes'}),{dep:1}),
+  Object.assign(M('ar_telar','Tipo de telaraña',[['🚫','Ninguna'],['⭕','Orbicular'],['🌀','Irregular'],['🕳️','Tubular'],['🌪️','Embudo']],'',{ex:'Ninguna'}),{dep:1}),
+  Object.assign(M('ar_aguijon','Aguijón',[['✅','Presente'],['🚫','Ausente']],'',{ex:'Ausente'}),{dep:1}),
+  Object.assign(M('ar_resp','Tipo de respiración',[['📖','Pulmones en libro'],['🫁','Tráqueas'],['🔀','Ambos']],'',{ex:1}),{dep:1})
  ],
  Plantae:[
   S('pl_uso','Toxicidad / uso humano',['Medicinal','Comestible','Ornamental','Tóxica / Venenosa','Industrial','Maderable']),
@@ -1242,9 +1259,25 @@ function fillRasgos(obj){
  depAll();
 }
 /* Campos que aparecen según otra respuesta: lugar de origen (si hay origen) y diferencia entre sexos (si hay dimorfismo) */
-const DEPS=[['origen_lugar','origen',v=>!!v],['an_dimorfismo_dif','an_dimorfismo',v=>v==='Presente']];
+const ES_ARAC=v=>String(v||'').split(', ').includes('Arácnido');
+const DEPS=[['origen_lugar','origen',v=>!!v],['an_dimorfismo_dif','an_dimorfismo',v=>v==='Presente']]
+ .concat(['ar_grupo','ar_ojos','ar_hileras','ar_telar','ar_aguijon','ar_resp'].map(k=>[k,'anat_grupo',ES_ARAC]));
+/* Valor actual de un campo: sirve para listas, textos y cuadros (selección múltiple) */
+function depVal(el){
+ if(!el)return '';
+ if(el.dataset.m){
+  const on=[...el.querySelectorAll('.chip.on:not(.otra)')].map(b=>b.dataset.v),o=el.querySelector('.chip.otra.on')?$(el.id+'-o').value.trim():'';
+  return on.concat(o?[o]:[]).join(', ');
+ }
+ return el.value;
+}
+function depClear(x,k){
+ if(!x)return;
+ if(x.dataset.m){x.querySelectorAll('.chip').forEach(b=>setChip(b,false));const o=$('r-'+k+'-o');if(o){o.hidden=true;o.value=''}}
+ else{x.value='';const o=$('r-'+k+'-o');if(o){o.hidden=true;o.value=''}}
+}
 function depAll(){
- DEPS.forEach(([k,on,when])=>{const s=$('r-'+on),w=$('w-'+k);if(!s||!w)return;const show=when(s.value);w.hidden=!show;if(!show){const x=$('r-'+k);if(x)x.value=''}});
+ DEPS.forEach(([k,on,when])=>{const s=$('r-'+on),w=$('w-'+k);if(!s||!w)return;const show=when(depVal(s));w.hidden=!show;if(!show)depClear($('r-'+k),k)});
  const s=$('r-origen'),l=$('l-origen_lugar');if(s&&l)l.textContent=s.value==='Endémico'?'¿De dónde es endémico?':s.value?'¿De dónde fue introducido?':'';
 }
 /* Fichas antiguas: «Nativo» / «Invasor» ya no existen (lo maneja el mapa); los textos de endemismo se conservan en el campo de lugar */
@@ -1267,9 +1300,15 @@ function legacy(r){
 dlg.addEventListener('click',e=>{
  const b=e.target.closest&&e.target.closest('.chip');if(!b)return;
  const box=b.parentElement,f=FD[box.dataset.k],on=!b.classList.contains('on');
+ const isO=b.classList.contains('otra'),o=$(box.id+'-o');
+ if(on&&f&&f.ex===1){   // ex:1 → solo se permite una opción
+  box.querySelectorAll('.chip.on').forEach(x=>{if(x!==b)setChip(x,false)});
+  if(!isO&&o){o.hidden=true;o.value=''}
+ }
  setChip(b,on);
- if(b.classList.contains('otra')){const o=$(box.id+'-o');o.hidden=!on;if(on)o.focus();return}
- if(on&&f&&f.ex)box.querySelectorAll('.chip.on:not(.otra)').forEach(x=>{if(x!==b&&((b.dataset.v===f.ex)!==(x.dataset.v===f.ex)))setChip(x,false)});
+ if(isO){o.hidden=!on;if(on)o.focus();depAll();return}
+ if(on&&f&&f.ex&&f.ex!==1)box.querySelectorAll('.chip.on:not(.otra)').forEach(x=>{if(x!==b&&((b.dataset.v===f.ex)!==(x.dataset.v===f.ex)))setChip(x,false)});
+ depAll();
 });
 dlg.addEventListener('change',e=>{
  const el=e.target;
@@ -1813,7 +1852,7 @@ function caracteristicasTxt(){
   if(f.t==='s'||f.t==='m'){
    v=(f.opts||[]).join(', ');
    if(!f.noOtra)v+=(v?', ':'')+'u otra (texto libre)';
-   if(f.t==='m')v+=' · se pueden marcar varias'+(f.ex?' («'+f.ex+'» es exclusiva)':'');
+   if(f.t==='m')v+=' · se pueden marcar varias'+(f.ex===1?' · solo se puede marcar una':f.ex?' («'+f.ex+'» es exclusiva)':'');
   }else v=(f.t==='a'?'texto largo':'texto libre')+(f.ph?' · '+f.ph:'');
   return (f.dep?'   ↳ ':'• ')+f.label+(f.dep?' (aparece según el campo anterior)':'')+': '+v;
  };

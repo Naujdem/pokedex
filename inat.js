@@ -347,10 +347,19 @@ async function cmpInat(sp,o){
  }finally{b.disabled=false;b.textContent='🔍 Comparar con iNaturalist'}
 }
 
-$('fcmpb').onclick=()=>{
+$('fcmpb').onclick=async()=>{
  const g=$('f-genero').value.trim(),e=$('f-especie').value.trim(),box=$('fcmpbox');
  if(!g||!e){box.innerHTML='<p class="note">Escribe el género y la especie para comparar.</p>';return}
- cmpInat({reino:$('f-reino').value},{box,btn:$('fcmpb'),name:g+' '+e,ref:formFotos[0]||''});
+ await cmpInat({reino:$('f-reino').value},{box,btn:$('fcmpb'),name:g+' '+e,ref:formFotos[0]||''});
+ $('fcmpb').textContent='🔍 Comparar especie';   // cmpInat deja el texto antiguo al terminar: se corrige aquí
+};
+
+/* Comparar a nivel de género (solo usa el campo «Género») */
+$('fcmpg').onclick=async()=>{
+ const g=$('f-genero').value.trim(),box=$('fcmpbox');
+ if(!g){box.innerHTML='<p class="note">Escribe el género primero.</p>';return}
+ await cmpInat({reino:$('f-reino').value},{box,btn:$('fcmpg'),name:g,ref:formFotos[0]||''});
+ $('fcmpg').textContent='🔍 Comparar género';
 };
 
 /* ======================================================================
