@@ -335,12 +335,13 @@ async function cmpInat(sp,o){
    +'<div class="cmpc"><b>Tu foto</b><div class="cmpi">'+mine+'</div></div>'
    +'<div class="cmpc"><b>iNaturalist</b><div class="cmpi">'+(m?'<img id="cmpref" src="'+esc(okUrl(m.medium_url))+'" alt="Foto de referencia de '+esc(t.name)+'">':'<span aria-hidden="true">🌿</span>')+'</div>'
    +(ph.length>1?'<div class="cmpth">'+ph.map(p=>'<img src="'+esc(okUrl(p.square_url||p.medium_url))+'" data-big="'+esc(okUrl(p.medium_url))+'" data-at="'+esc(p.attribution||'')+'" alt="Otra foto de referencia">').join('')+'</div>':'')
-   +'<small class="pcm" id="cmpat">'+(m&&m.attribution?'📷 '+esc(m.attribution):'')+'</small></div></div>'
+   +'<small class="pcm" id="cmpat">'+(m&&m.attribution?'📷 '+esc(m.attribution):'')+'</small>'+(m?'<br><button type="button" id="cmpuse" style="margin-top:6px">📥 Usar esta foto</button>':'')+'</div></div><p class="hint" id="cmpmsg" role="status"></p>'
    +'<p class="hint"><i>'+esc(t.name)+'</i>'+(com?' · '+esc(com):'')+' · <a href="https://www.inaturalist.org/taxa/'+encodeURIComponent(t.id)+'" target="_blank" rel="noopener" style="color:var(--lnk)">Ver más fotos en iNaturalist ↗</a> · <button type="button" id="cmpx" class="lnkb">Cerrar</button></p>';
   box.onclick=e=>{
    const th=e.target.closest&&e.target.closest('.cmpth img');
    if(th){$('cmpref').src=th.dataset.big;$('cmpat').textContent=th.dataset.at?'📷 '+th.dataset.at:''}
    else if(e.target.id==='cmpx')box.innerHTML='';
+   else if(e.target.id==='cmpuse'){const im=$('cmpref');if(im)cmpFoto(im.src.replace(/\/(medium|square)\./,'/large.'),($('cmpat').textContent||'').replace(/^📷\s*/,''),$('cmpmsg'),e.target)}
   };
  }catch(err){
   box.innerHTML='<p class="note">'+(err instanceof TypeError?'No pude conectar con iNaturalist (¿sin internet?).':'Error al consultar iNaturalist ('+esc(err&&err.message||err)+').')+'</p>';
@@ -354,12 +355,79 @@ $('fcmpb').onclick=async()=>{
  $('fcmpb').textContent='🔍 Comparar especie';   // cmpInat deja el texto antiguo al terminar: se corrige aquí
 };
 
+/* ---- v4.6 · Usar una foto de iNaturalist como foto de la ficha (copia el patrón de orgPick) ---- */
+async function cmpFoto(url,at,msg,btn){
+ if(!msg)return;
+ if(formFotos.length>=MAXF){msg.textContent='Máximo '+MAXF+' fotos por especie.';return}
+ btn.disabled=true;msg.textContent='⏳ Descargando foto…';
+ try{
+  const r=await fetch(url);if(!r.ok)throw new Error(r.status);
+  const b=await r.blob(),f=new File([b],'inat.jpg',{type:b.type||'image/jpeg'});
+  const ref=GDRIVE_ON?await addLocal(f):await resize(f);
+  if(!ref)throw new Error('imagen');
+  formFotos.push(ref);
+  formCred[ref]=(String(at||'iNaturalist').replace(/[|\n\r]+/g,' ').trim()+' · vía iNaturalist');
+  drawThumbs();
+  msg.textContent='✓ Foto añadida con su crédito.';
+ }catch(err){
+  btn.disabled=false;
+  msg.innerHTML='No pude descargar esa imagen (iNaturalist puede bloquearla desde el navegador). Ábrela en <a href="'+esc(url)+'" target="_blank" rel="noopener" style="color:var(--lnk)">iNaturalist ↗</a>, guárdala y súbela con «Elegir fotos».';
+ }
+}
+
+/* ---- v4.6 · Comparar por GÉNERO: lista de especies del género con foto, nombre y botones ---- */
+let genCands=[];
+const capF=s=>s?s.charAt(0).toUpperCase()+s.slice(1):'';
+async function cmpGen(g,o){
+ const box=o.box,b=o.btn;
+ if(!navigator.onLine){box.innerHTML='<p class="note">Sin conexión: la comparación necesita internet.</p>';return}
+ b.disabled=true;b.textContent='⏳ Buscando…';box.innerHTML='';genCands=[];
+ try{
+  let r=await fetch(INAT+'taxa?q='+encodeURIComponent(g)+'&rank=genus&per_page=5&locale=es');
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  const t=((await r.json()).results||[]).find(x=>norm(x.name)===norm(g));
+  if(!t){box.innerHTML='<p class="note">No encontré el género «'+esc(g)+'» en iNaturalist. Revisa el nombre.</p>';return}
+  r=await fetch(INAT+'taxa?taxon_id='+encodeURIComponent(t.id)+'&rank=species&order_by=observations_count&order=desc&per_page=8&locale=es');
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  genCands=((await r.json()).results||[]).filter(x=>x&&x.name).map(x=>{
+   const dp=x.default_photo||{},raw=dp.medium_url||dp.square_url||'';
+   return {name:x.name,com:x.preferred_common_name||'',id:x.id,th:okUrl(raw),big:okUrl(raw.replace(/\/(medium|square)\./,'/large.')),at:dp.attribution||''};
+  });
+  if(!genCands.length){box.innerHTML='<p class="note">No encontré especies del género «'+esc(t.name)+'» en iNaturalist.</p>';return}
+  const card='display:flex;flex-direction:column;gap:6px;padding:8px;border:1px solid var(--line);border-radius:12px;background:var(--panel);min-width:0';
+  box.innerHTML='<p class="hint">Especies de <i>'+esc(t.name)+'</i> en iNaturalist (las más observadas, hasta 8).</p>'
+   +'<p class="hint" id="cmpgmsg" role="status"></p>'
+   +'<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px">'
+   +genCands.map((c,i)=>'<div style="'+card+'">'
+    +'<div style="aspect-ratio:1/1;border-radius:10px;overflow:hidden;background:var(--soft);display:grid;place-items:center;font-size:2rem">'
+    +(c.th?'<img src="'+esc(c.th)+'" alt="Foto de referencia de '+esc(c.name)+'" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block">':'<span aria-hidden="true">🌿</span>')+'</div>'
+    +'<div><b><i>'+esc(c.name)+'</i></b><br><span>'+esc(c.com||'sin nombre común')+'</span>'
+    +(c.at?'<div class="pcm">📷 '+esc(c.at)+'</div>':'')
+    +'<a class="pc" href="https://www.inaturalist.org/taxa/'+encodeURIComponent(c.id)+'" target="_blank" rel="noopener" style="color:var(--lnk)">Ver en iNaturalist ↗</a></div>'
+    +'<button type="button" class="primary" data-a="el" data-i="'+i+'" style="min-height:40px">✓ Elegir esta</button>'
+    +(c.big?'<button type="button" data-a="ph" data-i="'+i+'" style="min-height:40px">📥 Usar esta foto</button>':'')
+    +'</div>').join('')+'</div>'
+   +'<p class="hint"><button type="button" id="cmpgx" class="lnkb">Cerrar</button></p>';
+  box.onclick=e=>{
+   const x=e.target.closest&&e.target.closest('button');if(!x)return;
+   if(x.id==='cmpgx'){box.innerHTML='';genCands=[];return}
+   const c=genCands[+x.dataset.i];if(!c)return;
+   if(x.dataset.a==='el'){
+    $('f-especie').value=c.name.split(' ').slice(1).join(' ');
+    if(!$('f-comun').value.trim()&&c.com)$('f-comun').value=capF(c.com);
+    const m=$('cmpgmsg');if(m)m.textContent='✓ Especie «'+c.name+'» elegida.';
+   }else if(x.dataset.a==='ph')cmpFoto(c.big,c.at,$('cmpgmsg'),x);
+  };
+ }catch(err){
+  box.innerHTML='<p class="note">'+(err instanceof TypeError?'No pude conectar con iNaturalist (¿sin internet?).':'Error al consultar iNaturalist ('+esc(err&&err.message||err)+').')+'</p>';
+ }finally{b.disabled=false;b.textContent='🔍 Comparar género'}
+}
+
 /* Comparar a nivel de género (solo usa el campo «Género») */
 $('fcmpg').onclick=async()=>{
  const g=$('f-genero').value.trim(),box=$('fcmpbox');
  if(!g){box.innerHTML='<p class="note">Escribe el género primero.</p>';return}
- await cmpInat({reino:$('f-reino').value},{box,btn:$('fcmpg'),name:g,ref:formFotos[0]||''});
- $('fcmpg').textContent='🔍 Comparar género';
+ await cmpGen(g,{box,btn:$('fcmpg')});
 };
 
 /* ======================================================================

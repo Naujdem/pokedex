@@ -429,7 +429,7 @@ body.selmode main{padding-bottom:90px}
     <button id="imj">⬆ Importar fichas (JSON)</button><input type="file" id="imf" accept="application/json,.json" hidden>
     <hr>
     <button id="out" class="mout">Salir</button>
-    <div class="mfoot">Biotaxo dex · v4.4</div>
+    <div class="mfoot">Biotaxo dex · v4.6</div>
    </div>
   </div>
  </div>
@@ -592,7 +592,7 @@ const ESP={
   Object.assign(M('an_dimorfismo','Dimorfismo sexual',[['👫','Presente'],['🧍','Ausente']],'',{ex:1}),{noOtra:1}),
   Object.assign(A('an_dimorfismo_dif','Diferencia entre sexos','Ej: el macho es más grande y colorido'),{dep:1}),
   T('an_nido','Tipo de nido / refugio'),
-  M('anat_grupo','Grupo de artrópodo (si aplica)',[['🦗','Insecto'],['🕷️','Arácnido'],['🦂','Escorpión'],['🦀','Crustáceo'],['🪱','Miriápodo'],['🦐','Otro artrópodo']],'',{ex:1}),
+  M('anat_grupo','Grupo de artrópodo (si aplica)',[['🦗','Insecto'],['🕷️','Arácnido'],['🦀','Crustáceo'],['🪱','Miriápodo'],['🦐','Otro artrópodo']],'',{ex:1}),
   M('anat_patas','Número de patas',[['🐍','Sin patas'],['🦩','2 patas'],['🐆','4 patas'],['🐜','6 patas'],['🕷️','8 patas'],['🦐','10 patas'],['🐛','Muchas']],'',{ex:'Sin patas'}),
   M('anat_alas','Tipo de alas',[['🚫','Sin alas'],['🦋','Un par'],['🐝','Dos pares'],['🪲','Élitros'],['🦟','Halterios']],'',{ex:'Sin alas'}),
   M('anat_esqueleto','Tipo de esqueleto',[['🦈','Cartilaginoso'],['🦴','Óseo'],['💧','Hidrostático'],['🪲','Quitinoso'],['🪱','Sin esqueleto']],'',{ex:'Sin esqueleto'}),
@@ -605,8 +605,7 @@ const ESP={
   Object.assign(M('ar_ojos','Número de ojos',[['2','2 ojos'],['4','4 ojos'],['6','6 ojos'],['8','8 ojos'],['0','Sin ojos']],'',{ex:1}),{dep:1}),
   Object.assign(M('ar_hileras','Hileras (glándulas de seda)',[['✅','Presentes'],['🚫','Ausentes']],'',{ex:'Ausentes'}),{dep:1}),
   Object.assign(M('ar_telar','Tipo de telaraña',[['🚫','Ninguna'],['⭕','Orbicular'],['🌀','Irregular'],['🕳️','Tubular'],['🌪️','Embudo']],'',{ex:'Ninguna'}),{dep:1}),
-  Object.assign(M('ar_aguijon','Aguijón',[['✅','Presente'],['🚫','Ausente']],'',{ex:'Ausente'}),{dep:1}),
-  Object.assign(M('ar_resp','Tipo de respiración',[['📖','Pulmones en libro'],['🫁','Tráqueas'],['🔀','Ambos']],'',{ex:1}),{dep:1})
+  Object.assign(M('ar_aguijon','Aguijón',[['✅','Presente'],['🚫','Ausente']],'',{ex:'Ausente'}),{dep:1})
  ],
  Plantae:[
   M('pl_uso','Toxicidad / uso humano',[['💊','Medicinal'],['🍽️','Comestible'],['🌺','Ornamental'],['☠️','Tóxica / Venenosa'],['🏭','Industrial'],['🪵','Maderable']]),
@@ -1219,12 +1218,23 @@ function fHTML(f){
  const h='<label id="l-'+f.key+'"'+(f.t==='m'?'':' for="'+id+'"')+'>'+esc(f.label)+'</label>'+c;
  return f.dep?'<div id="w-'+f.key+'" hidden>'+h+'</div>':h;
 }
+/* Orden en el formulario y en el TXT: cuadros (m) → desplegables (s) → textos (t/a).
+   Cada campo dependiente (dep) se queda pegado a su padre, que se lee de DEPS. */
+function ordF(arr){
+ const par={};DEPS.forEach(d=>{par[d[0]]=d[1]});
+ const keys=new Set(arr.map(f=>f.key)),gs=[],by={};
+ arr.forEach(f=>{if(!(par[f.key]&&keys.has(par[f.key]))){const g={f,d:[],i:gs.length};gs.push(g);by[f.key]=g}});
+ arr.forEach(f=>{if(par[f.key]&&keys.has(par[f.key]))by[par[f.key]].d.push(f)});
+ const rk=f=>f.t==='m'?0:f.t==='s'?1:2;
+ gs.sort((a,b)=>rk(a.f)-rk(b.f)||a.i-b.i);
+ return [].concat(...gs.map(g=>[g.f].concat(g.d)));
+}
 function buildRasgos(){
  const r=$('f-reino').value;
- $('rg-u').innerHTML=UNIV.map(fHTML).join('');
- $('rg-c').innerHTML=CAMPO.map(fHTML).join('');
- $('rg-t').innerHTML=TAXR.map(fHTML).join('');txLabels();
- $('rg-e').innerHTML=(ESP[r]||[]).concat(legOn&&r==='Plantae'?[LEGP]:[]).map(fHTML).join('');
+ $('rg-u').innerHTML=ordF(UNIV).map(fHTML).join('');
+ $('rg-c').innerHTML=ordF(CAMPO).map(fHTML).join('');
+ $('rg-t').innerHTML=ordF(TAXR).map(fHTML).join('');txLabels();
+ $('rg-e').innerHTML=ordF((ESP[r]||[]).concat(legOn&&r==='Plantae'?[LEGP]:[])).map(fHTML).join('');
  $('rg-et').textContent='Características específicas · '+(ESPN[r]||r)+' (opcional)';
 }
 function collectRasgos(){
@@ -1264,9 +1274,9 @@ function fillRasgos(obj){
  depAll();
 }
 /* Campos que aparecen según otra respuesta: lugar de origen (si hay origen) y diferencia entre sexos (si hay dimorfismo) */
-const ES_ARAC=v=>String(v||'').split(', ').includes('Arácnido');
+const ES_ARAC=v=>{const a=String(v||'').split(', ');return a.includes('Arácnido')||a.includes('Escorpión')};
 const DEPS=[['origen_lugar','origen',v=>!!v],['an_dimorfismo_dif','an_dimorfismo',v=>v==='Presente']]
- .concat(['ar_grupo','ar_ojos','ar_hileras','ar_telar','ar_aguijon','ar_resp'].map(k=>[k,'anat_grupo',ES_ARAC]));
+ .concat(['ar_grupo','ar_ojos','ar_hileras','ar_telar','ar_aguijon'].map(k=>[k,'anat_grupo',ES_ARAC]));
 /* Valor actual de un campo: sirve para listas, textos y cuadros (selección múltiple) */
 function depVal(el){
  if(!el)return '';
@@ -1389,7 +1399,7 @@ $('save').onclick=async()=>{
  const falta=faltantes(Object.assign({},rec,{car:rec.caracteristicas,fotos:formFotos}));
  if(falta.length){const c=await askWarn(falta);if(c==='cancel')return;if(c==='warn')rec.rasgos._adv='1'}
  rec.fotos=formFotos.slice();rec.foto=formFotos[0]||'';
- if(rec.reino==='Plantae'){const tg=formFotos.map(r=>formOrg[r]||'');if(tg.some(Boolean))rec.rasgos._fo=tg.join('|');const cr=formFotos.map(r=>formCred[r]||'');if(cr.some(Boolean))rec.rasgos._fc=cr.join('|')}   // v3.3 · etiqueta Flor/Hoja/Fruto por foto
+ if(rec.reino==='Plantae'){const tg=formFotos.map(r=>formOrg[r]||'');if(tg.some(Boolean))rec.rasgos._fo=tg.join('|')}{const cr=formFotos.map(r=>formCred[r]||'');if(cr.some(Boolean))rec.rasgos._fc=cr.join('|')}   // v3.3 · etiqueta Flor/Hoja/Fruto por foto
  const trash=formOrig.filter(r=>/^gd:/.test(r)&&!formFotos.includes(r));
  if(GDRIVE_ON&&formFotos.some(isLoc)&&navigator.onLine&&!gdValid())await gdToken(true).catch(()=>{});
  rec.distribucion={nativo:[...edist.nativo],invasor:[...edist.invasor]};
@@ -1617,7 +1627,7 @@ const ORG_IC={Flor:'🌸',Hoja:'🍃',Fruto:'🍎'};
 let formOrg={};                                    // etiqueta por foto del formulario: {referencia:'Flor'|…}
 
 function orgTags(sp){return sp.reino==='Plantae'&&sp.rasgos&&sp.rasgos._fo?String(sp.rasgos._fo).split('|'):[]}
-function credTags(sp){return sp.reino==='Plantae'&&sp.rasgos&&sp.rasgos._fc?String(sp.rasgos._fc).split('|'):[]}
+function credTags(sp){return sp.rasgos&&sp.rasgos._fc?String(sp.rasgos._fc).split('|'):[]}
 function credLoad(sp,list){const t=credTags(sp),m={};list.forEach((r,i)=>{if(t[i])m[r]=t[i]});return m}
 let formCred={};                                   // crédito por foto del formulario: {referencia:'(c) autor…'}
 function orgLoad(sp,list){const t=orgTags(sp),m={};list.forEach((r,i)=>{if(t[i])m[r]=t[i]});return m}
@@ -1863,12 +1873,12 @@ function caracteristicasTxt(){
  };
  const o=[];
  o.push('BIOTAXO DEX · Características de las fichas');
- o.push('Generado el '+new Date().toLocaleString('es-CO')+' · v4.4');
+ o.push('Generado el '+new Date().toLocaleString('es-CO')+' · v4.6');
  o.push('Son los campos que aparecen en «Añadir especie» y en «Editar ficha». Todos son opcionales.');
  o.push('');
  o.push('1. Características universales (aplican a TODOS los reinos)');
  o.push('');
- UNIV.forEach(f=>o.push(ln(f)));
+ ordF(UNIV).forEach(f=>o.push(ln(f)));
  o.push('• Distribución geográfica: lugares donde la especie es nativa y lugares donde es invasora (sección «Distribución geográfica» del formulario)');
  o.push('');
  o.push('2. Características específicas por reino');
@@ -1876,12 +1886,12 @@ function caracteristicasTxt(){
   o.push('');
   o.push((REI[k]||'•')+' Reino '+k+' ('+(ESPN[k]||k)+')');
   o.push('');
-  ESP[k].forEach(f=>o.push(ln(f)));
+  ordF(ESP[k]).forEach(f=>o.push(ln(f)));
  });
  o.push('');
  o.push('3. Datos de la observación (de campo)');
  o.push('');
- CAMPO.forEach(f=>o.push(ln(f)));
+ ordF(CAMPO).forEach(f=>o.push(ln(f)));
  o.push('');
  o.push('4. Datos generales de la ficha');
  o.push('');
