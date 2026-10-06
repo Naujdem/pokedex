@@ -1206,7 +1206,8 @@ function rgHTML(sp){
  return cl+(body||'<p class="empty">Aún no hay características. Toca «Editar ficha» para añadirlas.</p>');
 }
 const fav=s=>!!(s.rasgos&&s.rasgos._fav);
-const spCard=s=>'<div class="cardw"><button class="card'+(s.id===sel?' sel':'')+(selSet.has(s.id)?' picked':'')+'" data-id="'+s.id+'"><div class="ph">'+photo(s.foto,s.reino)+advBadge(s)+chkHTML(s)+'<span class="rtag">'+esc(s.reino)+'</span></div><div class="cap"><b>'+(s.pend?'⏳ ':'')+(fav(s)?'★ ':'')+esc(s.comun||sci(s))+'</b><i>'+esc(sci(s))+'</i></div></button>'
+const dest=s=>!!(s.rasgos&&s.rasgos._dest);
+const spCard=s=>'<div class="cardw"><button class="card'+(s.id===sel?' sel':'')+(selSet.has(s.id)?' picked':'')+'" data-id="'+s.id+'"><div class="ph">'+photo(s.foto,s.reino)+advBadge(s)+chkHTML(s)+'<span class="rtag">'+esc(s.reino)+'</span></div><div class="cap"><b>'+(s.pend?'⏳ ':'')+(dest(s)?'📌 ':'')+(fav(s)?'★ ':'')+esc(s.comun||sci(s))+'</b><i>'+esc(sci(s))+'</i></div></button>'
  +'<span class="cact"><button type="button" data-act="edit" data-id="'+s.id+'" aria-label="Editar '+esc(s.comun||sci(s))+'">✎</button><button type="button" data-act="del" data-id="'+s.id+'" aria-label="Eliminar '+esc(s.comun||sci(s))+'">🗑</button></span></div>';
 const norm=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 const hay=s=>norm([].concat(LV.map(k=>s[k]),[s.comun,s.car],Object.values(s.rasgos||{}).filter(v=>typeof v==='string')).join(' '));
@@ -1248,11 +1249,11 @@ function render(){
  else if(!atSp){const nk=st.next;
   let keys=nk==='dominio'?DOM.filter(k=>items.some(s=>s.dominio===k)):nk==='reino'?(REINOS[path[0]]||[]):[...new Set(items.map(s=>lvVal(s,nk)))].sort((a,b)=>(a===''?1:0)-(b===''?1:0));
   h=keys.map(k=>{
-   const g=items.filter(s=>lvVal(s,nk)===k),ph=g.find(s=>s.foto),r=nk==='dominio'?(g[0]&&g[0].reino):(nk==='reino'?k:path[1]);
+   const g=items.filter(s=>lvVal(s,nk)===k),ph=g.find(s=>dest(s)&&s.foto)||g.find(s=>s.foto),r=nk==='dominio'?(g[0]&&g[0].reino):(nk==='reino'?k:path[1]);
    return '<button class="card" data-k="'+esc(k)+'"><div class="ph">'+photo(ph&&ph.foto,r)+'</div><div class="cap"><b>'+esc(k||'Sin '+LBL[nk].toLowerCase())+'</b><small>'+g.length+(g.length===1?' especie':' especies')+'</small></div></button>';
   }).join('')||'<p class="empty">Aún no hay nada aquí.</p>';
  }else{
-  h=items.map(spCard).join('');
+  h=items.filter(dest).concat(items.filter(s=>!dest(s))).map(spCard).join('');
  }
  $('grid').innerHTML=h;
  if(filt()&&!showSp){const n=data.filter(matches).length;$('crumb').textContent=n+(n===1?' resultado':' resultados')+(Q?' para «'+Q+'»':'')+(onlyFav?' · solo favoritas':'')+(XF?' · '+XFL[XF]:'')}
@@ -1266,7 +1267,7 @@ function render(){
    +'<div class="ficha">'+galHTML(sp)
    +'<div class="finfo"><h2>'+esc(sp.comun||sci(sp))+'</h2><p class="sci">'+esc(sci(sp))+' <button type="button" id="cpsci" title="Copiar nombre científico" aria-label="Copiar nombre científico" style="padding:2px 8px;font-size:.85rem;margin-left:6px;vertical-align:middle;border-radius:8px">📋</button></p>'
    +advLine(sp)+sumHTML(sp)+'<ol class="lin deskonly">'+linHTML(sp)+'</ol>'
-   +'<div class="btns"><button id="favb">'+(fav(sp)?'★ Favorito':'☆ Favorito')+'</button><button id="shr">↗ Compartir</button><button id="edit">Editar ficha</button><button class="danger" id="del">🗑 Eliminar</button></div></div>'
+   +'<div class="btns"><button id="favb">'+(fav(sp)?'★ Favorito':'☆ Favorito')+'</button><button id="destb">'+(dest(sp)?'📌 Quitar destacado':'📌 Destacar')+'</button><button id="shr">↗ Compartir</button><button id="edit">Editar ficha</button><button class="danger" id="del">🗑 Eliminar</button></div></div>'
    +'<div class="ficha-car">'+distBlock(sp)+rgHTML(sp)
    +'</div></div>'
   :'';
@@ -1321,6 +1322,7 @@ $('detail').onclick=e=>{
  if(e.target.id==='back'){sel=null;render()}
  if(e.target.id==='edit')openEdit(sp);
  if(e.target.id==='favb')toggleFav(sp);
+ if(e.target.id==='destb')toggleDest(sp);
  if(e.target.id==='shr')share(sp);
  if(e.target.id==='cpsci')copySci(sp);
  if(e.target.id==='del'){
@@ -2131,11 +2133,16 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!menu.hidden){setMe
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 
 /* ---------- Favorito, compartir, buscador ---------- */
-const withFav=r=>{const p=data.find(x=>x.id===editId);if(p&&p.rasgos&&p.rasgos._fav)r._fav='1';return r};
+const withFav=r=>{const p=data.find(x=>x.id===editId);if(p&&p.rasgos&&p.rasgos._fav)r._fav='1';if(p&&p.rasgos&&p.rasgos._dest)r._dest='1';return r};
 async function toggleFav(sp){
  const r=Object.assign({},sp.rasgos);if(r._fav)delete r._fav;else r._fav='1';
  sp.rasgos=r;await persist(sp);
  const b=$('favb');if(b&&sel===sp.id)b.textContent=fav(sp)?'★ Favorito':'☆ Favorito';
+}
+async function toggleDest(sp){
+ const r=Object.assign({},sp.rasgos);if(r._dest)delete r._dest;else r._dest='1';
+ sp.rasgos=r;await persist(sp);
+ const b=$('destb');if(b&&sel===sp.id)b.textContent=dest(sp)?'📌 Quitar destacado':'📌 Destacar';
 }
 async function copySci(sp){
  const t=sci(sp);
