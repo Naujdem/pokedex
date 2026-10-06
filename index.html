@@ -387,6 +387,14 @@ body.selmode main{padding-bottom:90px}
 .lvbox .wk a:hover{text-decoration:underline}
 .ficha-car>.lvbox{margin-bottom:14px}
 @media (max-width:900px){#lvinfo{grid-column:1}}
+.fchips{flex:1 1 100%;min-width:0;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:2px}
+.fchips::-webkit-scrollbar{display:none}
+.fchips button{flex:0 0 auto;border-radius:999px;padding:7px 14px;font-size:.85rem;background:var(--bg)}
+.fchips button.on{background:var(--acc);border-color:var(--acc);color:var(--acc-ink);font-weight:700}
+.cl.warn:before{background:#f2c14e}.cl.bad:before{background:var(--dng)}
+#net{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#net.clk{cursor:pointer;text-decoration:underline dotted;text-underline-offset:3px}
+@media (max-width:480px){#net.ok{display:none}}
 
 </style>
 </head>
@@ -413,7 +421,7 @@ body.selmode main{padding-bottom:90px}
     <button id="imj">⬆ Importar copia (JSON)</button><input type="file" id="imf" accept="application/json,.json" hidden>
     <hr>
     <button id="out" class="mout">Salir</button>
-    <div class="mfoot">Biotaxo dex · v3.3</div>
+    <div class="mfoot">Biotaxo dex · v3.5</div>
    </div>
   </div>
  </div>
@@ -429,7 +437,7 @@ body.selmode main{padding-bottom:90px}
 </section>
 <div class="app" id="app" hidden>
  <nav class="steps" id="steps" aria-label="Nivel taxonómico"></nav>
- <main><div class="tools"><input id="q" type="search" placeholder="Buscar: Felidae, mono, jaguar…" aria-label="Buscar"></div><p class="crumb" id="crumb"></p><div id="lvinfo"></div><div class="grid" id="grid"></div><section id="detail" hidden></section></main>
+ <main><div class="tools"><input id="q" type="search" placeholder="Buscar: Felidae, mono, jaguar…" aria-label="Buscar"><div class="fchips" id="fchips" role="group" aria-label="Filtros rápidos"><button type="button" data-f="all">Todas</button><button type="button" data-f="fav">★ Favoritas</button><button type="button" data-f="inc" data-t="⚠ Incompletas">⚠ Incompletas</button><button type="button" data-f="foto" data-t="📷 Con foto">📷 Con foto</button><button type="button" data-f="sinfoto" data-t="🚫 Sin foto">🚫 Sin foto</button></div></div><p class="crumb" id="crumb"></p><div id="lvinfo"></div><div class="grid" id="grid"></div><section id="detail" hidden></section></main>
 </div>
 
 <div id="selbar" hidden><b id="selcount"></b><button type="button" id="selall">Todas / ninguna</button><button type="button" class="primary" id="selbulk">Editar en lote</button><button type="button" id="selx">Cancelar</button></div>
@@ -905,7 +913,7 @@ async function subirFotos(o){
    const ref='gd:'+await gdUpload(b,fname(o),o.id);
    await dbPut('fotos',b,ref);await dbDel('fotos',L[i]);
    if(urlCache.has(L[i]))urlCache.set(ref,urlCache.get(L[i]));
-   L[i]=ref;o.foto=L[0]||'';await dbPut('especies',Object.assign({},o));
+   L[i]=ref;o.foto=L[0]||'';await dbPut('especies',Object.assign({},o));netUI();
   }
   o.foto=L[0]||'';await dbPut('especies',Object.assign({},o));return true;
  }catch(e){
@@ -954,14 +962,28 @@ let off=false;
 const normDist=d=>({nativo:Array.isArray(d&&d.nativo)?d.nativo:[],invasor:Array.isArray(d&&d.invasor)?d.invasor:[]});
 const byC=a=>a.sort((x,y)=>String(x.creado||'').localeCompare(String(y.creado||'')));
 const toRow=o=>{const r={id:o.id,comun:o.comun,caracteristicas:o.car,rasgos:o.rasgos,distribucion:o.dist};if(o.creado)r.creado=o.creado;if(o.foto!==undefined)r.foto=o.foto;if(o.fotos)r.fotos=o.fotos;LV.forEach(k=>r[k]=o[k]);return r};
+/* Estado de sincronización en #net: sin conexión / sincronizando / pendientes (fichas y fotos loc:) / error de Drive / todo al día */
+const driveErr=()=>/Conecta tu Google Drive/.test(flush.err||'');
 async function netUI(){
- const n=(await dbAll('cola')).length,on=navigator.onLine,t=(on?'':'Sin conexión')+(n?(on?'':' · ')+'⏳ '+n+(n>1?' pendientes':' pendiente'):'');
- $('net').textContent=t;$('net').hidden=!t;$('net').className='sans cl'+(on?' on':'');
+ const my=netUI.s=(netUI.s||0)+1;
+ const q=await dbAll('cola'),es=await dbAll('especies');
+ if(my!==netUI.s)return;                                   // llegó una actualización más nueva
+ const nf=q.length,np=es.reduce((a,o)=>a+(Array.isArray(o.fotos)?o.fotos.filter(isLoc).length:0),0),on=navigator.onLine,dr=driveErr();
+ const pp=[];if(nf)pp.push(nf+(nf===1?' ficha':' fichas'));if(np)pp.push(np+(np===1?' foto':' fotos'));
+ const pend=pp.length?'⬆ '+pp.join(' · ')+(nf+np===1?' pendiente':' pendientes'):'';
+ let t,c='';
+ if(!on)t='Sin conexión'+(pend?' · '+pend:'');
+ else if(flush.busy){t='⬆ Sincronizando…';c=' warn'}
+ else if(flush.err){t=dr?(pend?pend+' · ':'')+'☁ Conecta Drive para subir':(pend||'⚠ Sin sincronizar')+' · error al subir';c=' bad'}
+ else if(pend){t=pend;c=' warn'}
+ else{t='✓ Sincronizado';c=' on ok'}
+ const n=$('net');n.textContent=t;n.hidden=false;n.className='sans cl'+c+(on&&dr&&!flush.busy?' clk':'');n.title=(on&&flush.err)||'';
 }
+$('net').onclick=()=>{if(driveErr()&&navigator.onLine)$('gdb').click()};
 /* Guarda primero en el dispositivo y deja la ficha en la cola; sube si hay red */
 async function persist(o,trash){o.pend=true;await dbPut('especies',Object.assign({},o));const prev=await dbGet('cola',o.id),tr=[...((prev&&prev.trash)||[]),...(trash||[])];await dbPut('cola',{id:o.id,op:'upsert',ts:Date.now(),trash:tr});netUI();return flush()}
 async function flush(){
- if(!SB||!navigator.onLine)return;if(flush.busy){flush.again=true;return}flush.busy=true;flush.err='';let n=0;
+ if(!SB||!navigator.onLine)return;if(flush.busy){flush.again=true;return}flush.busy=true;flush.err='';let n=0;netUI();
  try{
   for(const j of (await dbAll('cola')).sort((a,b)=>a.ts-b.ts)){
    let error;
@@ -980,7 +1002,7 @@ async function flush(){
    }
    if(error){flush.err=error.message+(/distribucion|rasgos|fotos/i.test(error.message)?' (Falta ejecutar distribucion.sql en Supabase).':'');break}
    for(const r of (j.trash||[]))await gdTrash(r);
-   await dbDel('cola',j.id);n++;
+   await dbDel('cola',j.id);n++;netUI();
    const o=await dbGet('especies',j.id);if(o){delete o.pend;await dbPut('especies',o)}
    const m=data.find(x=>x.id===j.id);if(m){delete m.pend;if(o&&o.fotos){m.fotos=o.fotos;m.foto=o.foto}}
   }
@@ -1122,7 +1144,7 @@ async function loadData(){
 
 const CAMPO=[T('c_fecha','Fecha de la observación','AAAA-MM-DD o AAAA-MM-DD HH:MM'),T('c_lugar','Lugar de la observación','Municipio, vereda…'),T('c_salida','Salida / diario de campo','Ej: Salida a Chingaza · 12 mar'),T('c_lat','Latitud (GPS)','Ej: 4.711000'),T('c_lon','Longitud (GPS)','Ej: -74.072100'),A('c_nota','Nota personal')];
 // v3.4 · una descripción por cada nivel (incluye los opcionales subphylum y suborden)
-const TXN=[['dominio','dominio','del dominio'],['reino','reino','del reino'],['filo','filo o división','del filo o división'],['subphylum','subphylum','del subphylum'],['clase','clase','de la clase'],['orden','orden','del orden'],['suborden','suborden','del suborden'],['familia','familia','de la familia'],['genero','género','del género'],['especie','especie','de la especie']];
+const TXN=[['dominio','dominio','del dominio'],['reino','reino','del reino'],['filo','filo o división','del filo o división'],['subphylum','subphylum','del subphylum'],['clase','clase','de la clase'],['orden','orden','del orden'],['suborden','suborden','del suborden'],['familia','familia','de la familia'],['genero','género','del género']];
 const TAXR=TXN.map(n=>A('tx_'+n[0],'Descripción '+n[2],'Qué caracteriza '+n[2].replace(/^de(l| la)? /,(m,a)=>a==='l'?'al ':'a la ')+'…'));
 // v3.3 · descripción por órgano (Plantae)
 const PLORG=[A('pl_d_flor','Flor · descripción','Color, forma, número de pétalos…'),A('pl_d_hoja','Hoja · descripción','Forma, borde, disposición…'),A('pl_d_fruto','Fruto · descripción','Forma, color, tamaño…')];
@@ -1175,8 +1197,24 @@ const spCard=s=>'<div class="cardw"><button class="card'+(s.id===sel?' sel':'')+
  +'<span class="cact"><button type="button" data-act="edit" data-id="'+s.id+'" aria-label="Editar '+esc(s.comun||sci(s))+'">✎</button><button type="button" data-act="del" data-id="'+s.id+'" aria-label="Eliminar '+esc(s.comun||sci(s))+'">🗑</button></span></div>';
 const norm=t=>String(t||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
 const hay=s=>norm([].concat(LV.map(k=>s[k]),[s.comun,s.car],Object.values(s.rasgos||{}).filter(v=>typeof v==='string')).join(' '));
-const matches=s=>(!onlyFav||fav(s))&&(!Q||hay(s).includes(norm(Q)));
-function clearF(){Q='';onlyFav=false;$('q').value='';$('fav').textContent='☆ Favoritas'}
+/* Filtros rápidos. Regla: si hay algún filtro activo (búsqueda Q, ★ Favoritas o un chip) se muestra una lista plana
+   de TODA la colección, sin tocar `path`; al quitar los filtros vuelve el carrete donde estabas.
+   Q + Favoritas + un chip se combinan con AND. Incompletas / Con foto / Sin foto son excluyentes entre sí.
+   «Todas» quita Favoritas y el chip (no la búsqueda). */
+let XF='';
+const hasFoto=s=>!!((s.fotos&&s.fotos.length)||s.foto);
+const XFP={inc:s=>!!(s.rasgos&&s.rasgos._adv)&&faltantes(s).length>0,foto:hasFoto,sinfoto:s=>!hasFoto(s)};
+const XFL={inc:'incompletas',foto:'con foto',sinfoto:'sin foto'};
+const matches=s=>(!onlyFav||fav(s))&&(!XF||XFP[XF](s))&&(!Q||hay(s).includes(norm(Q)));
+const filt=()=>!!(Q||onlyFav||XF);
+function fchipsUI(){
+ const act={all:!onlyFav&&!XF,fav:onlyFav,inc:XF==='inc',foto:XF==='foto',sinfoto:XF==='sinfoto'};
+ document.querySelectorAll('#fchips button').forEach(b=>{
+  const k=b.dataset.f;b.classList.toggle('on',!!act[k]);b.setAttribute('aria-pressed',act[k]?'true':'false');
+  if(XFP[k])b.textContent=b.dataset.t+' · '+data.filter(XFP[k]).length;
+ });
+}
+function clearF(){Q='';onlyFav=false;XF='';$('q').value='';$('fav').textContent='☆ Favoritas'}
 function render(){
  const st=lvState(),d=path.length,atSp=st.next==='especie',cur=curLv(st),sp=data.find(x=>x.id===sel);
  $('steps').innerHTML=stepSeq(st).map((k,j)=>{
@@ -1187,12 +1225,12 @@ function render(){
   const on=$('steps').querySelector('.step.on');
   if(on)$('steps').scrollLeft=Math.max(0,on.offsetLeft-$('steps').offsetLeft-($('steps').clientWidth-on.offsetWidth)/2);
  }
- const showSp=!!sp&&atSp;
+ const showSp=!!sp&&atSp;fchipsUI();
  const bc=(d?['<button class="bc" data-bc="-1">Inicio</button>']:[]).concat(path.map((p,j)=>'<button class="bc" data-bc="'+j+'">'+esc(p)+'</button>')).join(' › ');
  const tail=d<7?'elige '+(LN[d]==='Filo o división'?'un filo o división':'un/a '+LN[d].toLowerCase()):'elige una especie';
  $('crumb').innerHTML='';
  const items=scoped();let h='';
- if(Q||onlyFav){h=data.filter(matches).map(spCard).join('')||'<p class="empty">Sin resultados.</p>'}
+ if(filt()){h=data.filter(matches).map(spCard).join('')||'<p class="empty">Sin resultados.</p>'}
  else if(!atSp){const nk=st.next;
   let keys=nk==='dominio'?DOM.filter(k=>items.some(s=>s.dominio===k)):nk==='reino'?(REINOS[path[0]]||[]):[...new Set(items.map(s=>lvVal(s,nk)))].sort((a,b)=>(a===''?1:0)-(b===''?1:0));
   h=keys.map(k=>{
@@ -1203,10 +1241,10 @@ function render(){
   h=items.map(spCard).join('');
  }
  $('grid').innerHTML=h;
- if((Q||onlyFav)&&!showSp){const n=data.filter(matches).length;$('crumb').textContent=n+(n===1?' resultado':' resultados')+(Q?' para «'+Q+'»':'')+(onlyFav?' · solo favoritas':'')}
+ if(filt()&&!showSp){const n=data.filter(matches).length;$('crumb').textContent=n+(n===1?' resultado':' resultados')+(Q?' para «'+Q+'»':'')+(onlyFav?' · solo favoritas':'')+(XF?' · '+XFL[XF]:'')}
  const ver=!!sp&&atSp;
  document.body.classList.toggle('ficha-abierta',ver);
- $('lvinfo').innerHTML=(!ver&&!Q&&!onlyFav&&d>=1)?lvInfoHTML():'';
+ $('lvinfo').innerHTML=(!ver&&!filt()&&d>=1)?lvInfoHTML():'';
  $('grid').hidden=ver;$('detail').hidden=!ver;
  $('detail').innerHTML=ver
   ?'<button id="back">← Volver a las especies</button>'
@@ -1214,7 +1252,7 @@ function render(){
    +'<div class="finfo"><h2>'+esc(sp.comun||sci(sp))+'</h2><p class="sci">'+esc(sci(sp))+'</p>'
    +advLine(sp)+sumHTML(sp)+'<ol class="lin deskonly">'+linHTML(sp)+'</ol>'
    +'<div class="btns"><button id="favb">'+(fav(sp)?'★ Favorito':'☆ Favorito')+'</button><button id="shr">↗ Compartir</button><button id="cmpb">🔍 Comparar con iNaturalist</button><button id="edit">Editar ficha</button><button class="danger" id="del">🗑 Eliminar</button></div><div id="cmpbox"></div></div>'
-   +'<div class="ficha-car">'+lvBox('Especie',sci(sp),(sp.rasgos||{}).tx_especie||'',sci(sp))+distBlock(sp)+rgHTML(sp)
+   +'<div class="ficha-car">'+distBlock(sp)+rgHTML(sp)
    +'</div></div>'
   :'';
  if(ver){
@@ -1464,7 +1502,7 @@ $('save').onclick=async()=>{
  $('save').disabled=false;
  if(editId)data=data.map(x=>x.id===editId?o:x);else data.push(o);
  path=chainFor(o);sel=o.id;dlg.close();render();
- if(flush.err)alert('La ficha quedó guardada en el dispositivo, pero no se pudo subir: '+flush.err);
+ if(flush.err&&!driveErr())alert('La ficha quedó guardada en el dispositivo, pero no se pudo subir: '+flush.err);
 };
 
 /* ======================================================================
@@ -1810,7 +1848,7 @@ $('b-ok').onclick=async()=>{
  $('b-ok').disabled=false;
  dlgbulk.close();selExit();
  bToast(n?'✓ Se actualizaron '+n+(n===1?' ficha':' fichas'):'Sin cambios: las fichas ya tenían esos datos.');
- if(flush.err)alert('Las fichas quedaron guardadas en el dispositivo, pero no se pudieron subir: '+flush.err);
+ if(flush.err&&!driveErr())alert('Las fichas quedaron guardadas en el dispositivo, pero no se pudieron subir: '+flush.err);
 };
 
 /* ======================================================================
@@ -1917,7 +1955,7 @@ async function importData(file){
    have.add(o.id);
   }
   byC(data);fix();render();
-  alert('Importadas '+todo.length+' fichas'+(bad?' ('+bad+' omitidas por estar incompletas)':'')+'.'+(flush.err?'\n\nQuedaron guardadas en el dispositivo, pero aún no se subieron: '+flush.err:''));
+  alert('Importadas '+todo.length+' fichas'+(bad?' ('+bad+' omitidas por estar incompletas)':'')+'.'+(flush.err&&!driveErr()?'\n\nQuedaron guardadas en el dispositivo, pero aún no se subieron: '+flush.err:''));
  }catch(e){alert('No se pudo importar: '+(e.message||e))}
  finally{b.disabled=false;b.textContent=txt0}
 }
@@ -1991,7 +2029,14 @@ async function share(sp){
  try{if(navigator.share)await navigator.share({title:sci(sp),text:t});else{await navigator.clipboard.writeText(t);alert('Copiado al portapapeles.')}}catch(e){}
 }
 $('q').oninput=e=>{Q=e.target.value.trim();sel=null;render()};
-$('fav').onclick=()=>{onlyFav=!onlyFav;$('fav').textContent=onlyFav?'★ Favoritas':'☆ Favoritas';sel=null;render()};
+function favToggle(){onlyFav=!onlyFav;$('fav').textContent=onlyFav?'★ Favoritas':'☆ Favoritas';sel=null;render()}
+$('fav').onclick=favToggle;
+$('fchips').onclick=e=>{
+ const b=e.target.closest('button[data-f]');if(!b)return;const k=b.dataset.f;
+ if(k==='fav')return favToggle();
+ if(k==='all'){onlyFav=false;XF='';$('fav').textContent='☆ Favoritas'}else XF=XF===k?'':k;
+ sel=null;render();
+};
 /* ---------- Modo estudio ---------- */
 const dlgst=$('dlgst');let deck=[],dl=[],di=0,okc=0,fl=false;
 function stStart(){
