@@ -1,7 +1,8 @@
 /* ============================================================
    drive.js · Biotaxo dex
    Todo lo de Google Drive: conexión (token), API de Drive,
-   mostrar fotos, subir fotos, botón «☁ Drive» y botón de entrar con Google.
+   mostrar fotos, subir fotos y botón «☁ Drive».
+   (El botón «Entrar con Google» está ahora en supabase.js.)
    Se carga ANTES del <script> principal de index.html.
    (Código movido tal cual desde index.html, sin cambios.)
    ============================================================ */
@@ -159,7 +160,7 @@ async function toDataURL(ref){
  try{const b=await getBlob(ref);if(!b)return ref;return await new Promise((ok,ko)=>{const f=new FileReader();f.onload=()=>ok(f.result);f.onerror=ko;f.readAsDataURL(b)})}catch(_){return ref}
 }
 
-/* --- Botón «☁ Drive» y login con Google --- */
+/* --- Botón «☁ Drive» --- */
 function gdUI(){const b=$('gdb');if(!b)return;b.hidden=!GDRIVE_ON;b.className=gdValid()?'':'off';b.textContent=gdValid()?'☁ Drive ✓':'☁ Conectar Drive'}
 setInterval(gdUI,30000);addEventListener('online',retryImgs);
 document.addEventListener('DOMContentLoaded',()=>{
@@ -167,10 +168,5 @@ document.addEventListener('DOMContentLoaded',()=>{
  $('gdb').onclick=async()=>{
   try{await gdToken(true);gdUI();await flush();retryImgs()}
   catch(e){alert('No se pudo conectar con Google Drive: '+(e.message||e)+'\n\nSi estás en la app instalada (APK) y no se abre la ventana de Google, cierra sesión y usa «Entrar con Google».')}
- };
- $('glogin').onclick=async()=>{
-  if(!SB){$('aerr').textContent='No se pudo cargar el servicio de acceso (¿sin internet?).';return}
-  const r=await SB.auth.signInWithOAuth({provider:'google',options:{scopes:GSCOPE,redirectTo:location.origin+location.pathname,queryParams:{access_type:'offline',prompt:'consent'}}});
-  if(r.error)$('aerr').textContent=r.error.message;
  };
 });

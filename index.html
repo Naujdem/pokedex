@@ -529,11 +529,12 @@ body.selmode main{padding-bottom:90px}
 <dialog id="tview" aria-label="Visor de término"><div class="tvh"><button type="button" id="tv-x">← Cerrar</button><b id="tv-t"></b><a id="tv-ext" target="_blank" rel="noopener"></a></div><div id="tv-b"></div></dialog>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <script src="drive.js"></script>
 <script src="inat.js"></script>
 <script>
-const SB=window.supabase?supabase.createClient('https://amybwsnzxmfdvaomkopm.supabase.co','sb_publishable_DVidqeawdNUHxd46TWgfbg_xfDGda_z'):null;
+/* El cliente de Supabase (SB) ahora se crea en supabase.js */
 const LV=['dominio','reino','filo','clase','orden','familia','genero','especie'];
 const LN=['Dominio','Reino','Filo o división','Clase','Orden','Familia','Género','Especie'];
 const COL=['#5b9bd5','#5bbfc4','#5bbf95','#6fbf62','#a3bf62','#d1c455','#d49a5b','#c58a5e'];
@@ -1711,133 +1712,7 @@ $('b-ok').onclick=async()=>{
  if(flush.err&&!driveErr())alert('Las fichas quedaron guardadas en el dispositivo, pero no se pudieron subir: '+flush.err);
 };
 
-/* ======================================================================
-   v3.3 · 6b) COMPARAR CON INATURALIST (foto del usuario ↔ foto de referencia)
-   ----------------------------------------------------------------------
-   Consulta la API pública /v1/taxa con el nombre científico (sin token) y
-   muestra lado a lado la foto que estás viendo en la galería y las fotos de
-   referencia de iNaturalist.
-   ====================================================================== */
-const INAT='https://api.inaturalist.org/v1/';
-const okUrl=u=>/^https:\/\//.test(u||'')?u:'';
-async function cmpInat(sp,o){
- o=o||{};
- const box=o.box||$('cmpbox'),b=o.btn||$('cmpb'),name=o.name||sci(sp);
- if(!navigator.onLine){box.innerHTML='<p class="note">Sin conexión: la comparación necesita internet.</p>';return}
- b.disabled=true;b.textContent='⏳ Buscando…';box.innerHTML='';
- try{
-  const r=await fetch(INAT+'taxa?q='+encodeURIComponent(name)+'&per_page=5&locale=es');
-  if(!r.ok)throw new Error('HTTP '+r.status);
-  const res=(await r.json()).results||[];
-  const t=res.find(x=>norm(x.name)===norm(name));
-  if(!t){
-   box.innerHTML='<p class="note">No encontré «'+esc(name)+'» en iNaturalist.'+(res[0]?' Lo más parecido es «'+esc(res[0].name)+'».':'')+' Revisa el nombre científico.</p>';
-   return;
-  }
-  // Fotos de referencia: las de la ficha del taxón; si fallan, la principal
-  let ph=[],com=t.preferred_common_name||'';
-  try{
-   const d=await fetch(INAT+'taxa/'+t.id+'?locale=es');
-   if(d.ok){const j=((await d.json()).results||[])[0]||{};ph=(j.taxon_photos||[]).map(x=>x.photo).filter(Boolean);com=com||j.preferred_common_name||''}
-  }catch(_){}
-  if(!ph.length&&t.default_photo)ph=[t.default_photo];
-  ph=ph.filter(p=>okUrl(p.medium_url)).slice(0,6);
-  // Foto del usuario: la que se ve ahora en la galería (respeta el filtro Flor/Hoja/Fruto)
-  let ref;
-  if(o.ref!==undefined)ref=o.ref;   // desde el formulario: la portada que estás añadiendo
-  else{const g=$('gal'),vis=g?[...g.children].filter(c=>!c.hidden):[];
-  const sl=vis[g&&g.clientWidth?Math.min(vis.length-1,Math.round(g.scrollLeft/g.clientWidth)):0]||vis[0],im=sl&&sl.querySelector('img');
-  ref=im?(im.dataset.ref||im.getAttribute('src')||''):''}
-  const mine=ref?IMG(ref):'<span class="nophoto" aria-hidden="true">'+(EMO[sp.reino]||'🧬')+'</span>';
-  const m=ph[0];
-  box.innerHTML='<div class="cmp">'
-   +'<div class="cmpc"><b>Tu foto</b><div class="cmpi">'+mine+'</div></div>'
-   +'<div class="cmpc"><b>iNaturalist</b><div class="cmpi">'+(m?'<img id="cmpref" src="'+esc(okUrl(m.medium_url))+'" alt="Foto de referencia de '+esc(t.name)+'">':'<span aria-hidden="true">🌿</span>')+'</div>'
-   +(ph.length>1?'<div class="cmpth">'+ph.map(p=>'<img src="'+esc(okUrl(p.square_url||p.medium_url))+'" data-big="'+esc(okUrl(p.medium_url))+'" data-at="'+esc(p.attribution||'')+'" alt="Otra foto de referencia">').join('')+'</div>':'')
-   +'<small class="pcm" id="cmpat">'+(m&&m.attribution?'📷 '+esc(m.attribution):'')+'</small></div></div>'
-   +'<p class="hint"><i>'+esc(t.name)+'</i>'+(com?' · '+esc(com):'')+' · <a href="https://www.inaturalist.org/taxa/'+encodeURIComponent(t.id)+'" target="_blank" rel="noopener" style="color:var(--lnk)">Ver más fotos en iNaturalist ↗</a> · <button type="button" id="cmpx" class="lnkb">Cerrar</button></p>';
-  box.onclick=e=>{
-   const th=e.target.closest&&e.target.closest('.cmpth img');
-   if(th){$('cmpref').src=th.dataset.big;$('cmpat').textContent=th.dataset.at?'📷 '+th.dataset.at:''}
-   else if(e.target.id==='cmpx')box.innerHTML='';
-  };
- }catch(err){
-  box.innerHTML='<p class="note">'+(err instanceof TypeError?'No pude conectar con iNaturalist (¿sin internet?).':'Error al consultar iNaturalist ('+esc(err&&err.message||err)+').')+'</p>';
- }finally{b.disabled=false;b.textContent='🔍 Comparar con iNaturalist'}
-}
-
-$('fcmpb').onclick=()=>{
- const g=$('f-genero').value.trim(),e=$('f-especie').value.trim(),box=$('fcmpbox');
- if(!g||!e){box.innerHTML='<p class="note">Escribe el género y la especie para comparar.</p>';return}
- cmpInat({reino:$('f-reino').value},{box,btn:$('fcmpb'),name:g+' '+e,ref:formFotos[0]||''});
-};
-
-/* ======================================================================
-   v4.1 · Completar Flor / Hoja / Fruto con fotos de iNaturalist (solo Plantae)
-   Si ya etiquetaste alguna foto y falta algún órgano, el formulario sugiere buscarlo.
-   Se listan fotos de observaciones con licencia abierta; al tocar una se descarga, se añade
-   a la ficha con su etiqueta y se guarda el crédito de su autor (rasgos._fc, paralelo a _fo).
-   Flor = fenología «Floración/Botón»; Fruto = «Fructificación»; Hoja = «Sin evidencia de floración»
-   (suele mostrar el follaje): elige tú la foto que muestre bien el órgano.
-   ====================================================================== */
-const ORG_Q={Flor:'13,15',Fruto:'14',Hoja:'21'};
-let orgCands=[],orgCur='';
-function orgMissing(){
- if($('f-reino').value!=='Plantae')return [];
- const have=new Set(formFotos.map(r=>formOrg[r]).filter(Boolean));
- return have.size?ORG.map(o=>o[0]).filter(o=>!have.has(o)):[];
-}
-function orgSug(){
- const el=$('orgsug');if(!el)return;
- const m=orgMissing();
- if(!m.length){el.hidden=true;el.innerHTML='';return}
- el.hidden=false;
- el.innerHTML='🌿 Te falta: '+m.map(o=>ORG_IC[o]+' '+o).join(', ')+'. Puedes completarla con una foto de iNaturalist (se guarda con el crédito de quien la tomó).<br>'
-  +m.map(o=>'<button type="button" data-og="'+o+'" style="margin:6px 6px 0 0">'+ORG_IC[o]+' Buscar '+o.toLowerCase()+'</button>').join('');
-}
-const _dtOrg=drawThumbs;
-drawThumbs=function(){_dtOrg.apply(this,arguments);orgSug()};
-dlg.addEventListener('close',()=>{$('orgres').innerHTML='';orgCands=[]});
-$('orgsug').onclick=e=>{const b=e.target.closest('button[data-og]');if(b)orgSearch(b.dataset.og)};
-$('orgres').onclick=e=>{const b=e.target.closest('button[data-i]');if(b)orgPick(+b.dataset.i,b)};
-async function orgSearch(org){
- const box=$('orgres'),g=$('f-genero').value.trim(),e=$('f-especie').value.trim();
- if(!g||!e){box.innerHTML='<p class="note">Escribe el género y la especie para buscar.</p>';return}
- if(!navigator.onLine){box.innerHTML='<p class="note">Sin conexión: la búsqueda necesita internet.</p>';return}
- box.innerHTML='<p class="hint">⏳ Buscando '+esc(org.toLowerCase())+' de '+esc(g+' '+e)+'…</p>';
- try{
-  const r=await fetch(INAT+'observations?taxon_name='+encodeURIComponent(g+' '+e)+'&term_id=12&term_value_id='+ORG_Q[org]
-   +'&photos=true&photo_license=cc0,cc-by,cc-by-sa,cc-by-nc,cc-by-nc-sa&quality_grade=research&order_by=votes&per_page=12&locale=es');
-  if(!r.ok)throw new Error(r.status);
-  const d=await r.json(),c=[];
-  (d.results||[]).forEach(o=>{const p=(o.photos||[])[0];if(p&&p.license_code&&okUrl(p.url))c.push({th:p.url,big:p.url.replace('/square.','/large.'),at:p.attribution||'',oid:o.id})});
-  orgCands=c;orgCur=org;
-  if(!c.length){box.innerHTML='<p class="note">No encontré fotos con licencia abierta de «'+esc(org.toLowerCase())+'» para '+esc(g+' '+e)+'.</p>';return}
-  box.innerHTML='<p class="hint">Toca la foto que mejor muestre '+ORG_IC[org]+' '+esc(org.toLowerCase())+'. Se descarga con el crédito de su autor.</p>'
-   +'<div style="display:flex;flex-wrap:wrap;gap:6px">'+c.map((x,i)=>'<button type="button" data-i="'+i+'" style="padding:0;border:0;background:none;border-radius:10px;overflow:hidden;width:76px;height:76px"><img src="'+esc(x.th)+'" alt="Foto de iNaturalist" style="width:100%;height:100%;object-fit:cover;display:block"></button>').join('')+'</div>';
- }catch(err){
-  box.innerHTML='<p class="note">'+(err instanceof TypeError?'No pude conectar con iNaturalist (¿sin internet?).':'Error al consultar iNaturalist ('+esc(err&&err.message||err)+').')+'</p>';
- }
-}
-async function orgPick(i,btn){
- const c=orgCands[i],box=$('orgres');if(!c)return;
- if(formFotos.length>=MAXF){box.innerHTML='<p class="note">Máximo '+MAXF+' fotos por especie.</p>';return}
- btn.disabled=true;
- try{
-  const r=await fetch(c.big);if(!r.ok)throw new Error(r.status);
-  const b=await r.blob(),f=new File([b],'inat.jpg',{type:b.type||'image/jpeg'});
-  const ref=GDRIVE_ON?await addLocal(f):await resize(f);
-  if(!ref)throw new Error('imagen');
-  formFotos.push(ref);formOrg[ref]=orgCur;
-  formCred[ref]=(String(c.at||'iNaturalist').replace(/[|\n\r]+/g,' ').trim()+' · vía iNaturalist');
-  drawThumbs();
-  box.innerHTML='<p class="hint">✔ Foto de '+esc(orgCur.toLowerCase())+' añadida con su crédito. Se guarda al pulsar «Guardar».</p>';
-  orgCands=[];
- }catch(err){
-  btn.disabled=false;
-  box.innerHTML='<p class="note">No pude descargar esa imagen (iNaturalist puede bloquearla desde el navegador). Ábrela en <a href="https://www.inaturalist.org/observations/'+encodeURIComponent(c.oid)+'" target="_blank" rel="noopener" style="color:var(--lnk)">iNaturalist ↗</a> y súbela con «Elegir fotos».</p>';
- }
-}
+/* «Comparar con iNaturalist» y «Completar Flor/Hoja/Fruto»: ahora en inat.js */
 
 /* ---------- Exportar ---------- */
 function saveFile(name,text,type){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)}
@@ -2036,52 +1911,7 @@ async function importData(file){
 $('imj').onclick=()=>$('imf').click();
 $('imf').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)importData(f)};
 
-/* ---------- Sesión ---------- */
-/* ---------- Perfil: nombre y foto de usuario ---------- */
-let prof={name:'',foto:'',email:'',uid:''},setFoto=null;
-const profIni=n=>String(n||prof.name||prof.email||'?').trim()[0].toUpperCase();
-const avHTML=(f,n,big)=>'<span class="av'+(big?' big':'')+'">'+(f?'<img alt="" referrerpolicy="no-referrer" src="'+esc(f)+'">':esc(profIni(n)))+'</span>';
-function drawWho(){
- const w=$('who');if(!w)return;
- w.innerHTML=prof.email?avHTML(prof.foto)+'<span class="wtx"><b>'+esc(prof.name||prof.email.split('@')[0])+'</b><small>'+esc(prof.email)+'</small></span>':'';
-}
-async function loadProf(email,uid,meta){
- meta=meta||{};
- let f='';try{f=(await dbGet('meta','avatar_'+uid))||''}catch(_){}
- prof={email,uid,name:meta.nombre_perfil||ls('pk_pn_'+uid)||meta.full_name||meta.name||'',foto:f==='none'?'':(f||meta.avatar_url||meta.picture||'')};
- drawWho();
-}
-const dlgset=$('dlgset');
-function setPrev(){$('set-av').outerHTML=avHTML(setFoto===null?prof.foto:setFoto,$('set-name').value,1).replace('class="av big"','class="av big" id="set-av"')}
-function avatarFrom(file){return new Promise(res=>{const u=URL.createObjectURL(file),im=new Image();
- im.onload=()=>{const S=256,c=document.createElement('canvas');c.width=c.height=S;const m=Math.min(im.width,im.height);c.getContext('2d').drawImage(im,(im.width-m)/2,(im.height-m)/2,m,m,0,0,S,S);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',.85))};
- im.onerror=()=>{URL.revokeObjectURL(u);res('')};im.src=u})}
-$('setb').onclick=()=>{setFoto=null;$('set-name').value=prof.name;$('set-mail').textContent=prof.email;$('set-err').textContent='';$('set-foto').value='';setPrev();dlgset.showModal()};
-$('set-name').oninput=()=>{if((setFoto===null?prof.foto:setFoto)==='')setPrev()};
-$('set-foto').onchange=async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;const d=await avatarFrom(f);if(!d){$('set-err').textContent='No se pudo leer esa imagen.';return}$('set-err').textContent='';setFoto=d;setPrev()};
-$('set-rm').onclick=()=>{setFoto='';setPrev()};
-$('set-cancel').onclick=()=>dlgset.close();
-$('set-save').onclick=async()=>{
- const name=$('set-name').value.trim().slice(0,40);
- prof.name=name;lsSet('pk_pn_'+prof.uid,name);
- if(setFoto!==null){prof.foto=setFoto;await dbPut('meta',setFoto||'none','avatar_'+prof.uid)}
- drawWho();dlgset.close();
- if(SB&&navigator.onLine){try{const r=await SB.auth.updateUser({data:{nombre_perfil:name}});if(r.error)alert('El nombre quedó guardado en este dispositivo, pero no se pudo sincronizar: '+r.error.message)}catch(_){}}
-};
-
-$('out').onclick=async()=>{
- if(!SB)return;await flush();
- if((await dbAll('cola')).length&&!confirm('Hay fichas sin subir que se perderán si sales ahora. ¿Salir de todos modos?'))return;
- off=false;await dbClear('especies');await dbClear('cola');await dbClear('meta');await dbClear('fotos');gdForget();SB.auth.signOut();
-};
-SB&&SB.auth.onAuthStateChange(async(_e,sess)=>{
- const u=sess&&sess.user;if(!u&&off)return;
- if(u){off=false;const m=await dbGet('meta','uid');if(m&&m!==u.id){await dbClear('especies');await dbClear('cola');await dbClear('fotos');gdForget()}await dbPut('meta',u.id,'uid');await dbPut('meta',u.email,'email');if(_e==='SIGNED_IN'&&sess.provider_token&&GDRIVE_ON&&sess.provider_token!==ls('pk_ptok')){lsSet('pk_ptok',sess.provider_token);gdSet(sess.provider_token,3500);if(sess.provider_refresh_token)gdFn({action:'store',refresh_token:sess.provider_refresh_token}).catch(()=>{})}}
-
- $('auth').hidden=!!u;$('app').hidden=!u;$('top').hidden=!u;if(u)await loadProf(u.email,u.id,u.user_metadata);else{prof.email='';drawWho()}
- gdUI();if(u&&u.id!==uid){uid=u.id;loadData()}
- if(!u){uid=null;data=[];path=[];sel=null}
-});
+/* Sesión y perfil de usuario: ahora en supabase.js */
 /* ---------- Menú de ajustes (⋮) ---------- */
 const mnu=$('mnu'),menu=$('menu');
 const setMenu=o=>{menu.hidden=!o;mnu.setAttribute('aria-expanded',o?'true':'false')};
