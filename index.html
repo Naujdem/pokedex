@@ -429,7 +429,7 @@ body.selmode main{padding-bottom:90px}
     <button id="imj">⬆ Importar fichas (JSON)</button><input type="file" id="imf" accept="application/json,.json" hidden>
     <hr>
     <button id="out" class="mout">Salir</button>
-    <div class="mfoot">Biotaxo dex · v4.3</div>
+    <div class="mfoot">Biotaxo dex · v4.4</div>
    </div>
   </div>
  </div>
@@ -557,16 +557,16 @@ const A=(key,label,ph)=>({key,label,t:'a',ph});
 /* M = selección múltiple en cuadros. items: [icono, valor, texto corto opcional]. x: {ex:'valor exclusivo', al:{valorAntiguo:valorNuevo}} */
 const M=(key,label,items,ph,x)=>Object.assign({key,label,t:'m',items,opts:items.map(i=>i[1]),ph},x||{});
 const UNIV=[
- S('uicn','Estado de conservación (UICN)',['Preocupación Menor (LC)','Casi Amenazado (NT)','Vulnerable (VU)','En Peligro (EN)','En Peligro Crítico (CR)','Extinto en Estado Silvestre (EW)','Extinto (EX)','Datos Insuficientes (DD)']),
- Object.assign(S('origen','Origen / Endemismo',['Exótico / Introducido','Endémico']),{noOtra:1}),
+ M('uicn','Estado de conservación (UICN)',[['🔵','Preocupación Menor (LC)'],['🟡','Casi Amenazado (NT)'],['🟠','Vulnerable (VU)'],['🔴','En Peligro (EN)'],['🟣','En Peligro Crítico (CR)'],['⚫','Extinto en Estado Silvestre (EW)'],['⬛','Extinto (EX)'],['❔','Datos Insuficientes (DD)']],'',{ex:1}),
+ Object.assign(M('origen','Origen / Endemismo',[['🌍','Exótico / Introducido'],['🏠','Endémico']],'',{ex:1}),{noOtra:1}),
  Object.assign(T('origen_lugar','Lugar de endemismo / introducción','Ej: Andes colombianos, Madagascar…'),{dep:1,lab:r=>r.origen==='Endémico'?'Endémico de':'Introducido desde'}),
  M('habitat','Hábitat',[['🏙️','Ciudades'],['🌲','Bosques'],['🌴','Bosque húmedo tropical'],['🏔️','Bosques andinos de montaña'],['🍂','Bosques secos tropicales'],['🌵','Matorrales'],['🌾','Sabana'],['🏜️','Desierto'],['🦆','Humedal'],['🏖️','Costa'],['⛰️','Montaña'],['🕳️','Cuevas'],['🌴','Selva'],['🛣️','Bordes de caminos'],['🚜','Antrópico / agroecosistemas']]),
  M('peligro','Nivel de peligrosidad / toxicidad',[['🕊️','Inofensivo'],['☠️','Venenoso'],['🐍','Ponzoñoso'],['⚠️','Irritante'],['🦠','Patógeno']],'',{ex:'Inofensivo'}),
  T('tamano','Tamaño / dimensiones','Longitud, altura, envergadura, diámetro…'),
  T('ciclo','Ciclo de vida','Anual, bienal, perenne; fases principales…'),
  T('longevidad','Longevidad','Esperanza de vida aproximada'),
- S('metamorfosis','Metamorfosis',['Completa (holometábola)','Incompleta (hemimetábola)','Sin metamorfosis (desarrollo directo)']),
- S('poblacion','Estado poblacional / tendencia',['Estable','En declive','En aumento']),
+ M('metamorfosis','Metamorfosis',[['🦋','Completa (holometábola)'],['🦗','Incompleta (hemimetábola)'],['🐛','Sin metamorfosis (desarrollo directo)']],'',{ex:1}),
+ M('poblacion','Estado poblacional / tendencia',[['➡️','Estable'],['⬇️','En declive'],['⬆️','En aumento']],'',{ex:1}),
  T('amenazas','Amenazas principales','Pérdida de hábitat, caza, contaminación…'),
  T('ecologica','Importancia ecológica','Polinizador, dispersor de semillas, depredador tope, bioindicador…'),
  T('humanos','Interacciones con humanos','Beneficio económico, conflicto, uso cultural/tradicional'),
@@ -587,9 +587,9 @@ const ESP={
   T('an_camada','Tamaño de camada / número de crías'),
   M('an_locomocion','Tipo de locomoción',[['🏃','Cursorial'],['🦘','Saltador'],['🦅','Volador'],['🧗','Trepador'],['⛏️','Excavador'],['🏊','Nadador']]),
   M('an_sentidos','Sensibilidad sensorial destacada',[['👁️','Visión'],['👃','Olfato'],['🦇','Ecolocación'],['⚡','Electrorrecepción'],['🧪','Quimiorrecepción']]),
-  S('an_territorialidad','Territorialidad',['Territorial','No territorial','Migratorio']),
-  S('an_estrategia','Estrategia reproductiva',['K estratega','r estratega']),
-  Object.assign(S('an_dimorfismo','Dimorfismo sexual',['Presente','Ausente']),{noOtra:1}),
+  M('an_territorialidad','Territorialidad',[['🛡️','Territorial'],['🕊️','No territorial'],['✈️','Migratorio']],'',{ex:1}),
+  M('an_estrategia','Estrategia reproductiva',[['🐘','K estratega'],['🐁','r estratega']],'',{ex:1}),
+  Object.assign(M('an_dimorfismo','Dimorfismo sexual',[['👫','Presente'],['🧍','Ausente']],'',{ex:1}),{noOtra:1}),
   Object.assign(A('an_dimorfismo_dif','Diferencia entre sexos','Ej: el macho es más grande y colorido'),{dep:1}),
   T('an_nido','Tipo de nido / refugio'),
   M('anat_grupo','Grupo de artrópodo (si aplica)',[['🦗','Insecto'],['🕷️','Arácnido'],['🦂','Escorpión'],['🦀','Crustáceo'],['🪱','Miriápodo'],['🦐','Otro artrópodo']],'',{ex:1}),
@@ -609,15 +609,15 @@ const ESP={
   Object.assign(M('ar_resp','Tipo de respiración',[['📖','Pulmones en libro'],['🫁','Tráqueas'],['🔀','Ambos']],'',{ex:1}),{dep:1})
  ],
  Plantae:[
-  S('pl_uso','Toxicidad / uso humano',['Medicinal','Comestible','Ornamental','Tóxica / Venenosa','Industrial','Maderable']),
+  M('pl_uso','Toxicidad / uso humano',[['💊','Medicinal'],['🍽️','Comestible'],['🌺','Ornamental'],['☠️','Tóxica / Venenosa'],['🏭','Industrial'],['🪵','Maderable']]),
   M('pl_habito','Forma de crecimiento (hábito)',[['🌳','Árbol'],['🪴','Arbusto'],['🌱','Hierba'],['🍃','Trepadora / Liana'],['🌸','Epífita'],['🪨','Litófita']]),
-  S('pl_follaje','Tipo de hoja / follaje',['Perennifolio','Caduco (caducifolio)']),
+  M('pl_follaje','Tipo de hoja / follaje',[['🌲','Perennifolio'],['🍂','Caduco (caducifolio)']],'',{ex:1}),
   M('pl_polinizacion','Tipo de polinización',[['💨','Anemófila (viento)','Viento'],['🐝','Entomófila (insectos)','Insectos'],['🐦','Ornitófila (aves)','Aves'],['🦇','Quiropterófila (murciélagos)','Murciélagos']]),
-  S('pl_estructuras','Estructuras de interés',['Flores','Frutos comestibles','Espinas / Aguijones','Esporas']),
-  S('pl_raiz','Tipo de raíz',['Pivotante','Fasciculada','Adventicia','Aérea']),
-  S('pl_fruto','Tipo de fruto',['Baya','Drupa','Cápsula','Legumbre','Aquenio']),
-  S('pl_dispersion','Dispersión de semillas',['Zoocoria','Anemocoria','Hidrocoria','Autocoria']),
-  S('pl_luz','Requerimientos de luz',['Heliófita','Esciófita','Intermedia']),
+  M('pl_estructuras','Estructuras de interés',[['🌸','Flores'],['🍎','Frutos comestibles'],['🌵','Espinas / Aguijones'],['🍄','Esporas']]),
+  M('pl_raiz','Tipo de raíz',[['🥕','Pivotante'],['🌾','Fasciculada'],['🌿','Adventicia'],['🎈','Aérea']],'',{ex:1}),
+  M('pl_fruto','Tipo de fruto',[['🍇','Baya'],['🍑','Drupa'],['🌰','Cápsula'],['🫛','Legumbre'],['🌾','Aquenio']],'',{ex:1}),
+  M('pl_dispersion','Dispersión de semillas',[['🐦','Zoocoria'],['💨','Anemocoria'],['💧','Hidrocoria'],['🌱','Autocoria']]),
+  M('pl_luz','Requerimientos de luz',[['☀️','Heliófita'],['🌑','Esciófita'],['🌤️','Intermedia']],'',{ex:1}),
   T('pl_sequia','Tolerancia a la sequía'),
   T('pl_inundacion','Tolerancia a la inundación'),
   T('pl_latex','Látex, resinas o metabolitos secundarios'),
@@ -625,37 +625,37 @@ const ESP={
   S('pl_inflorescencia','Tipo de inflorescencia',['Racimo','Espiga','Panoja / Panícula','Umbela','Corimbo','Capítulo','Cima','Espádice','Amento','Solitaria (flor solitaria)'])
  ],
  Fungi:[
-  S('fu_comestibilidad','Comestibilidad y toxicidad',['Comestible excelente','Comestible con precaución','Sin valor culinario','Tóxico / Venenoso','Mortal','Alucinógeno / Psicoactivo']),
-  S('fu_nutricion','Ecología / nutrición',['Saprófito (descomponedor)','Micorrícico','Parásito']),
-  S('fu_esporocarpo','Tipo de esporocarpo (cuerpo fructífero)',['Sombrilla (láminas / poros)','Copa','Gelatinoso','Coralino','Polvo (bejín)']),
-  S('fu_sustrato','Sustrato',['Madera en descomposición (lígnicola)','Suelo (humícola)','Hojarasca','Sobre insectos (entomopatógeno)']),
+  M('fu_comestibilidad','Comestibilidad y toxicidad',[['⭐','Comestible excelente'],['👍','Comestible con precaución'],['😐','Sin valor culinario'],['⚠️','Tóxico / Venenoso'],['☠️','Mortal'],['🍄','Alucinógeno / Psicoactivo']],'',{ex:1}),
+  M('fu_nutricion','Ecología / nutrición',[['🍄','Saprófito (descomponedor)'],['🤝','Micorrícico'],['🩸','Parásito']],'',{ex:1}),
+  M('fu_esporocarpo','Tipo de esporocarpo (cuerpo fructífero)',[['☂️','Sombrilla (láminas / poros)'],['🥣','Copa'],['🍮','Gelatinoso'],['🪸','Coralino'],['💨','Polvo (bejín)']],'',{ex:1}),
+  M('fu_sustrato','Sustrato',[['🪵','Madera en descomposición (lígnicola)'],['🌱','Suelo (humícola)'],['🍂','Hojarasca'],['🐛','Sobre insectos (entomopatógeno)']]),
   T('fu_esporada','Color de la esporada'),
   T('fu_olor','Olor característico'),
   T('fu_sabor','Sabor (solo si se prueba con precaución)'),
-  S('fu_estacionalidad','Estacionalidad',['Primavera','Verano','Otoño','Invierno','Todo el año']),
+  M('fu_estacionalidad','Estacionalidad',[['🌸','Primavera'],['☀️','Verano'],['🍂','Otoño'],['❄️','Invierno'],['🔄','Todo el año']]),
   T('fu_simbiosis','Relación simbiótica específica','Con qué árboles o plantas forma micorrizas'),
-  S('fu_anillo','Anillo / volva (agaricales)',['Con anillo','Con volva','Con anillo y volva','Sin anillo ni volva'])
+  M('fu_anillo','Anillo / volva (agaricales)',[['💍','Con anillo'],['🥚','Con volva'],['💍🥚','Con anillo y volva'],['⭕','Sin anillo ni volva']],'',{ex:1})
  ],
  Protista:[
-  S('pr_nutricion','Nutrición',['Autótrofo (fotosintético)','Heterótrofo','Mixótrofo']),
-  S('pr_locomocion','Locomoción',['Flagelos','Cilios','Seudópodos','Inmóvil']),
-  S('pr_rol','Importancia / rol',['Productor primario acuático','Bioluminiscente','Causa mareas rojas','Patógeno / Parásito','Simbionte']),
-  S('pr_pared','Pared celular',['Presente','Ausente'],'Ej: Presente, de celulosa'),
-  S('pr_reproduccion','Forma de reproducción',['Binaria','Sexual','Formación de quistes']),
-  S('pr_habitat','Hábitat específico',['Planctónico','Bentónico','Endosimbionte']),
+  M('pr_nutricion','Nutrición',[['🌿','Autótrofo (fotosintético)'],['🍽️','Heterótrofo'],['🔄','Mixótrofo']],'',{ex:1}),
+  M('pr_locomocion','Locomoción',[['〰️','Flagelos'],['👁️','Cilios'],['🦶','Seudópodos'],['🛑','Inmóvil']],'',{ex:1}),
+  M('pr_rol','Importancia / rol',[['🌱','Productor primario acuático'],['✨','Bioluminiscente'],['🩸','Causa mareas rojas'],['🦠','Patógeno / Parásito'],['🤝','Simbionte']]),
+  M('pr_pared','Pared celular',[['🧱','Presente'],['⭕','Ausente']],'Ej: Presente, de celulosa',{ex:1}),
+  M('pr_reproduccion','Forma de reproducción',[['🧬','Binaria'],['💕','Sexual'],['🔴','Formación de quistes']],'',{ex:1}),
+  M('pr_habitat','Hábitat específico',[['🌊','Planctónico'],['⚓','Bentónico'],['🤝','Endosimbionte']]),
   T('pr_pigmentos','Pigmentos fotosintéticos','Clorofila a/b/c, ficoeritrina…')
  ],
  Monera:[
-  S('mo_morfologia','Morfología',['Coco','Bacilo','Espirilo','Vibrión']),
-  S('mo_oxigeno','Relación con el oxígeno',['Aerobia estricta','Anaerobia estricta','Anaerobia facultativa']),
-  S('mo_efecto','Efecto / patogenicidad',['Benéfica (simbionte / flora intestinal / fijadora de nitrógeno)','Utilidad industrial (fermentación)','Patógena']),
-  S('mo_gram','Tinción de Gram',['Gram positiva','Gram negativa']),
-  S('mo_metabolismo','Metabolismo energético',['Quimioautótrofo','Fotoautótrofo','Quimioheterótrofo']),
-  S('mo_endosporas','Presencia de endosporas',['Presente','Ausente']),
-  S('mo_movilidad','Movilidad',['Flagelos','Deslizamiento','Inmóvil']),
-  S('mo_biofilm','Capacidad de formar biofilms',['Sí','No']),
+  M('mo_morfologia','Morfología',[['⚪','Coco'],['🟫','Bacilo'],['🌀','Espirilo'],['❓','Vibrión']],'',{ex:1}),
+  M('mo_oxigeno','Relación con el oxígeno',[['💨','Aerobia estricta'],['🚫','Anaerobia estricta'],['🌀','Anaerobia facultativa']],'',{ex:1}),
+  M('mo_efecto','Efecto / patogenicidad',[['🤝','Benéfica (simbionte / flora intestinal / fijadora de nitrógeno)'],['🍺','Utilidad industrial (fermentación)'],['🦠','Patógena']],'',{ex:1}),
+  M('mo_gram','Tinción de Gram',[['🟪','Gram positiva'],['🟥','Gram negativa']],'',{ex:1}),
+  M('mo_metabolismo','Metabolismo energético',[['⚡','Quimioautótrofo'],['🌞','Fotoautótrofo'],['🍽️','Quimioheterótrofo']],'',{ex:1}),
+  M('mo_endosporas','Presencia de endosporas',[['✅','Presente'],['❌','Ausente']],'',{ex:1}),
+  M('mo_movilidad','Movilidad',[['〰️','Flagelos'],['🐌','Deslizamiento'],['🛑','Inmóvil']],'',{ex:1}),
+  M('mo_biofilm','Capacidad de formar biofilms',[['🟢','Sí'],['🔴','No']],'',{ex:1}),
   T('mo_antibioticos','Resistencia a antibióticos','Solo cuando sea relevante'),
-  S('mo_extremo','Hábitat extremo',['Termófila','Acidófila','Halófila'])
+  M('mo_extremo','Hábitat extremo',[['🔥','Termófila'],['🧪','Acidófila'],['🧂','Halófila']])
  ]
 };
 const ESPN={Animalia:'Animales',Plantae:'Plantas',Fungi:'Hongos',Protista:'Protistas',Monera:'Bacterias y arqueas'};
@@ -1210,8 +1210,8 @@ function fHTML(f){
  let c;
  if(f.t==='m')c='<div class="chips" id="'+id+'" data-k="'+f.key+'" data-m="1" role="group" aria-labelledby="l-'+f.key+'">'
   +f.items.map(i=>'<button type="button" class="chip" aria-pressed="false" data-v="'+esc(i[1])+'"><span class="ci" aria-hidden="true">'+i[0]+'</span><span>'+esc(i[2]||i[1])+'</span></button>').join('')
-  +'<button type="button" class="chip otra" aria-pressed="false" data-v="'+OTRA+'"><span class="ci" aria-hidden="true">✏️</span><span>Otra…</span></button></div>'
-  +'<textarea class="otro" id="'+id+'-o" hidden rows="2" placeholder="'+(ph||'Escribe cuál (Enter = nueva línea)')+'"></textarea>';
+  +(f.noOtra?'':'<button type="button" class="chip otra" aria-pressed="false" data-v="'+OTRA+'"><span class="ci" aria-hidden="true">✏️</span><span>Otra…</span></button>')+'</div>'
+  +(f.noOtra?'':'<textarea class="otro" id="'+id+'-o" hidden rows="2" placeholder="'+(ph||'Escribe cuál (Enter = nueva línea)')+'"></textarea>');
  else if(f.t==='s')c='<select id="'+id+'" data-k="'+f.key+'"><option value="">—</option>'+f.opts.map(o=>'<option>'+esc(o)+'</option>').join('')+(f.noOtra?'':'<option value="'+OTRA+'">Otra…</option>')+'</select>'
   +(f.noOtra?'':'<textarea class="otro" id="'+id+'-o" hidden rows="2" placeholder="'+(ph||'Escribe cuál (Enter = nueva línea)')+'"></textarea>');
  else if(f.t==='a')c='<textarea id="'+id+'" data-k="'+f.key+'" rows="2" placeholder="'+ph+'"></textarea>';
@@ -1251,8 +1251,8 @@ function fillRasgos(obj){
    const sel=new Set(),rest=[];
    (v==null||v===''?[]:String(v).split(', ')).forEach(t=>{const n=(f&&f.al&&f.al[t])||t;if(f&&f.opts.includes(n))sel.add(n);else rest.push(t)});
    el.querySelectorAll('.chip:not(.otra)').forEach(b=>setChip(b,sel.has(b.dataset.v)));
-   setChip(el.querySelector('.chip.otra'),rest.length>0);
-   const o=$(el.id+'-o');o.hidden=!rest.length;o.value=rest.join(', ');
+   const ob=el.querySelector('.chip.otra');if(ob)setChip(ob,rest.length>0);
+   const o=$(el.id+'-o');if(o){o.hidden=!rest.length;o.value=rest.join(', ')}
   }else if(el.tagName==='SELECT'){
    const o=$(el.id+'-o');
    if(v==null||v===''){el.value='';if(o){o.hidden=true;o.value=''}}
@@ -1283,7 +1283,7 @@ function depClear(x,k){
 }
 function depAll(){
  DEPS.forEach(([k,on,when])=>{const s=$('r-'+on),w=$('w-'+k);if(!s||!w)return;const show=when(depVal(s));w.hidden=!show;if(!show)depClear($('r-'+k),k)});
- const s=$('r-origen'),l=$('l-origen_lugar');if(s&&l)l.textContent=s.value==='Endémico'?'¿De dónde es endémico?':s.value?'¿De dónde fue introducido?':'';
+ const s=$('r-origen'),l=$('l-origen_lugar');if(s&&l){const ov=depVal(s);l.textContent=ov==='Endémico'?'¿De dónde es endémico?':ov?'¿De dónde fue introducido?':''}
 }
 /* Fichas antiguas: «Nativo» / «Invasor» ya no existen (lo maneja el mapa); los textos de endemismo se conservan en el campo de lugar */
 function legacy(r){
@@ -1863,7 +1863,7 @@ function caracteristicasTxt(){
  };
  const o=[];
  o.push('BIOTAXO DEX · Características de las fichas');
- o.push('Generado el '+new Date().toLocaleString('es-CO')+' · v4.3');
+ o.push('Generado el '+new Date().toLocaleString('es-CO')+' · v4.4');
  o.push('Son los campos que aparecen en «Añadir especie» y en «Editar ficha». Todos son opcionales.');
  o.push('');
  o.push('1. Características universales (aplican a TODOS los reinos)');
