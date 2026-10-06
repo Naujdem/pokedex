@@ -398,6 +398,11 @@ body.selmode main{padding-bottom:90px}
 @media (max-width:480px){#net.ok{display:none}}
 #net.pf{background:#f59e0b;color:#1b1200;font-weight:700;padding:6px 12px;border-radius:14px;white-space:normal;text-align:center;line-height:1.25;text-decoration:none}
 #net.pf:before{display:none}
+/* Arreglo móvil: la fila de cuadros (nowrap) ya no ensancha la ficha; se desplaza dentro de su caja */
+.ficha{grid-template-columns:minmax(0,1fr)}
+@media (min-width:901px){.ficha{grid-template-columns:minmax(260px,380px) minmax(0,1fr)}}
+.ficha>*,.finfo,.ficha-car,.acc,.accb{min-width:0;max-width:100%}
+.vchips{max-width:100%}
 
 </style>
 </head>
