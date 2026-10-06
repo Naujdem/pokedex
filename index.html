@@ -420,10 +420,11 @@ body.selmode main{padding-bottom:90px}
     <hr>
     <button id="exj" title="Exporta solo las fichas (nombre, taxonomía, características). Las fotos viven en tu Google Drive y en este dispositivo.">⬇ Exportar fichas (JSON)</button>
     <button id="exc">⬇ Exportar tabla (CSV, sin fotos)</button>
+    <button id="exk" title="Lista de todas las características que puedes llenar al añadir una especie o editar una ficha, con sus opciones">⬇ Exportar características (TXT)</button>
     <button id="imj">⬆ Importar fichas (JSON)</button><input type="file" id="imf" accept="application/json,.json" hidden>
     <hr>
     <button id="out" class="mout">Salir</button>
-    <div class="mfoot">Biotaxo dex · v4.1</div>
+    <div class="mfoot">Biotaxo dex · v4.2</div>
    </div>
   </div>
  </div>
@@ -2093,6 +2094,59 @@ async function exportData(kind){
  saveFile('pokedex-taxonomica-'+d+'.csv','﻿'+[cols.map(q).join(',')].concat(data.map(r=>cols.map(c=>q(c==='rasgos'?rasgosTxt(r):r[c])).join(','))).join('\r\n'),'text/csv');
 }
 $('exj').onclick=()=>exportData('json');$('exc').onclick=()=>exportData('csv');
+
+/* ---------- v4.2 · Exportar características (.txt) ----------
+   Genera, a partir de las mismas listas que usan «Añadir especie» y «Editar ficha» (UNIV, ESP, CAMPO, TXN),
+   un .txt con todas las características y sus opciones. Si agregas o cambias un campo, el .txt se actualiza solo. */
+function caracteristicasTxt(){
+ const REI={Animalia:'🐾',Plantae:'🌿',Fungi:'🍄',Protista:'🔬',Monera:'🧫'};
+ const ln=f=>{
+  let v;
+  if(f.t==='s'||f.t==='m'){
+   v=(f.opts||[]).join(', ');
+   if(!f.noOtra)v+=(v?', ':'')+'u otra (texto libre)';
+   if(f.t==='m')v+=' · se pueden marcar varias'+(f.ex?' («'+f.ex+'» es exclusiva)':'');
+  }else v=(f.t==='a'?'texto largo':'texto libre')+(f.ph?' · '+f.ph:'');
+  return (f.dep?'   ↳ ':'• ')+f.label+(f.dep?' (aparece según el campo anterior)':'')+': '+v;
+ };
+ const o=[];
+ o.push('BIOTAXO DEX · Características de las fichas');
+ o.push('Generado el '+new Date().toLocaleString('es-CO')+' · v4.2');
+ o.push('Son los campos que aparecen en «Añadir especie» y en «Editar ficha». Todos son opcionales.');
+ o.push('');
+ o.push('1. Características universales (aplican a TODOS los reinos)');
+ o.push('');
+ UNIV.forEach(f=>o.push(ln(f)));
+ o.push('• Distribución geográfica: lugares donde la especie es nativa y lugares donde es invasora (sección «Distribución geográfica» del formulario)');
+ o.push('');
+ o.push('2. Características específicas por reino');
+ Object.keys(ESP).forEach(k=>{
+  o.push('');
+  o.push((REI[k]||'•')+' Reino '+k+' ('+(ESPN[k]||k)+')');
+  o.push('');
+  ESP[k].forEach(f=>o.push(ln(f)));
+ });
+ o.push('');
+ o.push('3. Datos de la observación (de campo)');
+ o.push('');
+ CAMPO.forEach(f=>o.push(ln(f)));
+ o.push('');
+ o.push('4. Datos generales de la ficha');
+ o.push('');
+ o.push('• Fotos: hasta 8; la primera es la portada');
+ o.push('• Nombre común: texto libre');
+ o.push('• Taxonomía: '+LV.map((k,i)=>(typeof LN!=='undefined'&&LN[i])||k).join(' › ')+' (más Subphylum y Suborden, opcionales)');
+ o.push('• Otras características: texto largo');
+ o.push('');
+ o.push('5. Descripción por nivel taxonómico (texto libre; se reutiliza en las fichas del mismo taxón)');
+ o.push('');
+ TXN.forEach(n=>o.push('• Descripción '+n[2]));
+ return o.join('\r\n')+'\r\n';
+}
+$('exk').onclick=()=>{
+ const d=new Date().toISOString().slice(0,10);
+ saveFile('biotaxo-dex-caracteristicas-'+d+'.txt','\ufeff'+caracteristicasTxt(),'text/plain;charset=utf-8');
+};
 
 /* ---------- Importar (JSON de «Copia completa») ---------- */
 async function importData(file){
