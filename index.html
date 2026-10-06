@@ -408,7 +408,6 @@ body.selmode main{padding-bottom:90px}
    <button type="button" id="mnu" aria-haspopup="true" aria-expanded="false" aria-label="Ajustes">⋮</button>
    <div id="menu" hidden role="menu" aria-label="Ajustes">
     <div class="mhead"><span class="sans cl on" id="who"></span></div>
-    <button id="fav">☆ Favoritas</button>
     <button id="study">🎓 Modo estudio</button>
     <button id="selb">☑ Seleccionar</button>
     <hr>
@@ -421,7 +420,7 @@ body.selmode main{padding-bottom:90px}
     <button id="imj">⬆ Importar copia (JSON)</button><input type="file" id="imf" accept="application/json,.json" hidden>
     <hr>
     <button id="out" class="mout">Salir</button>
-    <div class="mfoot">Biotaxo dex · v3.5</div>
+    <div class="mfoot">Biotaxo dex · v3.6</div>
    </div>
   </div>
  </div>
@@ -1214,7 +1213,7 @@ function fchipsUI(){
   if(XFP[k])b.textContent=b.dataset.t+' · '+data.filter(XFP[k]).length;
  });
 }
-function clearF(){Q='';onlyFav=false;XF='';$('q').value='';$('fav').textContent='☆ Favoritas'}
+function clearF(){Q='';onlyFav=false;XF='';$('q').value=''}
 function render(){
  const st=lvState(),d=path.length,atSp=st.next==='especie',cur=curLv(st),sp=data.find(x=>x.id===sel);
  $('steps').innerHTML=stepSeq(st).map((k,j)=>{
@@ -1242,6 +1241,7 @@ function render(){
  }
  $('grid').innerHTML=h;
  if(filt()&&!showSp){const n=data.filter(matches).length;$('crumb').textContent=n+(n===1?' resultado':' resultados')+(Q?' para «'+Q+'»':'')+(onlyFav?' · solo favoritas':'')+(XF?' · '+XFL[XF]:'')}
+ else if(!filt()&&d>=1&&!showSp){const n=items.length;$('crumb').textContent=(path[d-1]||'Sin '+LBL[st.ks[d-1]].toLowerCase())+' · '+n+(n===1?' especie':' especies')}
  const ver=!!sp&&atSp;
  document.body.classList.toggle('ficha-abierta',ver);
  $('lvinfo').innerHTML=(!ver&&!filt()&&d>=1)?lvInfoHTML():'';
@@ -1502,6 +1502,7 @@ $('save').onclick=async()=>{
  $('save').disabled=false;
  if(editId)data=data.map(x=>x.id===editId?o:x);else data.push(o);
  path=chainFor(o);sel=o.id;dlg.close();render();
+ bToast('✓ Especie guardada');
  if(flush.err&&!driveErr())alert('La ficha quedó guardada en el dispositivo, pero no se pudo subir: '+flush.err);
 };
 
@@ -2029,12 +2030,11 @@ async function share(sp){
  try{if(navigator.share)await navigator.share({title:sci(sp),text:t});else{await navigator.clipboard.writeText(t);alert('Copiado al portapapeles.')}}catch(e){}
 }
 $('q').oninput=e=>{Q=e.target.value.trim();sel=null;render()};
-function favToggle(){onlyFav=!onlyFav;$('fav').textContent=onlyFav?'★ Favoritas':'☆ Favoritas';sel=null;render()}
-$('fav').onclick=favToggle;
+function favToggle(){onlyFav=!onlyFav;sel=null;render()}
 $('fchips').onclick=e=>{
  const b=e.target.closest('button[data-f]');if(!b)return;const k=b.dataset.f;
  if(k==='fav')return favToggle();
- if(k==='all'){onlyFav=false;XF='';$('fav').textContent='☆ Favoritas'}else XF=XF===k?'':k;
+ if(k==='all'){onlyFav=false;XF=''}else XF=XF===k?'':k;
  sel=null;render();
 };
 /* ---------- Modo estudio ---------- */
