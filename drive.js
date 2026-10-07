@@ -26,7 +26,7 @@ let gTok=null,folderP=null,tokP=null;
 try{gTok=JSON.parse(ls('pk_gtok')||'null')}catch(_){}
 const gdValid=()=>!!(gTok&&gTok.t&&gTok.exp>Date.now()+60000);
 function gdSet(t,secs){gTok={t,exp:Date.now()+(+secs||3600)*1000};lsSet('pk_gtok',JSON.stringify(gTok));gdUI()}
-function gdForget(){gTok=null;folderP=null;['pk_gtok','pk_gfolder','pk_ptok'].forEach(lsDel);gdUI()}
+function gdForget(){gTok=null;folderP=null;['pk_gtok','pk_gfolder','pk_ptok','pk_trashq'].forEach(lsDel);gdUI()}
 async function gdFn(body){
  let r;try{r=await SB.functions.invoke('drive-token',{body})}catch(_){throw new Error('NOTOKEN')}
  if(r.error||!r.data)throw new Error('NOTOKEN');
@@ -88,9 +88,22 @@ async function gdUpload(blob,name,sid,retry=1){
 }
 const gdBlob=async id=>{const r=await gd(API+'/files/'+id+'?alt=media');await gdOk(r);return r.blob()};
 /* A la papelera de Drive (recuperable), nunca borrado definitivo. Si falla, no pasa nada. */
+/* Cola de fotos pendientes de mandar a la papelera (si Drive no estaba conectado o falló) */
+function trashQ(ref,add){let q;try{q=JSON.parse(ls('pk_trashq')||'[]')}catch(_){q=[]}q=q.filter(x=>x!==ref);if(add)q.push(ref);q.length?lsSet('pk_trashq',JSON.stringify(q)):lsDel('pk_trashq')}
+function gdTrashRetry(){
+ if(!gdValid())return;
+ let q;try{q=JSON.parse(ls('pk_trashq')||'[]')}catch(_){q=[]}
+ if(!q.length)return;lsDel('pk_trashq');q.forEach(gdTrash);
+}
 async function gdTrash(ref){
  if(!isGd(ref))return;
- try{await gd(API+'/files/'+ref.slice(3),{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({trashed:true})})}catch(_){}
+ /* Si otra ficha todavía usa esta foto (p. ej. fichas duplicadas por importar dos veces), no se toca */
+ try{if((await dbAll('especies')).some(o=>o.foto===ref||(Array.isArray(o.fotos)&&o.fotos.includes(ref)))){trashQ(ref,false);return}}catch(_){}
+ try{
+  const r=await gd(API+'/files/'+ref.slice(3),{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({trashed:true})});
+  if(!r.ok&&r.status!==404)throw new Error('Drive '+r.status);
+ }catch(_){trashQ(ref,true);return}   // se reintenta cuando haya conexión con Drive
+ trashQ(ref,false);
  dbDel('fotos',ref).catch(()=>{});urlCache.delete(ref);
 }
 

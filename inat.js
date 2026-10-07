@@ -334,12 +334,12 @@ async function cmpInat(sp,o){
   box.innerHTML='<div class="cmp">'
    +'<div class="cmpc"><b>Tu foto</b><div class="cmpi">'+mine+'</div></div>'
    +'<div class="cmpc"><b>iNaturalist</b><div class="cmpi">'+(m?'<img id="cmpref" src="'+esc(okUrl(m.medium_url))+'" alt="Foto de referencia de '+esc(t.name)+'">':'<span aria-hidden="true">🌿</span>')+'</div>'
-   +(ph.length>1?'<div class="cmpth">'+ph.map(p=>'<img src="'+esc(okUrl(p.square_url||p.medium_url))+'" data-big="'+esc(okUrl(p.medium_url))+'" data-at="'+esc(p.attribution||'')+'" alt="Otra foto de referencia">').join('')+'</div>':'')
-   +'<small class="pcm" id="cmpat">'+(m&&m.attribution?'📷 '+esc(m.attribution):'')+'</small>'+(m?'<br><button type="button" id="cmpuse" style="margin-top:6px">📥 Usar esta foto</button>':'')+'</div></div><p class="hint" id="cmpmsg" role="status"></p>'
+   +(ph.length>1?'<div class="cmpth">'+ph.map(p=>'<img src="'+esc(okUrl(p.square_url||p.medium_url))+'" data-big="'+esc(okUrl(p.medium_url))+'" data-at="'+esc(p.attribution||'')+'" data-lic="'+(p.license_code?'1':'')+'" alt="Otra foto de referencia">').join('')+'</div>':'')
+   +'<small class="pcm" id="cmpat">'+(m&&m.attribution?'📷 '+esc(m.attribution):'')+'</small>'+(m?'<br><button type="button" id="cmpuse"'+(m.license_code?'':' hidden')+' style="margin-top:6px">📥 Usar esta foto</button>':'')+'</div></div><p class="hint" id="cmpmsg" role="status"></p>'
    +'<p class="hint"><i>'+esc(t.name)+'</i>'+(com?' · '+esc(com):'')+' · <a href="https://www.inaturalist.org/taxa/'+encodeURIComponent(t.id)+'" target="_blank" rel="noopener" style="color:var(--lnk)">Ver más fotos en iNaturalist ↗</a> · <button type="button" id="cmpx" class="lnkb">Cerrar</button></p>';
   box.onclick=e=>{
    const th=e.target.closest&&e.target.closest('.cmpth img');
-   if(th){$('cmpref').src=th.dataset.big;$('cmpat').textContent=th.dataset.at?'📷 '+th.dataset.at:''}
+   if(th){$('cmpref').src=th.dataset.big;$('cmpat').textContent=th.dataset.at?'📷 '+th.dataset.at:'';const u=$('cmpuse');if(u)u.hidden=!th.dataset.lic}
    else if(e.target.id==='cmpx')box.innerHTML='';
    else if(e.target.id==='cmpuse'){const im=$('cmpref');if(im)cmpFoto(im.src.replace(/\/(medium|square)\./,'/large.'),($('cmpat').textContent||'').replace(/^📷\s*/,''),$('cmpmsg'),e.target)}
   };
@@ -391,7 +391,7 @@ async function cmpGen(g,o){
   if(!r.ok)throw new Error('HTTP '+r.status);
   genCands=((await r.json()).results||[]).filter(x=>x&&x.name).map(x=>{
    const dp=x.default_photo||{},raw=dp.medium_url||dp.square_url||'';
-   return {name:x.name,com:x.preferred_common_name||'',id:x.id,th:okUrl(raw),big:okUrl(raw.replace(/\/(medium|square)\./,'/large.')),at:dp.attribution||''};
+   return {name:x.name,com:x.preferred_common_name||'',id:x.id,th:okUrl(raw),big:dp.license_code?okUrl(raw.replace(/\/(medium|square)\./,'/large.')):'',at:dp.attribution||''};
   });
   if(!genCands.length){box.innerHTML='<p class="note">No encontré especies del género «'+esc(t.name)+'» en iNaturalist.</p>';return}
   const card='display:flex;flex-direction:column;gap:6px;padding:8px;border:1px solid var(--line);border-radius:12px;background:var(--panel);min-width:0';

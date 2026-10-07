@@ -7,6 +7,7 @@
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#1E1E1E">
 <link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" type="image/png" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700&family=Source+Serif+4:ital,wght@0,400;1,400;1,600&display=swap" rel="stylesheet">
 <style>
@@ -878,6 +879,7 @@ async function flush(){
   }
  }catch(e){flush.err=String(e.message||e)}
  flush.busy=false;netUI();if(n&&!$('app').hidden)render();
+ if(!flush.err&&typeof gdTrashRetry==='function')gdTrashRetry();
  if(flush.again){flush.again=false;return flush()}
 }
 async function reconcile(rows,prune){
@@ -893,7 +895,7 @@ async function descargar(){
  b.disabled=true;if(GDRIVE_ON&&!gdValid())await gdToken(true).catch(()=>{});await flush();let n=0,fotosOk=true;
  try{
   for(let from=0;;from+=15){
-   const {data:rows,error}=await SB.from('especies').select(COLS+',fotos').order('creado').range(from,from+14);
+   const {data:rows,error}=await SB.from('especies').select(COLS+',fotos').order('creado').order('id').range(from,from+14);
    if(error)throw error;
    await reconcile(rows,false);if(fotosOk)fotosOk=await cacheFotos(rows);n+=rows.length;b.textContent='⬇ '+n+'…';if(rows.length<15)break;
   }
@@ -988,7 +990,8 @@ const photo=(src,r)=>src?IMG(src,' loading="lazy"'):'<span class="nophoto" aria-
 const COLS='id,creado,comun,caracteristicas,foto,rasgos,distribucion,'+LV.join(',');
 const MAXF=8;
 // fotos === undefined significa "todavía no cargadas" (la lista solo trae la portada)
-const fromRow=r=>{const o={id:r.id,comun:r.comun||'',car:r.caracteristicas||'',foto:r.foto||'',rasgos:r.rasgos&&typeof r.rasgos==='object'?r.rasgos:{},creado:r.creado,dist:normDist(r.distribucion)};
+const cleanR=x=>{const o={};if(x&&typeof x==='object'&&!Array.isArray(x))for(const k in x){const v=x[k];if(typeof v==='string')o[k]=v;else if(Array.isArray(v))o[k]=v.filter(i=>i!=null&&typeof i!=='object').join(', ');else if(typeof v==='number'||typeof v==='boolean')o[k]=String(v)}return o};
+const fromRow=r=>{const o={id:r.id,comun:r.comun||'',car:r.caracteristicas||'',foto:r.foto||'',rasgos:cleanR(r.rasgos),creado:r.creado,dist:normDist(r.distribucion)};
  if(r.fotos!==undefined)o.fotos=Array.isArray(r.fotos)&&r.fotos.length?r.fotos:(o.foto?[o.foto]:[]);
  LV.forEach(k=>o[k]=r[k]);return o};
 async function ensureFotos(sp){
@@ -1006,7 +1009,12 @@ async function loadData(){
  $('grid').innerHTML='<div class="card sk"><div class="ph"></div><div class="cap"><b>&nbsp;</b><small>&nbsp;</small></div></div>'.repeat(8);
  if(!SB||!navigator.onLine)return loadLocal();
  await flush();
- const {data:rows,error}=await SB.from('especies').select(COLS).order('creado');
+ let rows=[],error=null;
+ for(let from=0;;from+=500){   // Supabase limita cada consulta (1000 filas): se pide por páginas
+  const r=await SB.from('especies').select(COLS).order('creado').order('id').range(from,from+499);
+  if(r.error){error=r.error;break}
+  rows=rows.concat(r.data);if(r.data.length<500)break;
+ }
  if(error){if((await dbAll('especies')).length)return loadLocal();alert('No se pudieron cargar tus especies: '+error.message);return}
  await reconcile(rows,true);data=byC(await dbAll('especies'));fix();render();
  if(!data.length)$('crumb').textContent='Aún no tienes especies. Toca "+ Añadir especie" para empezar.';
@@ -1020,13 +1028,13 @@ const TAXR=TXN.map(n=>A('tx_'+n[0],'Descripción '+n[2],'Qué caracteriza '+n[2]
 const PLORG=[A('pl_d_flor','Flor · descripción','Color, forma, número de pétalos…'),A('pl_d_hoja','Hoja · descripción','Forma, borde, disposición…'),A('pl_d_fruto','Fruto · descripción','Forma, color, tamaño…')];
 ESP.Plantae.push(...PLORG);PLORG.concat([CAMPO[2]]).forEach(f=>{FD[f.key]=f});
 Object.assign(LABEL,{pl_d_flor:'Flor · descripción',pl_d_hoja:'Hoja · descripción',pl_d_fruto:'Fruto · descripción',c_salida:'Salida / diario de campo',_fo:'Órgano de cada foto'});
-TXN.forEach(n=>{LABEL['tx_'+n[0]]='Descripción '+n[2]});LABEL._adv='Advertencia';
+TXN.forEach(n=>{LABEL['tx_'+n[0]]='Descripción '+n[2]});LABEL._adv='Advertencia';LABEL._src='Id de origen (importación)';
 /* ---------- Ficha ---------- */
 const SUMK={Animalia:['an_dieta','an_actividad','ciclo','peligro'],Plantae:['pl_habito','pl_uso','ciclo','peligro'],Fungi:['fu_comestibilidad','fu_nutricion','peligro'],Protista:['pr_nutricion','pr_locomocion','pr_rol'],Monera:['mo_morfologia','mo_efecto','mo_oxigeno']};
 function sumHTML(sp){
  const r=sp.rasgos||{},u=(r.uicn||'').match(/\(([A-Z]{2})\)/),c=[];
  if(u)c.push('UICN '+u[1]);
- (SUMK[sp.reino]||[]).forEach(k=>{if(r[k])c.push(r[k].split(', ').map(x=>x.replace(/\s*\(.*\)$/,'')).join(', '))});
+ (SUMK[sp.reino]||[]).forEach(k=>{if(r[k])c.push(String(r[k]).split(', ').map(x=>x.replace(/\s*\(.*\)$/,'')).join(', '))});
  return c.length?'<p class="sum">'+c.map(t=>'<span>'+esc(t)+'</span>').join('')+'</p>':'';
 }
 /* Valor de una característica: en cuadros si es de selección múltiple, texto normal en los demás */
@@ -1923,10 +1931,12 @@ async function importData(file){
    valid.push(x);
   }
   if(!valid.length){alert('El archivo no tiene fichas válidas. Usa un JSON creado con «Exportar fichas (JSON)».');return}
-  const have=new Set(data.map(s=>s.id)),dups=valid.filter(x=>x.id&&have.has(x.id)).length;
+  const have=new Set(data.map(s=>s.id)),srcMap=new Map(data.filter(s=>s.rasgos&&s.rasgos._src).map(s=>[s.rasgos._src,s.id]));
+  const key=x=>(x.rasgos&&typeof x.rasgos._src==='string'&&x.rasgos._src)||x.id,ex=x=>x.id?(have.has(x.id)?x.id:srcMap.get(key(x))):undefined;   // ¿ya existe (por id o por ficha de origen)?
+  const dups=valid.filter(ex).length;
   let over=false;
   if(dups)over=confirm(dups+' de '+valid.length+' fichas ya existen en tu colección.\n\nAceptar = sobrescribirlas con las del archivo.\nCancelar = omitirlas y añadir solo las nuevas.');
-  const todo=valid.filter(x=>over||!(x.id&&have.has(x.id)));
+  const todo=valid.filter(x=>over||!ex(x));
   if(!todo.length){alert('No hay fichas nuevas que importar.');return}
   const fotosDe=x=>(Array.isArray(x.fotos)?x.fotos:(x.foto?[x.foto]:[])).filter(f=>typeof f==='string');
   const nLoc=todo.filter(x=>fotosDe(x).some(f=>/^loc:/.test(f))).length,nGd=todo.filter(x=>fotosDe(x).some(f=>/^gd:/.test(f))).length;
@@ -1948,12 +1958,12 @@ async function importData(file){
      try{const bl=await (await fetch(f)).blob(),ref='loc:'+crypto.randomUUID();await dbPut('fotos',bl,ref);refs.push(ref)}catch(_){}
     }else refs.push(f);
    }
-   const row={id:over&&x.id&&have.has(x.id)?x.id:crypto.randomUUID(),comun:x.comun||'',caracteristicas:x.car||x.caracteristicas||'',
-    rasgos:x.rasgos&&typeof x.rasgos==='object'?x.rasgos:{},distribucion:x.dist||x.distribucion,creado:x.creado||new Date().toISOString(),fotos:refs,foto:refs[0]||''};
+   const row={id:over&&ex(x)?ex(x):crypto.randomUUID(),comun:x.comun||'',caracteristicas:x.car||x.caracteristicas||'',
+    rasgos:Object.assign({},cleanR(x.rasgos),x.id?{_src:key(x)}:{}),distribucion:x.dist||x.distribucion,creado:x.creado||new Date().toISOString(),fotos:refs,foto:refs[0]||''};
    LV.forEach(k=>row[k]=x[k].trim());
    const o=fromRow(row);
-   if(have.has(o.id)){const p=data.find(s=>s.id===o.id);if(p)(await ensureFotos(p)).filter(r=>/^gd:/.test(r)&&!refs.includes(r)).forEach(gdTrash)}
-   await persist(o);
+   let viejas=[];if(have.has(o.id)){const p=data.find(s=>s.id===o.id);if(p)viejas=(await ensureFotos(p)).filter(r=>/^gd:/.test(r)&&!refs.includes(r))}
+   await persist(o);viejas.forEach(gdTrash);
    const i=data.findIndex(s=>s.id===o.id);if(i>=0)data[i]=o;else data.push(o);
    have.add(o.id);
   }
@@ -1976,7 +1986,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!menu.hidden){setMe
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
 
 /* ---------- Favorito, compartir, buscador ---------- */
-const withFav=r=>{const p=data.find(x=>x.id===editId);if(p&&p.rasgos&&p.rasgos._fav)r._fav='1';if(p&&p.rasgos&&p.rasgos._dest)r._dest='1';return r};
+const withFav=r=>{const p=data.find(x=>x.id===editId);if(p&&p.rasgos&&p.rasgos._fav)r._fav='1';if(p&&p.rasgos&&p.rasgos._dest)r._dest='1';if(p&&p.rasgos&&p.rasgos._src)r._src=p.rasgos._src;return r};
 async function toggleFav(sp){
  const r=Object.assign({},sp.rasgos);if(r._fav)delete r._fav;else r._fav='1';
  sp.rasgos=r;await persist(sp);
