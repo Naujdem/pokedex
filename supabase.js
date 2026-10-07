@@ -4,8 +4,8 @@
    usuario), el perfil (nombre y foto) y el botón «Entrar con Google».
    Se carga DESPUÉS de la librería de Supabase y ANTES de drive.js y del
    <script> principal de index.html.
-   Usa cosas que define el script principal (dbGet, dbPut, dbClear, dbAll, flush,
-   loadData, off, uid, data, path, sel, $, esc...). Solo las usa cuando algo
+   Usa cosas de db.js (dbGet, dbPut, dbClear, dbAll, flush) y del script principal
+   (loadData, off, uid, data, path, sel, $, esc...). Solo las usa cuando algo
    ocurre (un clic, un cambio de sesión), nunca al cargar el archivo.
    ============================================================ */
 
