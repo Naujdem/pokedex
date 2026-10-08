@@ -257,7 +257,7 @@ async function iaUse(i,btn){
   const cm=com?com.charAt(0).toUpperCase()+com.slice(1):'';
   // [id del campo, etiqueta, valor nuevo]; solo los que existen y traen valor
   const F=LV.slice(2).map(k=>['f-'+k,LN[LV.indexOf(k)],T[k]])
-   .concat([['f-comun','Nombre común',cm],['r-subphylum','Subphylum',m.subphylum],['r-suborden','Suborden',m.suborder]])
+   .concat([['f-comun','Nombre común',cm],['r-subphylum','Subphylum',reino==='Plantae'?'':m.subphylum],['r-suborden','Suborden',m.suborder]])
    .filter(f=>f[2]&&$(f[0]));
 
   // ¿Hay datos distintos ya escritos? → preguntar si sobrescribir

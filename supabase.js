@@ -32,7 +32,30 @@ async function loadProf(email,uid,meta){
  let f='';try{f=(await dbGet('meta','avatar_'+uid))||''}catch(_){}
  prof={email,uid,name:meta.nombre_perfil||ls('pk_pn_'+uid)||meta.full_name||meta.name||'',foto:f==='none'?'':(f||meta.avatar_url||meta.picture||'')};
  drawWho();
+ avSync(uid);   // trae (o sube) la foto guardada en la nube, sin esperar
 }
+/* Foto de perfil en la nube: tabla «perfiles» de Supabase (una fila por usuario; ver perfiles.sql).
+   La copia del dispositivo (IndexedDB, clave avatar_<uid>) sirve para verla sin conexión.
+   Si hay un cambio sin subir (marca pk_avpend_<uid>), se sube primero; si no, se baja la de la nube.
+   Valor 'none' = el usuario quitó su foto (se muestra la inicial del nombre). */
+async function avSync(uid,warn){
+ if(!SB||!uid||!navigator.onLine)return;
+ try{
+  if(ls('pk_avpend_'+uid)){
+   const f=await dbGet('meta','avatar_'+uid);
+   if(f===undefined){lsDel('pk_avpend_'+uid);return}
+   const r=await SB.from('perfiles').upsert({uid,foto:f||'none',actualizado:new Date().toISOString()});
+   if(r.error){if(warn)alert('La foto quedó guardada en este dispositivo, pero no se pudo subir a tu cuenta: '+r.error.message+'\n\n(¿Ejecutaste perfiles.sql en Supabase?)');return}
+   lsDel('pk_avpend_'+uid);return;
+  }
+  const r=await SB.from('perfiles').select('foto').eq('uid',uid).maybeSingle();
+  if(r.error||!r.data||prof.uid!==uid)return;
+  const c=r.data.foto||'none';
+  await dbPut('meta',c,'avatar_'+uid);
+  prof.foto=c==='none'?'':c;drawWho();
+ }catch(_){}
+}
+addEventListener('online',()=>{if(prof.uid)avSync(prof.uid)});
 function setPrev(){$('set-av').outerHTML=avHTML(setFoto===null?prof.foto:setFoto,$('set-name').value,1).replace('class="av big"','class="av big" id="set-av"')}
 function avatarFrom(file){return new Promise(res=>{const u=URL.createObjectURL(file),im=new Image();
  im.onload=()=>{const S=256,c=document.createElement('canvas');c.width=c.height=S;const m=Math.min(im.width,im.height);c.getContext('2d').drawImage(im,(im.width-m)/2,(im.height-m)/2,m,m,0,0,S,S);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',.85))};
@@ -59,8 +82,9 @@ $('set-cancel').onclick=()=>dlgset.close();
 $('set-save').onclick=async()=>{
  const name=$('set-name').value.trim().slice(0,40);
  prof.name=name;lsSet('pk_pn_'+prof.uid,name);
- if(setFoto!==null){prof.foto=setFoto;await dbPut('meta',setFoto||'none','avatar_'+prof.uid)}
+ if(setFoto!==null){prof.foto=setFoto;await dbPut('meta',setFoto||'none','avatar_'+prof.uid);lsSet('pk_avpend_'+prof.uid,'1')}
  drawWho();dlgset.close();
+ if(setFoto!==null)avSync(prof.uid,true);   // sube la foto a la nube (si no hay conexión, queda pendiente)
  if(SB&&navigator.onLine){try{const r=await SB.auth.updateUser({data:{nombre_perfil:name}});if(r.error)alert('El nombre quedó guardado en este dispositivo, pero no se pudo sincronizar: '+r.error.message)}catch(_){}}
 };
 

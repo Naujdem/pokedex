@@ -101,15 +101,19 @@ summary{cursor:pointer;padding:10px 0;font-weight:700;font-size:.95rem}
 }
 /* ---------- Pantalla de inicio de sesión ---------- */
 header:has(+ #auth:not([hidden])){display:none}
-.login{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:24px 16px;background:radial-gradient(ellipse at 50% 0%,#1d3a33 0,transparent 60%),linear-gradient(180deg,#0e1a2b,#16233a 60%,#0f1a14);color:#e6f0e9}
-.lcard{width:100%;max-width:420px;padding:36px 28px 28px;border-radius:36px;text-align:center;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.14);box-shadow:0 20px 60px rgba(0,0,0,.45);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
-.licon{width:88px;height:88px;margin:0 auto 22px;border-radius:24px;background:#059669;display:grid;place-items:center;box-shadow:0 8px 24px rgba(5,150,105,.4)}
-.lcard h2{font:400 clamp(2rem,9vw,2.6rem)/1.1 "Source Serif 4",Georgia,serif;margin:0 0 14px;color:#fff}
-.ldesc{margin:0 0 30px;color:#a9b8c9;font-size:1.02rem;line-height:1.6}
-.gbtn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:15px 20px;border-radius:999px;border:1px solid #d5dde6;background:#fff;color:#1b2430;font-size:1.05rem;font-weight:700}
-@media (hover:hover){.gbtn:hover{background:#f0f4f8}}
-.lerr{color:#ff9088;min-height:1.2em;margin:14px 0 0}
-.lfoot{margin:18px 0 0;color:#6b7c93;font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;font-weight:700;font-family:"Bricolage Grotesque",system-ui,sans-serif}
+.login{min-height:100vh;min-height:100dvh;display:grid;place-items:center;padding:24px 16px;background:var(--bg);color:var(--ink)}
+.lcard{width:100%;max-width:400px;padding:32px 24px 24px;border-radius:16px;text-align:center;background:var(--panel);border:1px solid var(--line);box-shadow:0 12px 36px rgba(0,0,0,.6)}
+.licon{width:84px;height:84px;margin:0 auto 18px;border-radius:20px;overflow:hidden;box-shadow:0 0 0 1px var(--line)}
+.licon img{width:100%;height:100%;display:block}
+.lcard h2{font:700 1.9rem/1.1 "Bricolage Grotesque",system-ui,sans-serif;margin:0 0 6px;color:var(--ink)}
+.ltag{margin:0 0 16px;color:var(--lnk);font-style:italic;font-weight:600;font-size:1.05rem}
+.ldesc{margin:0 0 18px;color:var(--mut);font-size:1rem;line-height:1.55}
+.lfeat{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:0 0 24px}
+.lfeat span{background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font:500 .8rem "Bricolage Grotesque",system-ui,sans-serif;color:var(--ink)}
+.gbtn{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;min-height:48px;padding:12px 20px;border-radius:999px;border:1px solid #8E918F;background:#131314;color:#E3E3E3;font-size:1rem;font-weight:700}
+@media (hover:hover){.gbtn:hover{background:var(--soft);border-color:var(--acc)}}
+.lerr{color:var(--dng);min-height:1.2em;margin:14px 0 0}
+.lfoot{margin:18px 0 0;color:var(--mut);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;font-weight:700;font-family:"Bricolage Grotesque",system-ui,sans-serif}
 [hidden]{display:none!important}.authbox{max-width:380px;margin:40px auto;padding:20px}.authbox label{display:block;font-size:.85rem;margin:10px 0 3px;color:var(--mut)}.authbox input{width:100%;padding:8px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink);font-size:1rem}
 
 .step{transition:background .15s}@media (hover:hover){.step:not(:disabled):hover{background:var(--soft)}}.step.on{border-left-width:9px}
@@ -437,9 +441,11 @@ body.selmode main{padding-bottom:90px}
 </header>
 <section id="auth" class="login">
  <div class="lcard">
-  <div class="licon" aria-hidden="true"><svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7c-1.6-1.5-4-2-8-2v13c4 0 6.4.5 8 2 1.6-1.5 4-2 8-2V5c-4 0-6.4.5-8 2z"/><path d="M12 7v13"/></svg></div>
+  <div class="licon" aria-hidden="true"><img src="icon-192.png" alt="" width="84" height="84"></div>
   <h2>Biotaxo dex</h2>
-  <p class="ldesc">Inicia sesión para acceder a tu catálogo taxonómico personal. Tus hallazgos se sincronizarán en todos tus dispositivos automáticamente.</p>
+  <p class="ltag">Tu catálogo taxonómico</p>
+  <p class="ldesc">Inicia sesión para acceder a tus fichas. Tus hallazgos se sincronizan en todos tus dispositivos.</p>
+  <div class="lfeat" aria-hidden="true"><span>📷 Fotos en tu Drive</span><span>🌎 Mapas</span><span>📴 Sin conexión</span></div>
   <button type="button" id="glogin" class="gbtn"><svg width="22" height="22" viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.4-4.1 7-10.1 7-17.6z"/><path fill="#FBBC05" d="M10.5 28.7c-.5-1.4-.8-3-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C.9 16.4 0 20.1 0 24s.9 7.6 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg><span>Continuar con Google</span></button>
   <p class="note lerr" id="aerr" role="alert"></p>
  </div>
@@ -518,7 +524,7 @@ body.selmode main{padding-bottom:90px}
  <label for="set-name">Nombre de usuario</label>
  <input id="set-name" maxlength="40" autocomplete="nickname" placeholder="¿Cómo quieres que te llamemos?">
  <p class="hint" id="set-mail"></p>
- <p class="hint">El nombre se sincroniza con tu cuenta. La foto se guarda en este dispositivo.</p>
+ <p class="hint">El nombre y la foto se guardan en tu cuenta y se ven en todos tus dispositivos.</p>
  <p class="note" id="set-err" role="alert"></p>
  <div class="acts"><button id="set-cancel">Cancelar</button><button class="primary" id="set-save">Guardar</button></div>
 </dialog>
@@ -586,7 +592,7 @@ const ESP={
   M('an_actividad','Patrón de actividad',[['☀️','Diurno'],['🌙','Nocturno'],['🌅','Crepuscular']]),
   M('an_habitos','Hábitos de vida',[['🧍','Solitario'],['👥','Gregario'],['🐝','Eusocial']],'',{al:{'Gregario (manada / bandada)':'Gregario','Social (eusocial)':'Eusocial'}}),
   M('an_respiracion','Tipo de respiración',[['🫁','Pulmonar'],['🐟','Branquial'],['🐸','Cutánea'],['🪲','Traqueal']]),
-  M('an_reproduccion','Reproducción / desarrollo',[['🥚','Ovíparo'],['🍼','Vivíparo'],['🐣','Ovovivíparo'],['🦋','Metamorfosis']]),
+  M('an_reproduccion','Reproducción / desarrollo',[['🥚','Ovíparo'],['🍼','Vivíparo'],['🐣','Ovovivíparo']]),
   T('an_camada','Tamaño de camada / número de crías'),
   M('an_locomocion','Tipo de locomoción',[['🏃','Cursorial'],['🦘','Saltador'],['🦅','Volador'],['🧗','Trepador'],['⛏️','Excavador'],['🏊','Nadador']]),
   M('an_sentidos','Sensibilidad sensorial destacada',[['👁️','Visión'],['👃','Olfato'],['🦇','Ecolocación'],['⚡','Electrorrecepción'],['🧪','Quimiorrecepción']]),
@@ -953,7 +959,7 @@ function sumHTML(sp){
 /* Valor de una característica: en cuadros si es de selección múltiple, texto normal en los demás */
 const SUBX={filo:['subphylum','Subphylum',2],orden:['suborden','Suborden',4]};
 function linHTML(sp){
- const r=sp.rasgos||{},v={subphylum:r.subphylum||r.pl_subphylum,suborden:r.suborden||r.an_suborden};
+ const r=sp.rasgos||{},v={subphylum:sp.reino==='Plantae'?'':(r.subphylum||r.pl_subphylum),suborden:r.suborden||r.an_suborden};
  return LV.map((k,i)=>{const x=SUBX[k];
   return '<li style="--c:'+COL[i]+'"><span>'+LN[i]+'</span> '+esc(sp[k])+'</li>'+(x&&v[x[0]]?'<li style="--c:'+COL[x[2]]+'"><span>'+x[1]+'</span> '+esc(v[x[0]])+'</li>':'');
  }).join('');
@@ -1157,6 +1163,10 @@ function buildRasgos(){
  $('rg-t').innerHTML=ordF(TAXR).map(fHTML).join('');txLabels();
  $('rg-e').innerHTML=ordF((ESP[r]||[]).concat(legOn&&r==='Plantae'?[LEGP]:[])).map(fHTML).join('');
  $('rg-et').textContent='Características específicas · '+(ESPN[r]||r)+' (opcional)';
+ /* El subfilo no se usa en plantas: se ocultan su campo y su descripción */
+ const pl=r==='Plantae',sf=$('r-subphylum');
+ if(sf)sf.parentElement.hidden=pl;
+ ['l-tx_subphylum','r-tx_subphylum'].forEach(i=>{const e=$(i);if(e)e.hidden=pl});
 }
 function collectRasgos(){
  const o={};
@@ -1231,6 +1241,7 @@ function legacy(r){
  if(r.an_suborden&&!r.suborden)r.suborden=r.an_suborden;
  if(r.pl_subphylum&&!r.subphylum)r.subphylum=r.pl_subphylum;
  delete r.an_suborden;delete r.pl_subphylum;
+ if(r.an_reproduccion){const t=String(r.an_reproduccion).split(', ').filter(x=>x!=='Metamorfosis');if(t.length)r.an_reproduccion=t.join(', ');else delete r.an_reproduccion}   // «Metamorfosis» ya tiene su propio campo
  return r;
 }
 dlg.addEventListener('click',e=>{
@@ -1317,6 +1328,7 @@ $('save').onclick=async()=>{
  const miss=LV.filter(k=>!rec[k]).map(k=>LN[LV.indexOf(k)].toLowerCase());
  if(miss.length){$('err').textContent='Falta: '+miss.join(', ')+'.';return}
  // v3.2 · ¿faltan campos clave? → modal: cancelar / con advertencia / sin advertencia
+ if(rec.reino==='Plantae'){delete rec.rasgos.subphylum;delete rec.rasgos.tx_subphylum}   // el subfilo no aplica a plantas
  const falta=faltantes(Object.assign({},rec,{car:rec.caracteristicas,fotos:formFotos}));
  if(falta.length){const c=await askWarn(falta);if(c==='cancel')return;if(c==='warn')rec.rasgos._adv='1'}
  rec.fotos=formFotos.slice();rec.foto=formFotos[0]||'';
@@ -1511,7 +1523,7 @@ const LVDEF={
  }
 };
 const tval=k=>{const el=$((k==='subphylum'||k==='suborden'?'r-':'f-')+k);return el?el.value:''};
-const lvVal=(s,k)=>{const r=s.rasgos||{};return k==='subphylum'?(r.subphylum||r.pl_subphylum||''):k==='suborden'?(r.suborden||r.an_suborden||''):s[k]};
+const lvVal=(s,k)=>{const r=s.rasgos||{};return k==='subphylum'?(s.reino==='Plantae'?'':(r.subphylum||r.pl_subphylum||'')):k==='suborden'?(r.suborden||r.an_suborden||''):s[k]};
 const wikiGo=n=>'https://es.wikipedia.org/w/index.php?title=Especial:Buscar&go=Ir&search='+encodeURIComponent(String(n).trim());
 function lvText(k,name){
  const n=norm(name);
@@ -1818,7 +1830,7 @@ function caracteristicasTxt(){
  o.push('');
  o.push('• Fotos: hasta 8; la primera es la portada');
  o.push('• Nombre común: texto libre');
- o.push('• Taxonomía: '+LV.map((k,i)=>(typeof LN!=='undefined'&&LN[i])||k).join(' › ')+' (más Subphylum y Suborden, opcionales)');
+ o.push('• Taxonomía: '+LV.map((k,i)=>(typeof LN!=='undefined'&&LN[i])||k).join(' › ')+' (más Subphylum, solo para animales, hongos, protistas y bacterias, y Suborden, opcionales)');
  o.push('• Otras características: texto largo');
  o.push('');
  o.push('5. Descripción por nivel taxonómico (texto libre; se reutiliza en las fichas del mismo taxón)');
