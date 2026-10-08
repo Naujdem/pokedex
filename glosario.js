@@ -118,6 +118,7 @@ let curT=null,imgTok=0;
 let tmenu,tback,tview;   // se asignan en DOMContentLoaded (la página aún no existe al cargar este archivo)
 function closeMenu(){tmenu.hidden=true;tback.hidden=true}
 document.addEventListener('click',e=>{
+ if(!tmenu||!tback||!tview)return;
  const b=e.target.closest&&e.target.closest('.term');if(!b)return;
  curT=GLOS[+b.dataset.ti];$('tm-t').textContent=curT.name;
  tback.hidden=false;tmenu.hidden=false;

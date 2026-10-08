@@ -3,7 +3,7 @@
    Todo lo de iNaturalist: reconocimiento de especie con IA (Computer Vision),
    conexión OAuth (PKCE) y token JWT, botones «🔍 Analizar con IA» y «Usar este».
    Se carga ANTES del <script> principal de index.html (después de drive.js).
-   Todo va dentro de DOMContentLoaded porque envuelve drawThumbs y usa
+   Todo va dentro de DOMContentLoaded porque registra hooks en window.onDrawThumbs y usa
    $, esc, LV, LN, dlg, formFotos, getBlob, isLoc, isGd, que se definen
    en el script principal (que se ejecuta después).
    ============================================================ */
@@ -47,9 +47,8 @@ function iaBusy(on){const b=$('ia');b.disabled=on;b.textContent=on?'⏳ Analizan
 function iaClear(){iaSeq++;if(iaManualRes)iaManualRes('');iaCands=[];iaRef=formFotos[0]||null;$('iares').innerHTML='';iaMsg('');iaBusy(false)}
 
 /* Si la foto de portada (la primera) cambia, o se abre/cierra el formulario, se limpia el panel.
-   Se engancha a drawThumbs() sin tocar su código. */
-const _drawThumbs=drawThumbs;
-drawThumbs=function(){_drawThumbs.apply(this,arguments);if((formFotos[0]||null)!==iaRef)iaClear()};
+   Se engancha con window.onDrawThumbs sin tocar el código de drawThumbs(). */
+window.onDrawThumbs.push(()=>{if((formFotos[0]||null)!==iaRef)iaClear()});
 dlg.addEventListener('close',iaClear);
 
 /* =====================  TOKEN DE INATURALIST  =====================
@@ -453,8 +452,7 @@ function orgSug(){
  el.innerHTML='🌿 Te falta: '+m.map(o=>ORG_IC[o]+' '+o).join(', ')+'. Puedes completarla con una foto de iNaturalist (se guarda con el crédito de quien la tomó).<br>'
   +m.map(o=>'<button type="button" data-og="'+o+'" style="margin:6px 6px 0 0">'+ORG_IC[o]+' Buscar '+o.toLowerCase()+'</button>').join('');
 }
-const _dtOrg=drawThumbs;
-drawThumbs=function(){_dtOrg.apply(this,arguments);orgSug()};
+window.onDrawThumbs.push(()=>{orgSug()});
 dlg.addEventListener('close',()=>{$('orgres').innerHTML='';orgCands=[]});
 $('orgsug').onclick=e=>{const b=e.target.closest('button[data-og]');if(b)orgSearch(b.dataset.og)};
 $('orgres').onclick=e=>{const b=e.target.closest('button[data-i]');if(b)orgPick(+b.dataset.i,b)};
@@ -504,8 +502,8 @@ async function orgPick(i,btn){
    2) «Completar Flor / Hoja / Fruto» (solo Plantae): ORG_Q, orgCands/orgCur,
       orgMissing(), orgSug(), orgSearch(org), orgPick(i,btn), los listeners
       $('orgsug').onclick y $('orgres').onclick, y dlg.addEventListener('close',...).
-   3) Segundo wrapper de drawThumbs (_dtOrg → orgSug), colocado DESPUÉS del
-      wrapper de iaClear. El wrapper de iaClear no se duplicó.
+   3) Segundo hook de window.onDrawThumbs (orgSug), registrado DESPUÉS del
+      hook de iaClear. El hook de iaClear no se duplicó.
    ===================================================================== */
 
 });

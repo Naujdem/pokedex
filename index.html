@@ -1157,10 +1157,12 @@ async function openEdit(sp){
 $('cancel').onclick=()=>dlg.close();
 let formFotos=[],formOrig=[],formNew=new Set(),formSaved=false;
 dlg.addEventListener('close',()=>{if(!formSaved)[...formNew].forEach(dropLoc);formNew=new Set()});
+window.onDrawThumbs=[];
 function drawThumbs(){
  $('fthumbs').innerHTML=formFotos.map((s,i)=>'<div class="th'+(i===0?' cover':'')+'">'+IMG(s)+orgBtn(s,i)
   +(i?'<button type="button" class="st" data-st="'+i+'" title="Hacer portada">★</button>':'')
   +'<button type="button" class="rm" data-rm="'+i+'" title="Quitar">✕</button></div>').join('');
+ window.onDrawThumbs.forEach(f=>f());
 }
 $('fthumbs').onclick=e=>{
  const b=e.target.closest('button');if(!b)return;
@@ -1478,8 +1480,7 @@ dlg.addEventListener('focusin',e=>{
  const b=dlg.querySelector('label.filebtn');
  if(b){b.classList.remove('nudge');void b.offsetWidth;b.classList.add('nudge')}
 });
-const _drawThumbs33=drawThumbs;
-drawThumbs=function(){_drawThumbs33.apply(this,arguments);if(formFotos.length)$('fotohint').hidden=true};
+window.onDrawThumbs.push(()=>{if(formFotos.length)$('fotohint').hidden=true});
 dlg.addEventListener('close',()=>{fhShown=false;$('fotohint').hidden=true});
 
 /* ======================================================================
