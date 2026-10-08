@@ -7,8 +7,8 @@
    Usa cosas que define el script principal ($, esc, tnorm, normDist, sel).
    Solo las usa cuando algo ocurre (un clic, abrir una ficha), nunca al cargar
    el archivo; los botones se enganchan en DOMContentLoaded.
-   Lo que el script principal usa de aquí: edist, distLoad, distN,
-   distBlock y wireDist.
+   Lo que otros archivos usan de aquí: edist, distLoad, distN, loadWorld, mkMap
+   y cname (ficha.js dibuja el bloque «Distribución» de la ficha con ellos).
    (Código movido tal cual desde index.html, sin cambios.)
    ============================================================ */
 
@@ -62,8 +62,4 @@ $('m-cont').onchange=()=>emap&&emap.zoom($('m-cont').value);
 $('m-q').onchange=e=>{const c=NM[tnorm(e.target.value)];if(c&&emap){etoggle(c);emap.show(c)}e.target.value=''};
 });
 const distN=sp=>sp.dist.nativo.length+sp.dist.invasor.length;
-function distBlock(sp){
- if(!distN(sp))return '';const L=(a,e)=>a.length?'<p class="hint">'+e+' '+esc(a.map(cname).sort().join(', '))+'</p>':'';
- return '<details class="acc" open><summary>🌎 Distribución<small>'+distN(sp)+(distN(sp)===1?' país':' países')+'</small></summary><div class="accb"><div class="mapbox" id="fmap"></div>'+L(sp.dist.nativo,'🟢 Nativo:')+L(sp.dist.invasor,'🔴 Invasor / introducido:')+'</div></details>';
-}
-function wireDist(sp){if(!distN(sp))return;loadWorld().then(()=>{const h=$('fmap');if(!h||sel!==sp.id)return;const d={nativo:new Set(sp.dist.nativo),invasor:new Set(sp.dist.invasor)},m=mkMap(h,{get:()=>d});m.paint();m.fitSel()}).catch(()=>{})}
+/* distBlock y wireDist (la ficha): ahora en ficha.js */
