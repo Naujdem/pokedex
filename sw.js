@@ -1,4 +1,4 @@
-const C='pokedex-v12',A=['./','./index.html','./db.js','./supabase.js','./drive.js','./inat.js','./map.js','./glosario.js','./ficha.js','./manifest.webmanifest','./icon-192.png','./icon-512.png','./world.svg'],X=['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'];
+const C='pokedex-v13',A=['./','./index.html','./db.js','./supabase.js','./drive.js','./formulario.js','./inat.js','./map.js','./glosario.js','./ficha.js','./manifest.webmanifest','./icon-192.png','./icon-512.png','./world.svg'],X=['https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(C).then(c=>c.addAll(A).then(()=>Promise.all(X.map(u=>c.add(new Request(u,{mode:'cors'})).catch(()=>{}))))).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==C).map(x=>caches.delete(x)))).then(()=>clients.claim())));
 function keep(r,x){if(x&&(x.ok||x.type==='opaque')){const c=x.clone();caches.open(C).then(k=>k.put(r,c))}return x}
