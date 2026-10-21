@@ -255,9 +255,11 @@ function legacy(r){
  return r;
 }
 async function openEdit(sp){
+ const fl=await ensureFotos(sp);
+ if(sp.fotos===undefined){alert('No se pudieron cargar todas las fotos de esta ficha (¿sin conexión?). Conéctate o pulsa «⬇ Sincronizar» antes de editarla, para no perder fotos.');return}
  editId=sp.id;legOn=!!(sp.rasgos&&sp.rasgos.pl_tolerancia);distLoad(sp.dist);
  $('fcmpb').style.display='';$('fcmpbox').innerHTML='';
- formFotos=(await ensureFotos(sp)).slice();formOrig=formFotos.slice();formNew=new Set();formSaved=false;formOrg=orgLoad(sp,formFotos);formCred=credLoad(sp,formFotos);drawThumbs();
+ formFotos=fl.slice();formOrig=formFotos.slice();formNew=new Set();formSaved=false;formOrg=orgLoad(sp,formFotos);formCred=credLoad(sp,formFotos);drawThumbs();
  $('dtitle').textContent='Editar especie';$('save').textContent='Guardar cambios';
  $('err').textContent='';$('f-foto').value='';$('f-comun').value=sp.comun;$('f-car').value=sp.car;
  LV.forEach(k=>{$('f-'+k).value=sp[k]});

@@ -631,11 +631,12 @@ const fromRow=r=>{const o={id:r.id,comun:r.comun||'',car:r.caracteristicas||'',f
  LV.forEach(k=>o[k]=r[k]);return o};
 async function ensureFotos(sp){
  if(sp.fotos)return sp.fotos;
- let arr=[];
+ let arr=null;   // null = no se pudo consultar (no se guarda en memoria: sp.fotos sigue undefined)
  try{
   const {data:row,error}=await SB.from('especies').select('fotos').eq('id',sp.id).single();
-  if(!error&&row&&Array.isArray(row.fotos))arr=row.fotos;
+  if(!error&&row)arr=Array.isArray(row.fotos)?row.fotos:[];
  }catch(_){}
+ if(arr===null)return sp.foto?[sp.foto]:[];
  sp.fotos=arr.length?arr:(sp.foto?[sp.foto]:[]);
  return sp.fotos;
 }
@@ -911,6 +912,7 @@ async function exportData(kind){
  if(!data.length){alert('Aún no hay especies para exportar.');return}
  if(kind==='json'){
   await Promise.all(data.map(ensureFotos));
+  if(data.some(sp=>sp.fotos===undefined)){alert('No se pudieron leer las fotos de todas las fichas (¿sin conexión?). Conéctate y vuelve a exportar para no perder referencias.');return}
   const nLoc=data.filter(sp=>(sp.fotos||[]).some(isLoc)).length,nInc=data.filter(sp=>(sp.fotos||[]).some(f=>/^data:/.test(f))).length;
   const aLoc=nLoc?'\n'+nLoc+(nLoc===1?' ficha tiene':' fichas tienen')+' fotos aún sin subir a Drive.':'';
   const aInc=nInc?'\n'+nInc+(nInc===1?' ficha tiene':' fichas tienen')+' fotos incrustadas de versiones anteriores; el archivo será más pesado.':'';

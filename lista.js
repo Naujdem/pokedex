@@ -114,7 +114,7 @@ function render(){
   :'';
  if(ver){
   wireGal();wireOrg();wireDist(sp);
-  if(sp.fotos===undefined)ensureFotos(sp).then(()=>{if(sel===sp.id&&sp.fotos.length>1)render()});
+  if(sp.fotos===undefined)ensureFotos(sp).then(()=>{if(sel===sp.id&&sp.fotos&&sp.fotos.length>1)render()});
  }
 }
 /* Nivel actual = el último elegido (con una especie abierta, «Especie») */
