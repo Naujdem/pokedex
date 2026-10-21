@@ -21,7 +21,7 @@ SB&&SB.auth.onAuthStateChange((e,s)=>{if(authFn)return authFn(e,s);authCola.push
 
 /* ---------- Perfil: nombre y foto de usuario ---------- */
 let prof={name:'',foto:'',email:'',uid:''},setFoto=null;
-const profIni=n=>String(n||prof.name||prof.email||'?').trim()[0].toUpperCase();
+const profIni=n=>[n,prof.name,prof.email].map(x=>String(x||'').trim()).find(Boolean)?.[0].toUpperCase()||'?';
 const avHTML=(f,n,big)=>'<span class="av'+(big?' big':'')+'">'+(f?'<img alt="" referrerpolicy="no-referrer" src="'+esc(f)+'">':esc(profIni(n)))+'</span>';
 function drawWho(){
  const w=$('who');if(!w)return;
