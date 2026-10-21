@@ -40,6 +40,9 @@ async function flush(){
    }
    if(error){flush.err=error.message+(/distribucion|rasgos|fotos/i.test(error.message)?' (Falta ejecutar distribucion.sql en Supabase).':'');break}
    for(const r of (j.trash||[]))await gdTrash(r);
+   /* Si mientras se subía hubo otra edición (persist() reemplaza la entrada con un ts nuevo), esa entrada NO se borra ni se marca como subida: se vuelve a procesar */
+   const cur=await dbGet('cola',j.id);
+   if(cur&&cur.ts!==j.ts){flush.again=true;n++;continue}
    await dbDel('cola',j.id);n++;netUI();
    const o=await dbGet('especies',j.id);if(o){delete o.pend;await dbPut('especies',o)}
    const m=data.find(x=>x.id===j.id);if(m){delete m.pend;if(o&&o.fotos){m.fotos=o.fotos;m.foto=o.foto}}
