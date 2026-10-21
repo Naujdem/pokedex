@@ -512,6 +512,7 @@ $('save').onclick=async()=>{
   $('err').textContent='No se pudo guardar en el dispositivo: '+(e&&e.message||e);return;
  }
  $('save').disabled=false;
+ formOrig.filter(r=>isLoc(r)&&!formFotos.includes(r)).forEach(dropLoc);   // fotos loc: que ya existían y quitaste: se libera su copia local
  if(editId)data=data.map(x=>x.id===editId?o:x);else data.push(o);
  byC(data);
  path=chainFor(o);sel=o.id;dlg.close();render();
