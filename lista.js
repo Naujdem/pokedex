@@ -82,13 +82,11 @@ function render(){
   if(on)$('steps').scrollLeft=Math.max(0,on.offsetLeft-$('steps').offsetLeft-($('steps').clientWidth-on.offsetWidth)/2);
  }
  const showSp=!!sp&&atSp;fchipsUI();
- const bc=(d?['<button class="bc" data-bc="-1">Inicio</button>']:[]).concat(path.map((p,j)=>'<button class="bc" data-bc="'+j+'">'+esc(p)+'</button>')).join(' › ');
- const tail=d<7?'elige '+(LN[d]==='Filo o división'?'un filo o división':'un/a '+LN[d].toLowerCase()):'elige una especie';
  $('crumb').innerHTML='';
  const items=scoped();let h='';
  if(filt()){h=data.filter(matches).map(spCard).join('')||'<p class="empty">Sin resultados.</p>'}
  else if(!atSp){const nk=st.next;
-  let keys=nk==='dominio'?DOM.filter(k=>items.some(s=>s.dominio===k)):nk==='reino'?(REINOS[path[0]]||[]):[...new Set(items.map(s=>lvVal(s,nk)))].sort((a,b)=>(a===''?1:0)-(b===''?1:0));
+  let keys=nk==='dominio'?DOM.filter(k=>items.some(s=>s.dominio===k)):nk==='reino'?(REINOS[path[0]]||[]).filter(k=>items.some(s=>s.reino===k)):[...new Set(items.map(s=>lvVal(s,nk)))].sort((a,b)=>(a===''?1:0)-(b===''?1:0));
   h=keys.map(k=>{
    const g=items.filter(s=>lvVal(s,nk)===k),ph=g.find(s=>dest(s)&&s.foto)||g.find(s=>s.foto),r=nk==='dominio'?(g[0]&&g[0].reino):(nk==='reino'?k:path[1]);
    return '<button class="card" data-k="'+esc(k)+'"><div class="ph">'+photo(ph&&ph.foto,r)+'</div><div class="cap"><b>'+esc(k||'Sin '+LBL[nk].toLowerCase())+'</b><small>'+g.length+(g.length===1?' especie':' especies')+'</small></div></button>';

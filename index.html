@@ -948,7 +948,7 @@ async function exportData(kind){
   finally{tp.remove()}
   return;
  }
- const cols=LV.concat(['comun','car','rasgos']),q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
+ const cols=LV.concat(['comun','car','rasgos']),q=v=>{let s=String(v==null?'':v);if(/^[=+\-@\t\r]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"'};   // el apóstrofo evita que Excel/Sheets lo lea como fórmula
  saveFile('pokedex-taxonomica-'+d+'.csv','﻿'+[cols.map(q).join(',')].concat(data.map(r=>cols.map(c=>q(c==='rasgos'?rasgosTxt(r):r[c])).join(','))).join('\r\n'),'text/csv');
 }
 $('exj').onclick=()=>exportData('json');$('exc').onclick=()=>exportData('csv');
