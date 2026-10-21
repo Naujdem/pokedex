@@ -498,8 +498,12 @@ $('save').onclick=async()=>{
  $('save').disabled=true;
  const prev=editId&&data.find(x=>x.id===editId);
  const o=fromRow(Object.assign({},rec,{id:editId||crypto.randomUUID(),creado:prev&&prev.creado||new Date().toISOString()}));
- formSaved=true;formNew.clear();
- await persist(o,trash);
+ const newBak=new Set(formNew);formSaved=true;formNew.clear();
+ try{await persist(o,trash)}
+ catch(e){   // p. ej. IndexedDB sin espacio: se deja el formulario abierto y el botón activo para reintentar
+  formSaved=false;formNew=newBak;$('save').disabled=false;
+  $('err').textContent='No se pudo guardar en el dispositivo: '+(e&&e.message||e);return;
+ }
  $('save').disabled=false;
  if(editId)data=data.map(x=>x.id===editId?o:x);else data.push(o);
  byC(data);
