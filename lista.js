@@ -51,7 +51,7 @@ function stepSeq(st){
 }
 const spCard=s=>'<div class="cardw"><button class="card'+(s.id===sel?' sel':'')+(selSet.has(s.id)?' picked':'')+'" data-id="'+s.id+'"><div class="ph">'+photo(s.foto,s.reino)+advBadge(s)+chkHTML(s)+'<span class="rtag">'+esc(s.reino)+'</span></div><div class="cap"><b>'+(s.pend?'⏳ ':'')+(dest(s)?'📌 ':'')+(fav(s)?'★ ':'')+esc(s.comun||sci(s))+'</b><i>'+esc(sci(s))+'</i></div></button>'
  +'<span class="cact"><button type="button" data-act="edit" data-id="'+s.id+'" aria-label="Editar '+esc(s.comun||sci(s))+'">✎</button><button type="button" data-act="del" data-id="'+s.id+'" aria-label="Eliminar '+esc(s.comun||sci(s))+'">🗑</button></span></div>';
-const hay=s=>norm([].concat(LV.map(k=>s[k]),[s.comun,s.car],Object.values(s.rasgos||{}).filter(v=>typeof v==='string')).join(' '));
+const hay=s=>norm([].concat(LV.map(k=>s[k]),[s.comun,s.car],Object.entries(s.rasgos||{}).filter(([k,v])=>k[0]!=='_'&&typeof v==='string').map(e=>e[1])).join(' '));
 /* Filtros rápidos. Regla: si hay algún filtro activo (búsqueda Q, ★ Favoritas o un chip) se muestra una lista plana
    de TODA la colección, sin tocar `path`; al quitar los filtros vuelve el carrete donde estabas.
    Q + Favoritas + un chip se combinan con AND. Incompletas / Con foto / Sin foto son excluyentes entre sí.
@@ -114,7 +114,7 @@ function render(){
   :'';
  if(ver){
   wireGal();wireOrg();wireDist(sp);
-  if(sp.fotos===undefined)ensureFotos(sp).then(()=>{if(sel===sp.id&&sp.fotos.length>1)render()});
+  if(sp.fotos===undefined)ensureFotos(sp).then(()=>{if(sel===sp.id&&sp.fotos&&sp.fotos.length>1)render()});
  }
 }
 /* Nivel actual = el último elegido (con una especie abierta, «Especie») */

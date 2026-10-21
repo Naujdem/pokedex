@@ -255,9 +255,11 @@ function legacy(r){
  return r;
 }
 async function openEdit(sp){
+ const fl=await ensureFotos(sp);
+ if(sp.fotos===undefined){alert('No se pudieron cargar todas las fotos de esta ficha (¿sin conexión?). Conéctate o pulsa «⬇ Sincronizar» antes de editarla, para no perder fotos.');return}
  editId=sp.id;legOn=!!(sp.rasgos&&sp.rasgos.pl_tolerancia);distLoad(sp.dist);
  $('fcmpb').style.display='';$('fcmpbox').innerHTML='';
- formFotos=(await ensureFotos(sp)).slice();formOrig=formFotos.slice();formNew=new Set();formSaved=false;formOrg=orgLoad(sp,formFotos);formCred=credLoad(sp,formFotos);drawThumbs();
+ formFotos=fl.slice();formOrig=formFotos.slice();formNew=new Set();formSaved=false;formOrg=orgLoad(sp,formFotos);formCred=credLoad(sp,formFotos);drawThumbs();
  $('dtitle').textContent='Editar especie';$('save').textContent='Guardar cambios';
  $('err').textContent='';$('f-foto').value='';$('f-comun').value=sp.comun;$('f-car').value=sp.car;
  LV.forEach(k=>{$('f-'+k).value=sp[k]});
@@ -480,7 +482,14 @@ $('f-foto').onchange=async e=>{
  drawThumbs();
 };
 $('save').onclick=async()=>{
- const rec={comun:$('f-comun').value.trim(),caracteristicas:$('f-car').value.trim(),rasgos:withFav(collectRasgos())};
+ /* Rasgos que el formulario no conoce (p. ej. de fichas importadas): se conservan al editar.
+    No se tocan los de otro reino que sí existen en el catálogo (FD), ni los internos «_», ni los antiguos que legacy() ya convirtió. */
+ const rg=collectRasgos(),prevSp=editId&&data.find(x=>x.id===editId);
+ if(prevSp&&prevSp.rasgos)for(const k in prevSp.rasgos){
+  if(k[0]==='_'||k in rg||FD[k]||k==='an_suborden'||k==='pl_subphylum'||dlg.querySelector('[data-k="'+k+'"]'))continue;
+  rg[k]=prevSp.rasgos[k];
+ }
+ const rec={comun:$('f-comun').value.trim(),caracteristicas:$('f-car').value.trim(),rasgos:withFav(rg)};
  LV.forEach(k=>rec[k]=$('f-'+k).value.trim());
  const miss=LV.filter(k=>!rec[k]).map(k=>LN[LV.indexOf(k)].toLowerCase());
  if(miss.length){$('err').textContent='Falta: '+miss.join(', ')+'.';return}
@@ -496,9 +505,14 @@ $('save').onclick=async()=>{
  $('save').disabled=true;
  const prev=editId&&data.find(x=>x.id===editId);
  const o=fromRow(Object.assign({},rec,{id:editId||crypto.randomUUID(),creado:prev&&prev.creado||new Date().toISOString()}));
- formSaved=true;formNew.clear();
- await persist(o,trash);
+ const newBak=new Set(formNew);formSaved=true;formNew.clear();
+ try{await persist(o,trash)}
+ catch(e){   // p. ej. IndexedDB sin espacio: se deja el formulario abierto y el botón activo para reintentar
+  formSaved=false;formNew=newBak;$('save').disabled=false;
+  $('err').textContent='No se pudo guardar en el dispositivo: '+(e&&e.message||e);return;
+ }
  $('save').disabled=false;
+ formOrig.filter(r=>isLoc(r)&&!formFotos.includes(r)).forEach(dropLoc);   // fotos loc: que ya existían y quitaste: se libera su copia local
  if(editId)data=data.map(x=>x.id===editId?o:x);else data.push(o);
  byC(data);
  path=chainFor(o);sel=o.id;dlg.close();render();
