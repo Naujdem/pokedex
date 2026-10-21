@@ -72,7 +72,7 @@ function wireGal(){
 }
 document.addEventListener('keydown',e=>{
  if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')return;
- if(dlg.hasAttribute('open')||dlgdel.hasAttribute('open'))return;
+ if(document.querySelector('dialog[open]'))return;   // cualquier diálogo abierto (formulario, lote, estudio, ajustes, Wikipedia…)
  if(/^(INPUT|TEXTAREA|SELECT)$/.test((e.target&&e.target.tagName)||''))return;
  const g=$('gal');if(!g||$('detail').hidden)return;
  g.scrollBy({left:(e.key==='ArrowRight'?1:-1)*g.clientWidth,behavior:SM()});
