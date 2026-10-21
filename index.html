@@ -689,7 +689,8 @@ $('delok').onclick=async()=>{
  const id=delId||sel;if(!id)return dlgdel.close();
  $('delok').disabled=true;
  const dsp=data.find(x=>x.id===id),dph=dsp?(await ensureFotos(dsp)).filter(r=>/^gd:/.test(r)):[];
- await dbDel('especies',id);await dbPut('cola',{id,op:'delete',ts:Date.now(),trash:dph});netUI();flush();
+ const prevQ=await dbGet('cola',id),trashAll=[...new Set([...((prevQ&&prevQ.trash)||[]),...dph])];   // conserva las fotos que ya estaban pendientes de ir a la papelera
+ await dbDel('especies',id);await dbPut('cola',{id,op:'delete',ts:Date.now(),trash:trashAll});netUI();flush();
  $('delok').disabled=false;
  data=data.filter(s=>s.id!==id);sel=null;fix();dlgdel.close();render();
 };
