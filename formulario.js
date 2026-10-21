@@ -482,7 +482,14 @@ $('f-foto').onchange=async e=>{
  drawThumbs();
 };
 $('save').onclick=async()=>{
- const rec={comun:$('f-comun').value.trim(),caracteristicas:$('f-car').value.trim(),rasgos:withFav(collectRasgos())};
+ /* Rasgos que el formulario no conoce (p. ej. de fichas importadas): se conservan al editar.
+    No se tocan los de otro reino que sí existen en el catálogo (FD), ni los internos «_», ni los antiguos que legacy() ya convirtió. */
+ const rg=collectRasgos(),prevSp=editId&&data.find(x=>x.id===editId);
+ if(prevSp&&prevSp.rasgos)for(const k in prevSp.rasgos){
+  if(k[0]==='_'||k in rg||FD[k]||k==='an_suborden'||k==='pl_subphylum'||dlg.querySelector('[data-k="'+k+'"]'))continue;
+  rg[k]=prevSp.rasgos[k];
+ }
+ const rec={comun:$('f-comun').value.trim(),caracteristicas:$('f-car').value.trim(),rasgos:withFav(rg)};
  LV.forEach(k=>rec[k]=$('f-'+k).value.trim());
  const miss=LV.filter(k=>!rec[k]).map(k=>LN[LV.indexOf(k)].toLowerCase());
  if(miss.length){$('err').textContent='Falta: '+miss.join(', ')+'.';return}
