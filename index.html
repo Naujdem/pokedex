@@ -453,7 +453,7 @@ body.selmode main{padding-bottom:90px}
     <button id="imj">⬆ Importar fichas (JSON)</button><input type="file" id="imf" accept="application/json,.json" hidden>
     <hr>
     <button id="out" class="mout">Salir</button>
-    <div class="mfoot">Biotaxo dex · v4.7</div>
+    <div class="mfoot">Biotaxo dex · v4.8</div>
    </div>
   </div>
  </div>
@@ -1001,7 +1001,7 @@ function caracteristicasTxt(){
  };
  const o=[];
  o.push('BIOTAXO DEX · Características de las fichas');
- o.push('Generado el '+new Date().toLocaleString('es-CO')+' · v4.7');
+ o.push('Generado el '+new Date().toLocaleString('es-CO')+' · v4.8');
  o.push('Son los campos que aparecen en «Añadir especie» y en «Editar ficha». Todos son opcionales.');
  o.push('');
  o.push('1. Características universales (aplican a TODOS los reinos)');
@@ -1249,7 +1249,7 @@ function stDraw(){
  b.innerHTML='<div class="stcard"><p class="hint" style="text-align:center;margin:0">'+(ST.prac?'Práctica · no cuenta':stNew(s)?'Nueva':'Repaso')+'</p>'
   +'<div class="ph">'+photo(s.foto,s.reino)+'</div><h3 style="text-align:center;margin:8px 0">'+esc(s.comun||sci(s))+'</h3>'
   +'<p style="text-align:center;margin:0 0 8px">¿Cuál es su <b>'+LN[LV.indexOf(L)].toLowerCase()+'</b>?</p>'
-  +(ST.fl?'<p class="sci" style="text-align:center;margin:0 0 6px">'+esc(sci(s))+'</p><ol class="lin">'+LV.slice(0,7).map((k,i)=>'<li style="--c:'+COL[i]+'"'+(k===L?' class="ans"':'')+'><span>'+LN[i]+'</span> '+esc(s[k])+'</li>').join('')+'</ol>':'')
+  +(ST.fl?'<p class="stans" style="text-align:center;margin:0 0 10px;line-height:1.55"><b>'+LN[LV.indexOf(L)]+':</b> '+esc(s[L]||'—')+'<br><b>Especie:</b> <i>'+esc(sci(s))+'</i></p><ol class="lin">'+LV.slice(0,7).map((k,i)=>'<li style="--c:'+COL[i]+'"'+(k===L?' class="ans"':'')+'><span>'+LN[i]+'</span> '+esc(s[k])+'</li>').join('')+'</ol>':'')
   +'</div>';
  let h=ST.err?'<p class="sterr">No se pudo guardar la última calificación en este dispositivo.</p>':'';
  if(!ST.fl)h+='<button type="button" class="primary one" data-a="fl">Voltear</button>';
