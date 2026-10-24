@@ -268,7 +268,7 @@ async function openEdit(sp){
  txSync();
  dlg.showModal();
 }
-let formFotos=[],formOrig=[],formNew=new Set(),formSaved=false;
+let formFotos=[],formOrig=[],formNew=new Set(),formSaved=false,fotoBusy=0;   // fotoBusy: fotos que aún se están preparando
 window.onDrawThumbs=[];
 function drawThumbs(){
  $('fthumbs').innerHTML=formFotos.map((s,i)=>'<div class="th'+(i===0?' cover':'')+'">'+IMG(s)+orgBtn(s,i)
@@ -475,13 +475,24 @@ $('f-foto').onchange=async e=>{
  const files=[...e.target.files];e.target.value='';
  exifFill(files);
  $('err').textContent='';
- for(const f of files){
-  if(formFotos.length>=MAXF){$('err').textContent='Máximo '+MAXF+' fotos por especie.';break}
-  const s=GDRIVE_ON?await addLocal(f):await resize(f);if(s)formFotos.push(s);
- }
+ let fail=0,full=false;
+ fotoBusy++;
+ try{
+  for(const f of files){
+   if(formFotos.length>=MAXF){full=true;break}
+   let s='';
+   try{s=GDRIVE_ON?await addLocal(f):await resize(f)}catch(_){s=''}
+   if(s){formFotos.push(s);drawThumbs()}else fail++;   // cada foto aparece apenas está lista
+  }
+ }finally{fotoBusy--}
  drawThumbs();
+ const m=[];
+ if(full)m.push('Máximo '+MAXF+' fotos por especie.');
+ if(fail)m.push(fail+(fail===1?' foto no se pudo procesar':' fotos no se pudieron procesar')+' (formato no compatible o poca memoria del teléfono). Prueba con menos fotos a la vez.');
+ if(m.length)$('err').textContent=m.join(' ');
 };
 $('save').onclick=async()=>{
+ if(fotoBusy){$('err').textContent='Espera un momento: todavía se están preparando las fotos.';return}   // si no, se guardaba solo lo que ya estuviera listo
  /* Rasgos que el formulario no conoce (p. ej. de fichas importadas): se conservan al editar.
     No se tocan los de otro reino que sí existen en el catálogo (FD), ni los internos «_», ni los antiguos que legacy() ya convirtió. */
  const rg=collectRasgos(),prevSp=editId&&data.find(x=>x.id===editId);
