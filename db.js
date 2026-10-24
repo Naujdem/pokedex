@@ -17,6 +17,9 @@
 const idb=new Promise((ok,ko)=>{const r=indexedDB.open('pokedex',2);r.onupgradeneeded=()=>{const d=r.result;[['especies',{keyPath:'id'}],['cola',{keyPath:'id'}],['meta'],['fotos']].forEach(([n,o])=>{if(!d.objectStoreNames.contains(n))d.createObjectStore(n,o)})};r.onsuccess=()=>ok(r.result);r.onerror=()=>ko(r.error)});
 const tx=async(s,m,f)=>{const d=await idb;return new Promise((ok,ko)=>{const t=d.transaction(s,m);let q;try{q=f(t.objectStore(s))}catch(e){return ko(e)}t.oncomplete=()=>ok(q&&q.result);t.onerror=t.onabort=()=>ko(t.error)})};
 const dbPut=(s,v,k)=>tx(s,'readwrite',o=>o.put(v,k)),dbGet=(s,k)=>tx(s,'readonly',o=>o.get(k)),dbAll=s=>tx(s,'readonly',o=>o.getAll()),dbDel=(s,k)=>tx(s,'readwrite',o=>o.delete(k)),dbClear=s=>tx(s,'readwrite',o=>o.clear());
+/* Cambia (o quita, si to es null) UNA foto de la ficha guardada, dentro de una sola transacción:
+   así subir fotos en segundo plano no pisa lo que editaste mientras tanto. */
+const dbSwapFoto=(id,from,to)=>tx('especies','readwrite',s=>{const g=s.get(id);g.onsuccess=()=>{const c=g.result;if(!c||!Array.isArray(c.fotos))return;const k=c.fotos.indexOf(from);if(k<0)return;if(to)c.fotos[k]=to;else c.fotos.splice(k,1);c.foto=c.fotos[0]||'';s.put(c)};return g});
 
 /* Guarda primero en el dispositivo y deja la ficha en la cola; sube si hay red */
 async function persist(o,trash){o.pend=true;await dbPut('especies',Object.assign({},o));const prev=await dbGet('cola',o.id),tr=[...((prev&&prev.trash)||[]),...(trash||[])];await dbPut('cola',{id:o.id,op:'upsert',ts:Date.now(),trash:tr});netUI();return flush()}

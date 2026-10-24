@@ -132,10 +132,19 @@ new MutationObserver(hydrate).observe(document.documentElement,{childList:true,s
 const retryImgs=()=>document.querySelectorAll('img.nodrive').forEach(i=>{i.classList.remove('nodrive');cargarImg(i)});
 
 /* --- Fotos nuevas: se reducen, se guardan en el dispositivo (loc:) y se suben a Drive al guardar la ficha --- */
-function toBlob(file){return new Promise(res=>{const u=URL.createObjectURL(file),im=new Image();
- im.onload=()=>{const k=Math.min(1,FOTO_MAX/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);c.toBlob(res,'image/jpeg',FOTO_Q)};
- im.onerror=()=>{URL.revokeObjectURL(u);res(null)};im.src=u})}
-async function addLocal(file){const b=await toBlob(file);if(!b)return '';const ref='loc:'+crypto.randomUUID();await dbPut('fotos',b,ref);formNew.add(ref);return ref}
+function toBlob(file,max){return new Promise(res=>{const u=URL.createObjectURL(file),im=new Image();
+ const fin=b=>{URL.revokeObjectURL(u);im.onload=im.onerror=null;im.src='';res(b||null)};
+ im.onload=()=>{try{
+  const k=Math.min(1,(max||FOTO_MAX)/Math.max(im.width,im.height)),c=document.createElement('canvas');
+  c.width=Math.max(1,Math.round(im.width*k));c.height=Math.max(1,Math.round(im.height*k));
+  c.getContext('2d').drawImage(im,0,0,c.width,c.height);
+  c.toBlob(b=>{c.width=c.height=0;fin(b)},'image/jpeg',FOTO_Q);   // se suelta la memoria del canvas: el móvil la limita y con varias fotos grandes toBlob devolvía null
+ }catch(_){fin(null)}};
+ im.onerror=()=>fin(null);im.src=u})}
+async function addLocal(file){
+ let b=await toBlob(file);if(!b)b=await toBlob(file,FOTO_MAX/2);   // segundo intento, más pequeña, si el móvil se quedó sin memoria
+ if(!b)return '';
+ const ref='loc:'+crypto.randomUUID();await dbPut('fotos',b,ref);formNew.add(ref);return ref}
 function dropLoc(ref){dbDel('fotos',ref).catch(()=>{});const u=urlCache.get(ref);if(u){URL.revokeObjectURL(u);urlCache.delete(ref)}formNew.delete(ref)}
 const fname=o=>((o.genero||'foto')+'_'+(o.especie||'')+'_'+Date.now().toString(36)).replace(/[^\w-]+/g,'_');
 /* Sube las fotos loc: de una ficha. Cada foto subida se anota enseguida, así un corte a mitad no duplica nada. */
@@ -143,14 +152,21 @@ async function subirFotos(o){
  const L=o.fotos;if(!L||!L.some(isLoc))return true;
  try{
   for(let i=0;i<L.length;i++){
-   if(!isLoc(L[i]))continue;
-   const b=await dbGet('fotos',L[i]);if(!b){L.splice(i--,1);continue}
+   const old=L[i];if(!isLoc(old))continue;
+   const b=await dbGet('fotos',old);
+   if(!b){
+    /* Sin copia local: si ya se había subido (la ficha se guardó con una referencia vieja), se recupera la de Drive; si no, se quita */
+    const al=await dbGet('meta','alias:'+old);
+    if(al){await dbSwapFoto(o.id,old,al);L[i]=al}else{await dbSwapFoto(o.id,old,null);L.splice(i--,1)}
+    o.foto=L[0]||'';continue;
+   }
    const ref='gd:'+await gdUpload(b,fname(o),o.id);
-   await dbPut('fotos',b,ref);await dbDel('fotos',L[i]);
-   if(urlCache.has(L[i]))urlCache.set(ref,urlCache.get(L[i]));
-   L[i]=ref;o.foto=L[0]||'';await dbPut('especies',Object.assign({},o));netUI();
+   await dbPut('fotos',b,ref);await dbPut('meta',ref,'alias:'+old);await dbDel('fotos',old);
+   if(urlCache.has(old))urlCache.set(ref,urlCache.get(old));
+   await dbSwapFoto(o.id,old,ref);   // solo cambia ESTA foto en la ficha guardada: no pisa ediciones hechas mientras se subía
+   L[i]=ref;o.foto=L[0]||'';netUI();
   }
-  o.foto=L[0]||'';await dbPut('especies',Object.assign({},o));return true;
+  o.foto=L[0]||'';return true;
  }catch(e){
   flush.err=/^(NOTOKEN|NODRIVE)$/.test(e.message)?'Conecta tu Google Drive (botón «☁ Conectar Drive») para subir las fotos pendientes.':'Drive: '+(e.message||e);
   return false;
