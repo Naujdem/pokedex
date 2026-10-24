@@ -408,7 +408,26 @@ body.selmode main{padding-bottom:90px}
 @media (min-width:901px){.ficha{grid-template-columns:minmax(260px,380px) minmax(0,1fr)}}
 .ficha>*,.finfo,.ficha-car,.acc,.accb{min-width:0;max-width:100%}
 .vchips{max-width:100%}
-
+/* ---------- v4.7 · Modo estudio con repetición espaciada (como las Fichas de SimulaPro) ---------- */
+#dlgst[open]{display:flex;flex-direction:column;height:92dvh;max-height:92dvh;padding:12px 14px 0;overflow:hidden}
+#dlgst .sthd{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:4px}
+#dlgst .sthd h2{margin:0;font-size:1.1rem}
+#dlgst .stopt{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px}
+#dlgst .stopt label{margin:0 0 2px}
+#stbody{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column}
+#stbody .stcard{margin:auto 0;width:100%}
+#stbody .ph{max-width:min(260px,32dvh);margin:4px auto}
+#stbody .stmsg{margin:auto 0;text-align:center}
+#stbar{flex:none;padding:10px 0 calc(10px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);background:var(--panel)}
+#stbar .one{width:100%;padding:14px;font-size:1.05rem}
+#stbar .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#stbar .two button{padding:12px}
+#stbar .rate{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+#stbar .rate button{padding:10px 2px;color:#fff;border:0;font-weight:700}
+#stbar .rate small{display:block;font-weight:600;font-size:.72rem;opacity:.92}
+#stbar .rate .r-again{background:#c93f37}#stbar .rate .r-hard{background:#b8691a}#stbar .rate .r-good{background:#2a8a53}#stbar .rate .r-easy{background:#2a73b3}
+#stbar .sterr{margin:0 0 8px;text-align:center;color:var(--dng);font-size:.85rem}
+@media (max-width:700px){#dlgst[open]{width:100%;max-width:none;height:100dvh;max-height:100dvh;margin:0;border:0;border-radius:0}}
 </style>
 </head>
 <body>
@@ -434,7 +453,7 @@ body.selmode main{padding-bottom:90px}
     <button id="imj">⬆ Importar fichas (JSON)</button><input type="file" id="imf" accept="application/json,.json" hidden>
     <hr>
     <button id="out" class="mout">Salir</button>
-    <div class="mfoot">Biotaxo dex · v4.6</div>
+    <div class="mfoot">Biotaxo dex · v4.7</div>
    </div>
   </div>
  </div>
@@ -529,7 +548,15 @@ body.selmode main{padding-bottom:90px}
  <div class="acts"><button id="set-cancel">Cancelar</button><button class="primary" id="set-save">Guardar</button></div>
 </dialog>
 
-<dialog id="dlgst"><h2 style="margin-top:0">🎓 Modo estudio</h2><label for="stlv">Quiero recordar…</label><select id="stlv"><option value="familia">La familia</option><option value="orden">El orden</option><option value="clase">La clase</option><option value="filo">El filo</option><option value="azar">Al azar</option></select><div id="stbody"></div><div class="acts"><button id="stx">Cerrar</button></div></dialog>
+<dialog id="dlgst">
+ <div class="sthd"><h2>🎓 Modo estudio</h2><span class="hint" id="stcnt"></span><button type="button" data-a="x">✕ Salir</button></div>
+ <div class="stopt">
+  <div><label for="stlv">Quiero recordar…</label><select id="stlv"><option value="familia">La familia</option><option value="orden">El orden</option><option value="clase">La clase</option><option value="filo">El filo</option><option value="azar">Al azar</option></select></div>
+  <div><label for="stnew">Nuevas por día</label><select id="stnew"><option value="5">5</option><option value="10">10</option><option value="20">20</option><option value="30">30</option><option value="50">50</option><option value="0">Sin límite</option></select></div>
+ </div>
+ <div id="stbody"></div>
+ <div id="stbar"></div>
+</dialog>
 <dialog id="dlgdel">
  <h2 style="margin-top:0">¿Eliminar esta especie?</h2>
  <p id="deltxt"></p>
@@ -574,7 +601,7 @@ const $=id=>document.getElementById(id);
 let off=false;
 const normDist=d=>({nativo:Array.isArray(d&&d.nativo)?d.nativo:[],invasor:Array.isArray(d&&d.invasor)?d.invasor:[]});
 /* Orden de la lista (SORTF, SORT, byC): ahora en lista.js */
-const toRow=o=>{const r={id:o.id,comun:o.comun,caracteristicas:o.car,rasgos:o.rasgos,distribucion:o.dist};if(o.creado)r.creado=o.creado;if(o.foto!==undefined)r.foto=o.foto;if(o.fotos)r.fotos=o.fotos;LV.forEach(k=>r[k]=o[k]);return r};
+const toRow=o=>{const r={id:o.id,comun:o.comun,caracteristicas:o.car,rasgos:o.rasgos,distribucion:o.dist};if(o.creado)r.creado=o.creado;if(o.foto!==undefined)r.foto=o.foto;if(o.fotos)r.fotos=o.fotos;if(o.estudio)r.estudio=o.estudio;LV.forEach(k=>r[k]=o[k]);return r};
 /* Estado de sincronización en #net: sin conexión / sincronizando / pendientes (fichas y fotos loc:) / error de Drive / todo al día */
 const driveErr=()=>/Conecta tu Google Drive/.test(flush.err||'');
 async function netUI(){
@@ -622,12 +649,13 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden)flush()});
 const sci=s=>[s.genero,s.especie].filter(Boolean).join(' ')||'(sin nombre)';
 /* Niveles de navegación (BASE, lvState, scoped, chainFor, stepSeq): ahora en lista.js */
 const photo=(src,r)=>src?IMG(src,' loading="lazy"'):'<span class="nophoto" aria-hidden="true">'+(EMO[r]||'🧬')+'<small>Sin foto</small></span>';
-const COLS='id,creado,comun,caracteristicas,foto,rasgos,distribucion,'+LV.join(',');
+const COLS='id,creado,comun,caracteristicas,foto,rasgos,distribucion,estudio,'+LV.join(',');   // estudio: progreso del Modo estudio
 const MAXF=8;
 // fotos === undefined significa "todavía no cargadas" (la lista solo trae la portada)
 const cleanR=x=>{const o={};if(x&&typeof x==='object'&&!Array.isArray(x))for(const k in x){const v=x[k];if(typeof v==='string')o[k]=v;else if(Array.isArray(v))o[k]=v.filter(i=>i!=null&&typeof i!=='object').join(', ');else if(typeof v==='number'||typeof v==='boolean')o[k]=String(v)}return o};
 const fromRow=r=>{const o={id:r.id,comun:r.comun||'',car:r.caracteristicas||'',foto:r.foto||'',rasgos:cleanR(r.rasgos),creado:r.creado,dist:normDist(r.distribucion)};
  if(r.fotos!==undefined)o.fotos=Array.isArray(r.fotos)&&r.fotos.length?r.fotos:(o.foto?[o.foto]:[]);
+ if(r.estudio!==undefined)o.estudio=(r.estudio&&typeof r.estudio==='object')?r.estudio:null;
  LV.forEach(k=>o[k]=r[k]);return o};
 async function ensureFotos(sp){
  if(sp.fotos)return sp.fotos;
@@ -973,7 +1001,7 @@ function caracteristicasTxt(){
  };
  const o=[];
  o.push('BIOTAXO DEX · Características de las fichas');
- o.push('Generado el '+new Date().toLocaleString('es-CO')+' · v4.6');
+ o.push('Generado el '+new Date().toLocaleString('es-CO')+' · v4.7');
  o.push('Son los campos que aparecen en «Añadir especie» y en «Editar ficha». Todos son opcionales.');
  o.push('');
  o.push('1. Características universales (aplican a TODOS los reinos)');
@@ -1101,24 +1129,150 @@ async function share(sp){
  try{if(navigator.share)await navigator.share({title:sci(sp),text:t});else{await navigator.clipboard.writeText(t);alert('Copiado al portapapeles.')}}catch(e){}
 }
 /* Orden, buscador y filtros rápidos de la lista: ahora en lista.js */
-/* ---------- Modo estudio ---------- */
-const dlgst=$('dlgst');let deck=[],dl=[],di=0,okc=0,fl=false;
-function stStart(){
- const pool=(path.length?scoped():data).slice();
- for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]]}
- deck=pool;const v=$('stlv').value,o=['filo','clase','orden','familia'];
- dl=deck.map(()=>v==='azar'?o[Math.floor(Math.random()*4)]:v);di=0;okc=0;fl=false;stDraw();
+/* ---------- Modo estudio · repetición espaciada ----------
+   Igual que las Fichas de SimulaPro: Voltear + Otra vez / Difícil / Bien / Fácil con el tiempo de vuelta;
+   las que fallas reaparecen en la misma sesión y solo salen las que tocan hoy + un tope de nuevas por día.
+   El progreso de cada especie vive en su columna «estudio» (Supabase) y se guarda con persist(), igual que ★ Favorito:
+     ef = facilidad · iv = intervalo en días · rp = repasos seguidos · due = próximo repaso
+     n = veces calificada · lr = última nota · lt = última vez · intro = día en que salió como nueva */
+const dlgst=$('dlgst');
+const SR={steps:[1,10],relearn:[10],grad:1,easyD:1,lapse:1,hard:1.2,easy:1.3,minEase:1.3};   // mismos ajustes que SimulaPro
+const SRQ={again:1,hard:3,good:4,easy:5};
+const SRB=[['again','Otra vez'],['hard','Difícil'],['good','Bien'],['easy','Fácil']];
+let ST=null;   // sesión de estudio en curso
+
+/* --- Cálculo del próximo repaso (SM-2 con pasos de aprendizaje, como sm2.ts de SimulaPro) --- */
+const srDay=(now,d)=>{const x=new Date(now);x.setHours(0,0,0,0);x.setDate(x.getDate()+d);return x};
+const srPhase=s=>s.rp>=1?'review':(s.iv>=1?'relearn':'learn');
+const srHard=(st,i)=>i===0&&st.length>1?Math.round((st[0]+st[1])/2):Math.round(st[i]*1.5);
+function srNext(s,r,now){
+ const stay=(step,min,ef=s.ef,iv=s.iv)=>({ef,iv,rp:0,step,delay:min,due:new Date(now.getTime()+min*60000)});   // sigue aprendiéndose: vuelve en minutos
+ const grad=(d,ef=s.ef,rp=1)=>({ef,iv:d,rp,step:0,due:srDay(now,d)});                                         // pasa a repasarse por días
+ const ph=srPhase(s);
+ if(ph==='learn'){
+  const st=Math.min(Math.max(0,s.step||0),SR.steps.length-1);
+  if(r==='again')return stay(0,SR.steps[0]);
+  if(r==='hard')return stay(st,srHard(SR.steps,st));
+  if(r==='easy')return grad(SR.easyD);
+  return st+1<SR.steps.length?stay(st+1,SR.steps[st+1]):grad(SR.grad);
+ }
+ if(ph==='relearn'){
+  if(r==='again')return stay(0,SR.relearn[0]);
+  if(r==='hard')return stay(0,srHard(SR.relearn,0));
+  const d=Math.max(1,s.iv);return grad(r==='easy'?d+1:d);
+ }
+ const q=SRQ[r],ef=Math.max(SR.minEase,Math.round((s.ef+0.1-(5-q)*(0.08+(5-q)*0.02))*100)/100);
+ if(r==='again')return stay(0,SR.relearn[0],ef,SR.lapse);
+ const hard=Math.max(s.iv+1,Math.round(s.iv*SR.hard)),good=Math.max(hard+1,Math.round(s.iv*s.ef)),easy=Math.max(good+1,Math.round(s.iv*s.ef*SR.easy));
+ return grad({hard,good,easy}[r],ef,s.rp+1);
+}
+/* Texto bajo cada botón: «1 min», «6 min», «1 d», «2,5 meses»… */
+function srFmt(x){
+ if(x.delay!==undefined)return x.delay<60?x.delay+' min':(Math.round(x.delay/6)/10).toLocaleString('es')+' h';
+ const d=x.iv;
+ if(d<30)return d+' d';
+ if(d<365){const m=Math.round(d/3)/10;return m.toLocaleString('es')+(m===1?' mes':' meses')}
+ const y=Math.round(d/36.5)/10;return y.toLocaleString('es')+(y===1?' año':' años');
+}
+
+/* --- Qué toca estudiar hoy --- */
+const stMs=iso=>{const t=Date.parse(iso||'');return isNaN(t)?0:t};
+const stNew=sp=>!(sp.estudio&&sp.estudio.n>0);
+const stOf=sp=>{const e=sp.estudio||{};return{ef:+e.ef||2.5,iv:+e.iv||0,rp:+e.rp||0,step:(ST&&ST.step[sp.id])||0}};
+const stNewLim=()=>{const v=ls('pk_stnew');return v==='0'?Infinity:(+v||20)};
+function stQueue(pool){
+ const now=new Date(),end=srDay(now,1).getTime(),start=srDay(now,0).getTime();
+ const hoy=data.filter(s=>s.estudio&&stMs(s.estudio.intro)>=start).length;   // nuevas que ya empezaste hoy (cuentan para el tope)
+ const rev=pool.filter(s=>!stNew(s)&&stMs(s.estudio.due)<end).sort((a,b)=>stMs(a.estudio.due)-stMs(b.estudio.due));
+ const nue=pool.filter(stNew);
+ for(let i=nue.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[nue[i],nue[j]]=[nue[j],nue[i]]}
+ return rev.concat(nue.slice(0,Math.max(0,stNewLim()-hoy)));
+}
+/* Siguiente ficha: 1) una de «Otra vez» cuyo tiempo ya pasó, 2) la siguiente de la cola, 3) si ya no hay cola, la de «Otra vez» que venza antes */
+const stEarly=(L,only)=>{let k=-1;L.forEach((l,i)=>{if(only!==null&&l.due>only)return;if(k<0||l.due<L[k].due)k=i});return k};
+function stPick(q,L,now){
+ let k=stEarly(L,now);
+ if(k<0&&q.length)return{cur:q[0],queue:q.slice(1),learning:L};
+ if(k<0)k=stEarly(L,null);
+ if(k<0)return{cur:null,queue:q,learning:L};
+ return{cur:L[k].card,queue:q,learning:L.filter((_,i)=>i!==k)};
+}
+
+/* --- Sesión --- */
+function stStart(prac){
+ const pool=(path.length?scoped():data).slice(),v=$('stlv').value,o=['filo','clase','orden','familia'],lv={};
+ pool.forEach(s=>lv[s.id]=v==='azar'?o[Math.floor(Math.random()*4)]:v);   // el nivel «al azar» se sortea una vez por especie
+ let q;
+ if(prac){q=pool.slice();for(let i=q.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[q[i],q[j]]=[q[j],q[i]]}}   // práctica libre: todas, sin guardar nada
+ else q=stQueue(pool);
+ const n=stPick(q,[],Date.now());
+ ST={prac:!!prac,lv,step:{},fl:false,done:0,okc:0,err:false,pool:pool.length,total:q.length,cur:n.cur,queue:n.queue,learning:n.learning};
+ stDraw();
+}
+async function stSave(sp,r,res,now){
+ const e=Object.assign({},sp.estudio||{}),nueva=!(e.n>0);
+ e.ef=res.ef;e.iv=res.iv;e.rp=res.rp;e.due=res.due.toISOString();e.lr=r;e.lt=now.toISOString();e.n=(e.n||0)+1;
+ if(nueva)e.intro=now.toISOString();   // cuenta para el tope de «nuevas por día»
+ sp.estudio=e;
+ await persist(sp);
+}
+function stRate(r){
+ const sp=ST.cur;if(!sp)return;
+ const now=new Date();
+ ST.fl=false;
+ if(ST.prac){if(r==='ok')ST.okc++;ST.done++}
+ else{
+  const res=srNext(stOf(sp),r,now);
+  ST.step[sp.id]=res.step;
+  stSave(sp,r,res,now).catch(()=>{ST.err=true;stDraw()});
+  if(res.delay!==undefined)ST.learning.push({card:sp,due:now.getTime()+res.delay*60000});else ST.done++;   // en minutos: todavía no cuenta como terminada
+ }
+ const n=stPick(ST.queue,ST.learning,Date.now());ST.cur=n.cur;ST.queue=n.queue;ST.learning=n.learning;
+ stDraw();
 }
 function stDraw(){
- const b=$('stbody');
- if(!deck.length){b.innerHTML='<p class="empty">Aún no tienes especies en esta selección.</p>';return}
- if(di>=deck.length){b.innerHTML='<h3>Terminaste: '+okc+' de '+deck.length+'</h3><button id="stre" class="primary">Repetir</button>';return}
- const s=deck[di],L=dl[di];
- b.innerHTML='<p class="hint">Tarjeta '+(di+1)+' / '+deck.length+'</p><div class="ph" style="max-width:240px;margin:8px auto">'+photo(s.foto,s.reino)+'</div><h3 style="text-align:center;margin:8px 0">'+esc(s.comun||sci(s))+'</h3><p style="text-align:center;margin:0 0 10px">¿Cuál es su <b>'+LN[LV.indexOf(L)].toLowerCase()+'</b>?</p>'
-  +(fl?'<p class="sci" style="text-align:center;margin:0 0 6px">'+esc(sci(s))+'</p><ol class="lin">'+LV.slice(0,7).map((k,i)=>'<li style="--c:'+COL[i]+'"'+(k===L?' class="ans"':'')+'><span>'+LN[i]+'</span> '+esc(s[k])+'</li>').join('')+'</ol><div class="acts"><button id="stno">Aún no la sé</button><button class="primary" id="stok">La sabía</button></div>':'<div class="acts" style="justify-content:center"><button class="primary" id="stfl">Voltear</button></div>');
+ const b=$('stbody'),bar=$('stbar'),X='<button type="button" data-a="x">Cerrar</button>';
+ const left=ST.cur?ST.queue.length+ST.learning.length+1:0;
+ $('stcnt').textContent=left?left+(left===1?' restante':' restantes'):'';
+ if(!ST.pool){b.innerHTML='<div class="stmsg"><p class="empty">Aún no tienes especies en esta selección.</p></div>';bar.innerHTML=X;return}
+ if(!ST.cur){
+  if(ST.prac){
+   b.innerHTML='<div class="stmsg"><h3>Terminaste: '+ST.okc+' de '+ST.total+'</h3></div>';
+   bar.innerHTML='<div class="two"><button type="button" class="primary" data-a="prac">Repetir</button>'+X+'</div>';return;
+  }
+  b.innerHTML='<div class="stmsg"><p style="font-size:2.4rem;margin:0">🎉</p>'+(ST.total
+   ?'<h3>¡Terminaste por hoy!</h3><p class="hint">Estudiaste '+ST.done+(ST.done===1?' especie.':' especies.')+'</p>'
+   :'<h3>¡Estás al día!</h3><p class="hint">No hay especies por estudiar ahora en esta selección.</p>')+'</div>';
+  bar.innerHTML='<div class="two"><button type="button" data-a="prac">Practicar sin contar</button>'+X+'</div>';return;
+ }
+ const s=ST.cur,L=ST.lv[s.id]||'familia';
+ b.innerHTML='<div class="stcard"><p class="hint" style="text-align:center;margin:0">'+(ST.prac?'Práctica · no cuenta':stNew(s)?'Nueva':'Repaso')+'</p>'
+  +'<div class="ph">'+photo(s.foto,s.reino)+'</div><h3 style="text-align:center;margin:8px 0">'+esc(s.comun||sci(s))+'</h3>'
+  +'<p style="text-align:center;margin:0 0 8px">¿Cuál es su <b>'+LN[LV.indexOf(L)].toLowerCase()+'</b>?</p>'
+  +(ST.fl?'<p class="sci" style="text-align:center;margin:0 0 6px">'+esc(sci(s))+'</p><ol class="lin">'+LV.slice(0,7).map((k,i)=>'<li style="--c:'+COL[i]+'"'+(k===L?' class="ans"':'')+'><span>'+LN[i]+'</span> '+esc(s[k])+'</li>').join('')+'</ol>':'')
+  +'</div>';
+ let h=ST.err?'<p class="sterr">No se pudo guardar la última calificación en este dispositivo.</p>':'';
+ if(!ST.fl)h+='<button type="button" class="primary one" data-a="fl">Voltear</button>';
+ else if(ST.prac)h+='<div class="two"><button type="button" data-a="no">Aún no la sé</button><button type="button" class="primary" data-a="ok">La sabía</button></div>';
+ else{const st=stOf(s),now=new Date();h+='<div class="rate">'+SRB.map(([r,t])=>'<button type="button" class="r-'+r+'" data-a="'+r+'">'+t+'<small>'+srFmt(srNext(st,r,now))+'</small></button>').join('')+'</div>'}
+ bar.innerHTML=h;
 }
-$('stbody').onclick=e=>{const id=e.target.id;if(id==='stfl')fl=true;else if(id==='stok'||id==='stno'){if(id==='stok')okc++;di++;fl=false}else if(id==='stre')return stStart();else return;stDraw()};
-$('stlv').onchange=stStart;$('study').onclick=()=>{stStart();dlgst.showModal()};$('stx').onclick=()=>dlgst.close();
+dlgst.onclick=e=>{
+ const b=e.target.closest('button[data-a]');if(!b)return;
+ const a=b.dataset.a;
+ if(a==='x')dlgst.close();
+ else if(a==='prac')stStart(true);
+ else if(!ST)return;
+ else if(a==='fl'){ST.fl=true;stDraw()}
+ else stRate(a);   // otra vez / difícil / bien / fácil (o «sé» / «no sé» en la práctica)
+};
+$('stlv').onchange=()=>{lsSet('pk_stlv',$('stlv').value);stStart(ST&&ST.prac)};
+$('stnew').onchange=()=>{lsSet('pk_stnew',$('stnew').value);stStart(false)};
+$('study').onclick=()=>{
+ $('stlv').value=ls('pk_stlv')||'familia';if(!$('stlv').value)$('stlv').value='familia';
+ $('stnew').value=ls('pk_stnew')||'20';if(!$('stnew').value)$('stnew').value='20';
+ stStart(false);dlgst.showModal();
+};
 /* ---------- Verificar en GBIF (solo compara; no autocompleta) ---------- */
 $('gb').onclick=async()=>{
  const g=$('f-genero').value.trim(),e=$('f-especie').value.trim(),o=$('gbres');

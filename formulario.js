@@ -515,7 +515,7 @@ $('save').onclick=async()=>{
  rec.distribucion={nativo:[...edist.nativo],invasor:[...edist.invasor]};
  $('save').disabled=true;
  const prev=editId&&data.find(x=>x.id===editId);
- const o=fromRow(Object.assign({},rec,{id:editId||crypto.randomUUID(),creado:prev&&prev.creado||new Date().toISOString()}));
+ const o=fromRow(Object.assign({},rec,{id:editId||crypto.randomUUID(),creado:prev&&prev.creado||new Date().toISOString(),estudio:prev&&prev.estudio||null}));   // al editar se conserva el progreso del Modo estudio
  const newBak=new Set(formNew);formSaved=true;formNew.clear();
  try{await persist(o,trash)}
  catch(e){   // p. ej. IndexedDB sin espacio: se deja el formulario abierto y el botón activo para reintentar
