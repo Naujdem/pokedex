@@ -428,6 +428,15 @@ body.selmode main{padding-bottom:90px}
 #stbar .rate .r-again{background:#c93f37}#stbar .rate .r-hard{background:#b8691a}#stbar .rate .r-good{background:#2a8a53}#stbar .rate .r-easy{background:#2a73b3}
 #stbar .sterr{margin:0 0 8px;text-align:center;color:var(--dng);font-size:.85rem}
 @media (max-width:700px){#dlgst[open]{width:100%;max-width:none;height:100dvh;max-height:100dvh;margin:0;border:0;border-radius:0}}
+/* ---------- v4.9 · Diagrama de la flor (flor.js) ---------- */
+#dlgflor{max-width:640px;padding:14px 16px}
+#dlgflor .sthd{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px}
+#dlgflor .sthd h2{margin:0;font-size:1.15rem}
+#flbox svg{display:block;width:100%;height:auto;max-height:72dvh;margin:6px auto}
+#dlgflor .fl-t{font:600 14px system-ui,sans-serif;fill:var(--ink)}
+#dlgflor .fl-s{font:500 12px system-ui,sans-serif;fill:var(--mut)}
+#dlgflor .fl-l{stroke:var(--mut);stroke-width:1.2;fill:none}
+#dlgflor .fl-d{fill:var(--mut)}
 </style>
 </head>
 <body>
@@ -453,7 +462,7 @@ body.selmode main{padding-bottom:90px}
     <button id="imj">⬆ Importar fichas (JSON)</button><input type="file" id="imf" accept="application/json,.json" hidden>
     <hr>
     <button id="out" class="mout">Salir</button>
-    <div class="mfoot">Biotaxo dex · v4.7</div>
+    <div class="mfoot">Biotaxo dex · v4.9</div>
    </div>
   </div>
  </div>
@@ -557,6 +566,12 @@ body.selmode main{padding-bottom:90px}
  <div id="stbody"></div>
  <div id="stbar"></div>
 </dialog>
+<dialog id="dlgflor">
+ <div class="sthd"><h2>🌸 Diagrama de la flor</h2><button type="button" id="flx">✕ Cerrar</button></div>
+ <p class="hint">Corte longitudinal de una flor completa (esquema general).</p>
+ <div id="flbox"></div>
+ <p class="hint">Es un esquema general: cada familia tiene sus variaciones (flores sin cáliz o sin corola, estambres soldados, ovario ínfero, etc.).</p>
+</dialog>
 <dialog id="dlgdel">
  <h2 style="margin-top:0">¿Eliminar esta especie?</h2>
  <p id="deltxt"></p>
@@ -580,6 +595,7 @@ body.selmode main{padding-bottom:90px}
 <script src="glosario.js"></script>
 <script src="ficha.js"></script>
 <script src="lista.js"></script>
+<script src="flor.js"></script>
 <script>
 /* El cliente de Supabase (SB) ahora se crea en supabase.js */
 const LV=['dominio','reino','filo','clase','orden','familia','genero','especie'];
@@ -706,6 +722,7 @@ $('detail').onclick=e=>{
  if(e.target.id==='destb')toggleDest(sp);
  if(e.target.id==='shr')share(sp);
  if(e.target.id==='cpsci')copySci(sp);
+ if(e.target.id==='florb')abrirFlor(sp);
  if(e.target.id==='del'){
   $('delerr').textContent='';
   $('deltxt').textContent='Vas a eliminar «'+(sp.comun||sci(sp))+'» ('+sci(sp)+').';
@@ -1001,7 +1018,7 @@ function caracteristicasTxt(){
  };
  const o=[];
  o.push('BIOTAXO DEX · Características de las fichas');
- o.push('Generado el '+new Date().toLocaleString('es-CO')+' · v4.7');
+ o.push('Generado el '+new Date().toLocaleString('es-CO')+' · v4.9');
  o.push('Son los campos que aparecen en «Añadir especie» y en «Editar ficha». Todos son opcionales.');
  o.push('');
  o.push('1. Características universales (aplican a TODOS los reinos)');
@@ -1249,7 +1266,7 @@ function stDraw(){
  b.innerHTML='<div class="stcard"><p class="hint" style="text-align:center;margin:0">'+(ST.prac?'Práctica · no cuenta':stNew(s)?'Nueva':'Repaso')+'</p>'
   +'<div class="ph">'+photo(s.foto,s.reino)+'</div><h3 style="text-align:center;margin:8px 0">'+esc(s.comun||sci(s))+'</h3>'
   +'<p style="text-align:center;margin:0 0 8px">¿Cuál es su <b>'+LN[LV.indexOf(L)].toLowerCase()+'</b>?</p>'
-  +(ST.fl?'<p class="sci" style="text-align:center;margin:0 0 6px">'+esc(sci(s))+'</p><ol class="lin">'+LV.slice(0,7).map((k,i)=>'<li style="--c:'+COL[i]+'"'+(k===L?' class="ans"':'')+'><span>'+LN[i]+'</span> '+esc(s[k])+'</li>').join('')+'</ol>':'')
+  +(ST.fl?'<p class="stans" style="text-align:center;margin:0 0 10px;line-height:1.55"><b>'+LN[LV.indexOf(L)]+':</b> '+esc(s[L]||'—')+'<br><b>Especie:</b> <i>'+esc(sci(s))+'</i></p><ol class="lin">'+LV.slice(0,7).map((k,i)=>'<li style="--c:'+COL[i]+'"'+(k===L?' class="ans"':'')+'><span>'+LN[i]+'</span> '+esc(s[k])+'</li>').join('')+'</ol>':'')
   +'</div>';
  let h=ST.err?'<p class="sterr">No se pudo guardar la última calificación en este dispositivo.</p>':'';
  if(!ST.fl)h+='<button type="button" class="primary one" data-a="fl">Voltear</button>';
