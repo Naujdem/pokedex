@@ -52,6 +52,42 @@ const FLOR_PARTES={
 /* Orden de los botones: de arriba hacia abajo en el dibujo */
 const FLOR_ORDEN=['estigma','estilo','ovario','ovulo','antera','filamento','petalo','sepalo','receptaculo','pedunculo'];
 
+/* --- Paso 5: diagramas propios por familia. Orchidaceae: vista frontal (tipo Phalaenopsis) --- */
+const FLOR_ORQ_SVG=`<svg id="flsvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 30 520 370" role="img" aria-label="Vista frontal de una flor de orquídea con sus partes"><g class="fl-f" stroke-linejoin="round" stroke-linecap="round"><g data-p="ovario"><path d="M251 300 C248 330 266 350 252 392 L270 392 C284 350 268 330 269 300 Z" fill="#cfe6a0" stroke="#55822f" stroke-width="2"/><path d="M252 335 C260 340 266 342 268 346 M251 360 C258 364 264 366 266 370" fill="none" stroke="#55822f" stroke-width="1.6"/></g><g data-p="sepalo_l" fill="#f9d4e3" stroke="#b24d78" stroke-width="2"><ellipse cx="192" cy="270" rx="40" ry="74" transform="rotate(34 192 270)"/><ellipse cx="328" cy="270" rx="40" ry="74" transform="rotate(-34 328 270)"/></g><g data-p="sepalo_d" fill="#f9d4e3" stroke="#b24d78" stroke-width="2"><ellipse cx="260" cy="112" rx="46" ry="64"/></g><g data-p="petalo" fill="#fdeef5" stroke="#b24d78" stroke-width="2"><ellipse cx="168" cy="186" rx="76" ry="60" transform="rotate(-12 168 186)"/><ellipse cx="352" cy="186" rx="76" ry="60" transform="rotate(12 352 186)"/></g><g data-p="labelo" fill="#fff3b0" stroke="#b8941c" stroke-width="2"><ellipse cx="232" cy="248" rx="17" ry="28" transform="rotate(14 232 248)"/><ellipse cx="288" cy="248" rx="17" ry="28" transform="rotate(-14 288 248)"/><path d="M246 260 Q260 252 274 260 C276 286 270 306 260 330 C250 306 244 286 246 260 Z"/><path d="M258 328 C250 336 244 334 240 328 M262 328 C270 336 276 334 280 328" fill="none"/></g><g data-p="columna"><path d="M247 196 C246 222 250 240 260 244 C270 240 274 222 273 196 Z" fill="#f4efe0" stroke="#8a7f5a" stroke-width="2"/></g><g data-p="estigma"><ellipse cx="260" cy="224" rx="6" ry="9" fill="#e8806a" stroke="#963e2a" stroke-width="1.8"/></g><g data-p="antera" fill="#f4c542" stroke="#9a7b0c" stroke-width="2"><path d="M246 198 C246 182 274 182 274 198 Z"/><circle cx="254" cy="193" r="3.4" fill="#ffe27a"/><circle cx="266" cy="193" r="3.4" fill="#ffe27a"/></g></g><g class="fl-r"><g data-p="sepalo_d"><text class="fl-t" x="10" y="84">Sépalo dorsal<tspan class="fl-s" x="10" dy="15">cáliz</tspan></text><path class="fl-l" d="M100 80 L238 92"/><circle class="fl-d" cx="238" cy="92" r="3"/></g><g data-p="petalo"><text class="fl-t" x="10" y="160">Pétalo<tspan class="fl-s" x="10" dy="15">corola</tspan></text><path class="fl-l" d="M62 156 L136 176"/><circle class="fl-d" cx="136" cy="176" r="3"/></g><g data-p="sepalo_l"><text class="fl-t" x="10" y="296">Sépalo lateral<tspan class="fl-s" x="10" dy="15">cáliz</tspan></text><path class="fl-l" d="M104 292 L176 292"/><circle class="fl-d" cx="176" cy="292" r="3"/></g><g data-p="ovario"><text class="fl-t" x="10" y="366">Ovario ínfero<tspan class="fl-s" x="10" dy="15">bajo la flor</tspan></text><path class="fl-l" d="M100 362 L254 362"/><circle class="fl-d" cx="254" cy="362" r="3"/></g></g><g class="fl-r" text-anchor="end"><g data-p="antera"><text class="fl-t" x="510" y="130">Antera y polinias<tspan class="fl-s" x="510" dy="15">masas de polen</tspan></text><path class="fl-l" d="M400 126 L274 190"/><circle class="fl-d" cx="274" cy="190" r="3"/></g><g data-p="columna"><text class="fl-t" x="510" y="196">Columna<tspan class="fl-s" x="510" dy="15">estambre + pistilo</tspan></text><path class="fl-l" d="M440 192 L273 210"/><circle class="fl-d" cx="273" cy="210" r="3"/></g><g data-p="estigma"><text class="fl-t" x="510" y="262">Estigma<tspan class="fl-s" x="510" dy="15">bajo la antera</tspan></text><path class="fl-l" d="M440 258 L266 226"/><circle class="fl-d" cx="266" cy="226" r="3"/></g><g data-p="labelo"><text class="fl-t" x="510" y="326">Labelo<tspan class="fl-s" x="510" dy="15">pétalo modificado</tspan></text><path class="fl-l" d="M400 322 L272 300"/><circle class="fl-d" cx="272" cy="300" r="3"/></g></g></svg>`;
+const FLOR_ORQ_PARTES={
+ sepalo_d:{n:'Sépalo dorsal',g:'cáliz · perianto (protege)',
+  d:'El sépalo de arriba. En una orquídea hay tres sépalos (uno dorsal y dos laterales) y juntos forman el cáliz, aunque casi siempre son tan vistosos como los pétalos.',
+  c:'En el botón cerrado protegen la flor. Cuando sépalos y pétalos se parecen tanto, a todas esas piezas se les llama tépalos.'},
+ sepalo_l:{n:'Sépalos laterales',g:'cáliz · perianto (protege)',
+  d:'Los dos sépalos de abajo, a los lados del labelo. En algunas orquídeas se sueldan entre sí.',
+  c:'En la orquídea mariposa (Phalaenopsis) son anchos y parecidos a los pétalos; en Paphiopedilum se fusionan y quedan detrás del labelo.'},
+ petalo:{n:'Pétalos',g:'corola · perianto (atrae polinizadores)',
+  d:'Las dos piezas internas laterales. La flor tiene simetría bilateral (zigomorfa) porque el tercer pétalo se transforma en el labelo.',
+  c:'En la orquídea mariposa son más anchos que los sépalos y forman las «alas» de la flor.'},
+ labelo:{n:'Labelo',g:'pétalo modificado (el tercer pétalo)',
+  d:'Pétalo muy distinto de los otros dos, casi siempre más decorado. Funciona como pista de aterrizaje y guía al polinizador hacia la columna.',
+  c:'Suele tener otro color, manchas, rayas o zonas peludas; en algunas orquídeas forma un saco o una espuela con néctar. En muchas, la flor gira al abrir (resupinación) y el labelo queda abajo.'},
+ columna:{n:'Columna',g:'estambre + pistilo fundidos (ginostemio)',
+  d:'Estructura central donde se unen el androceo y el gineceo en una sola pieza. Es lo más característico de las orquídeas.',
+  c:'Es una pieza corta y carnosa frente al labelo: arriba lleva la antera y debajo, el estigma.'},
+ antera:{n:'Antera y polinias',g:'androceo (parte masculina)',
+  d:'En la punta de la columna, bajo una tapita. El polen no es polvo suelto: forma masas compactas llamadas polinias.',
+  c:'Las polinias se pegan al polinizador como un solo bloque y se llevan juntas a otra flor. La mayoría de las orquídeas tiene una sola antera fértil.'},
+ estigma:{n:'Estigma',g:'pistilo · gineceo (parte femenina)',
+  d:'Superficie pegajosa y hundida en la cara inferior de la columna, que recibe las polinias.',
+  c:'Se ve como una cavidad húmeda y brillante bajo la antera. Una pieza llamada rostelo la separa del polen y ayuda a evitar la autopolinización.'},
+ ovario:{n:'Ovario ínfero',g:'pistilo · gineceo (parte femenina)',
+  d:'Queda por debajo de sépalos, pétalos y columna (ínfero). Parece un tallito alargado, a menudo retorcido, bajo la flor; en realidad incluye el pedicelo y el ovario.',
+  c:'Tras la fecundación se convierte en una cápsula con miles de semillas diminutas, casi como polvo.'}
+};
+const FLOR_ORQ_ORDEN=['sepalo_d','petalo','sepalo_l','labelo','columna','antera','estigma','ovario'];
+/* Un diagrama por familia (clave = nombre sin tildes ni mayúsculas). Si la familia no está aquí se usa el esquema general. */
+const FLOR_GEN={svg:FLOR_SVG,partes:FLOR_PARTES,orden:FLOR_ORDEN,sub:'Corte longitudinal de una flor completa (esquema general).',pie:'Es un esquema general: cada familia tiene sus variaciones (flores sin cáliz o sin corola, estambres soldados, ovario ínfero, etc.).'};
+const FLOR_DIAG={
+ orchidaceae:{svg:FLOR_ORQ_SVG,partes:FLOR_ORQ_PARTES,orden:FLOR_ORQ_ORDEN,sub:'Vista frontal de una orquídea (tipo Phalaenopsis): diagrama propio de la familia Orchidaceae.',pie:'Hay mucha variación entre géneros de orquídeas; por ejemplo, en Paphiopedilum el labelo forma un «zapatito» y hay dos anteras fértiles.'}
+};
+let florSet=FLOR_GEN,florBuilt=null;
+
 /* Resalta una parte (y su rótulo) y muestra su explicación. Tocarla otra vez la deselecciona. */
 function florSel(id){
  const b=document.getElementById('flbox'),s=b&&b.querySelector('svg');
@@ -61,7 +97,7 @@ function florSel(id){
  s.classList.toggle('fl-has',!!id);
  s.querySelectorAll('[data-p]').forEach(e=>e.classList.toggle('fl-sel',!!id&&e.dataset.p===id));
  document.querySelectorAll('#flchips button').forEach(c=>c.classList.toggle('on',!!id&&c.dataset.p===id));
- const p=id&&FLOR_PARTES[id],c=document.getElementById('fldef');
+ const p=id&&florSet.partes[id],c=document.getElementById('fldef');
  if(c)c.innerHTML=p
   ?'<h3>'+p.n+'<small>'+p.g+'</small></h3><p>'+p.d+'</p><p class="hint">'+p.c+'</p>'
   :'<p class="hint">Toca una parte del esquema, o uno de los botones, para ver qué es y cómo reconocerla.</p>';
@@ -69,10 +105,14 @@ function florSel(id){
 function abrirFlor(sp){
  const d=document.getElementById('dlgflor'),b=document.getElementById('flbox');
  if(!d||!b)return;
- if(!b.firstChild){   // se dibuja una sola vez
-  b.innerHTML=FLOR_SVG;
-  const ch=document.getElementById('flchips');
-  if(ch)ch.innerHTML=FLOR_ORDEN.map(k=>'<button type="button" data-p="'+k+'">'+FLOR_PARTES[k].n+'</button>').join('');
+ const fam=sp&&sp.familia,set=(fam&&FLOR_DIAG[florNorm(fam)])||FLOR_GEN;
+ if(florBuilt!==set){   // se dibuja al abrir por primera vez o cuando cambia el diagrama (otra familia)
+  florSet=set;florBuilt=set;
+  b.innerHTML=set.svg;
+  const ch=document.getElementById('flchips'),su=document.getElementById('flsub'),pi=document.getElementById('flpie');
+  if(ch)ch.innerHTML=set.orden.map(k=>'<button type="button" data-p="'+k+'">'+set.partes[k].n+'</button>').join('');
+  if(su)su.textContent=set.sub;
+  if(pi)pi.textContent=set.pie;
  }
  florSel('');
  florSp=sp&&sp.id;
