@@ -453,6 +453,19 @@ body.selmode main{padding-bottom:90px}
 #fldef h3 small{display:block;margin:2px 0 0;font-size:.78rem;font-weight:500;color:var(--mut)}
 #fldef p{margin:6px 0 0;line-height:1.4}
 #fldef p.hint{margin-top:6px}
+/* v5.1 · tu foto de la flor junto al esquema (en pantallas anchas, una al lado de la otra) */
+#dlgflor{max-width:860px}
+.flcmp{display:grid;gap:8px}
+@media (min-width:720px){.flcmp.con-foto{grid-template-columns:1fr 1fr;align-items:start}}
+#flfoto .flph{border-radius:10px;overflow:hidden;background:var(--soft);display:grid;place-items:center;min-height:120px}
+#flfoto .flph img{display:block;width:100%;max-height:34dvh;object-fit:contain}
+@media (min-width:720px){#flfoto .flph img{max-height:46dvh}}
+#flfoto .flthumbs{display:flex;gap:6px;margin-top:6px;overflow-x:auto}
+#flfoto .flthumbs button{flex:none;width:52px;height:52px;padding:0;border-radius:8px;overflow:hidden;border:2px solid var(--line)}
+#flfoto .flthumbs button.on{border-color:var(--acc)}
+#flfoto .flthumbs img{width:100%;height:100%;object-fit:cover;display:block}
+#flfoto .flcred{margin:6px 0 0;font-size:.78rem;color:var(--mut)}
+#flfoto .flnote{margin:0;background:var(--soft);border-radius:10px;padding:10px 12px;font-size:.85rem;line-height:1.4;color:var(--mut)}
 </style>
 </head>
 <body>
@@ -478,7 +491,7 @@ body.selmode main{padding-bottom:90px}
     <button id="imj">⬆ Importar fichas (JSON)</button><input type="file" id="imf" accept="application/json,.json" hidden>
     <hr>
     <button id="out" class="mout">Salir</button>
-    <div class="mfoot">Biotaxo dex · v5.0</div>
+    <div class="mfoot">Biotaxo dex · v5.1</div>
    </div>
   </div>
  </div>
@@ -585,7 +598,7 @@ body.selmode main{padding-bottom:90px}
 <dialog id="dlgflor">
  <div class="sthd"><h2>🌸 Diagrama de la flor</h2><button type="button" id="flx">✕ Cerrar</button></div>
  <p class="hint">Corte longitudinal de una flor completa (esquema general).</p>
- <div id="flbox"></div>
+ <div class="flcmp" id="flcmp"><div id="flfoto" hidden></div><div id="flbox"></div></div>
  <div id="flchips"></div>
  <div id="fldef"></div>
  <p class="hint">Es un esquema general: cada familia tiene sus variaciones (flores sin cáliz o sin corola, estambres soldados, ovario ínfero, etc.).</p>
@@ -1036,7 +1049,7 @@ function caracteristicasTxt(){
  };
  const o=[];
  o.push('BIOTAXO DEX · Características de las fichas');
- o.push('Generado el '+new Date().toLocaleString('es-CO')+' · v5.0');
+ o.push('Generado el '+new Date().toLocaleString('es-CO')+' · v5.1');
  o.push('Son los campos que aparecen en «Añadir especie» y en «Editar ficha». Todos son opcionales.');
  o.push('');
  o.push('1. Características universales (aplican a TODOS los reinos)');

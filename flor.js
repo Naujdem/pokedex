@@ -5,6 +5,10 @@
    el botón de la ficha de las especies del reino Plantae.
    Paso 2: al tocar una parte (en el dibujo, en su rótulo o en los
    botones de abajo) se resalta y aparece qué es y cómo reconocerla.
+   Paso 3: si la especie tiene una foto etiquetada como 🌸 Flor, se
+   muestra junto al esquema para compararlas (si tiene varias, se elige
+   con las miniaturas). Usa orgTags/credTags, IMG, esc y ensureFotos,
+   que viven en otros archivos y solo se llaman al ejecutar.
    El dibujo es original (SVG propio): no depende de internet ni de
    ninguna licencia externa. Cada parte lleva data-p="…".
    Se carga ANTES del <script> principal de index.html.
@@ -71,7 +75,37 @@ function abrirFlor(sp){
   if(ch)ch.innerHTML=FLOR_ORDEN.map(k=>'<button type="button" data-p="'+k+'">'+FLOR_PARTES[k].n+'</button>').join('');
  }
  florSel('');
+ florSp=sp&&sp.id;
+ florFoto(sp);   // no se espera: el esquema se ve de inmediato y la foto aparece cuando esté lista
  d.showModal();
+}
+
+/* --- Paso 3: foto de Flor de la especie junto al esquema --- */
+let florSp=null,florFotos=[];
+function florFotoHTML(i){
+ const f=florFotos[i];
+ return '<div class="flph">'+IMG(f.ref)+'</div>'
+  +(florFotos.length>1?'<div class="flthumbs">'+florFotos.map((g,k)=>'<button type="button" data-fi="'+k+'" class="'+(k===i?'on':'')+'" aria-label="Foto de flor '+(k+1)+'">'+IMG(g.ref)+'</button>').join('')+'</div>':'')
+  +'<p class="flcred">🌸 Tu foto de la flor'+(f.cred?' · 📷 '+esc(f.cred):'')+'</p>';
+}
+function florElegir(i){
+ const box=document.getElementById('flfoto');
+ if(!box||!florFotos[i])return;
+ box.innerHTML=florFotoHTML(i);
+}
+async function florFoto(sp){
+ const box=document.getElementById('flfoto'),cmp=document.getElementById('flcmp');
+ if(!box||!cmp)return;
+ box.hidden=true;box.innerHTML='';cmp.classList.remove('con-foto');florFotos=[];   // limpia lo de la especie anterior
+ if(!sp)return;
+ let list=sp.fotos;
+ if(!list){try{list=await ensureFotos(sp)}catch(_){list=[]}}
+ if(florSp!==sp.id)return;   // mientras tanto se cerró o se abrió otra especie
+ const t=orgTags(sp),c=credTags(sp);
+ florFotos=(list||[]).map((r,i)=>({ref:r,cred:c[i]||'',tag:t[i]})).filter(x=>x.tag==='Flor');
+ box.hidden=false;
+ if(florFotos.length){cmp.classList.add('con-foto');florElegir(0)}
+ else box.innerHTML='<p class="flnote">📷 Esta especie aún no tiene una foto etiquetada como 🌸 Flor. En «Editar ficha» puedes marcar una de tus fotos como Flor (botón «＋ Tipo») o traer una de iNaturalist, y así podrás compararla aquí con el esquema.</p>';
 }
 document.addEventListener('DOMContentLoaded',()=>{
  const d=document.getElementById('dlgflor');
@@ -79,6 +113,8 @@ document.addEventListener('DOMContentLoaded',()=>{
  const x=document.getElementById('flx');
  if(x)x.onclick=()=>d.close();
  d.addEventListener('click',e=>{
+  const f=e.target.closest&&e.target.closest('[data-fi]');
+  if(f&&d.contains(f))return florElegir(+f.dataset.fi);
   const t=e.target.closest&&e.target.closest('[data-p]');
   if(t&&d.contains(t))florSel(t.dataset.p);
  });
