@@ -76,6 +76,7 @@ function abrirFlor(sp){
  }
  florSel('');
  florSp=sp&&sp.id;
+ florFormula(sp);
  florFoto(sp);   // no se espera: el esquema se ve de inmediato y la foto aparece cuando esté lista
  d.showModal();
 }
@@ -106,6 +107,57 @@ async function florFoto(sp){
  box.hidden=false;
  if(florFotos.length){cmp.classList.add('con-foto');florElegir(0)}
  else box.innerHTML='<p class="flnote">📷 Esta especie aún no tiene una foto etiquetada como 🌸 Flor. En «Editar ficha» puedes marcar una de tus fotos como Flor (botón «＋ Tipo») o traer una de iNaturalist, y así podrás compararla aquí con el esquema.</p>';
+}
+
+/* --- Paso 4: fórmula floral típica de la familia de la especie ---
+   Notación: ✱ simétrica radial · ↓ bilateral · K cáliz · C corola · P perianto (tépalos) · A estambres · G carpelos.
+   ( ) = piezas soldadas · a+b = dos verticilos · ∞ = muchos · G subrayado = ovario súpero · G con raya arriba = ínfero.
+   Son fórmulas TÍPICAS de la familia (hay géneros que se salen); contrástalas con tu libro. */
+const FLOR_FAM=[
+ {n:'Fabaceae',a:['leguminosae'],f:[{s:'↓',K:'(5)',C:'5',A:'(9)+1',G:'1',o:'s'}],t:'Leguminosas. Corola papilionada (estandarte, alas y quilla) en Faboideae; el fruto es una legumbre. En Mimosoideae las flores son pequeñas, radiales y de estambres largos y numerosos.'},
+ {n:'Asteraceae',a:['compositae'],f:[{l:'flor del disco',s:'✱',K:'0 (vilano)',C:'(5)',A:'(5)',G:'(2)',o:'i'},{l:'flor del rayo',s:'↓',K:'0 (vilano)',C:'(5) lígula',A:'0',G:'(2)',o:'i'}],t:'Las «flores» que ves son capítulos: muchas florecillas juntas rodeadas de brácteas. Anteras soldadas en tubo (sinanteria); el fruto es una cipsela.'},
+ {n:'Poaceae',a:['gramineae'],f:[{s:'',P:'2 (lodículas)',A:'3',G:'(2-3)',o:'s'}],t:'Gramíneas. Flores diminutas dentro de glumas, lemas y páleas, agrupadas en espiguillas. Polinización por viento; el fruto es una cariopsis.'},
+ {n:'Solanaceae',f:[{s:'✱',K:'(5)',C:'(5)',A:'5',G:'(2)',o:'s'}],t:'Corola rotácea o campanulada; estambres pegados al tubo de la corola. Fruto en baya o cápsula.'},
+ {n:'Brassicaceae',a:['cruciferae'],f:[{s:'✱',K:'4',C:'4',A:'2+4',G:'(2)',o:'s'}],t:'Cuatro pétalos en cruz y seis estambres (2 cortos y 4 largos: tetradínamos). Fruto en silicua o silícula.'},
+ {n:'Rosaceae',f:[{s:'✱',K:'5',C:'5',A:'∞',G:'1–∞',o:'v'}],t:'Hipanto (copa floral) bien marcado. El ovario es súpero en la mayoría (rosas, fresas), pero ínfero en manzana y pera. Muy variable en carpelos.'},
+ {n:'Lamiaceae',a:['labiatae'],f:[{s:'↓',K:'(5)',C:'(5) bilabiada',A:'2+2',G:'(2)',o:'s'}],t:'Tallo cuadrangular, hojas opuestas y aromáticas. Corola con dos labios; 4 estambres de dos largos y dos cortos (didínamos). Fruto en tetranúcula.'},
+ {n:'Apiaceae',a:['umbelliferae'],f:[{s:'✱',K:'5 (muy reducido)',C:'5',A:'5',G:'(2)',o:'i'}],t:'Flores pequeñas agrupadas en umbelas (a menudo compuestas). Fruto seco que se divide en dos mericarpos.'},
+ {n:'Orchidaceae',f:[{s:'↓',P:'3+3 (uno es el labelo)',A:'1',G:'(3)',o:'i'}],t:'Estambres y estilo fundidos en la columna. El pétalo central se vuelve el labelo. Polen en masas (polinias); semillas diminutas.'},
+ {n:'Liliaceae',f:[{s:'✱',P:'3+3',A:'3+3',G:'(3)',o:'s'}],t:'Flores con seis tépalos parecidos entre sí. Varias familias antes incluidas aquí (cebolla, agave, jacinto) hoy están separadas.'},
+ {n:'Arecaceae',a:['palmae'],f:[{s:'✱',P:'3+3',A:'3+3',G:'(3) o 3',o:'s'}],t:'Palmas. Flores pequeñas, a menudo unisexuales, en inflorescencias grandes protegidas por una espata.'},
+ {n:'Araceae',f:[{s:'✱',P:'0–4',A:'1–6',G:'(1–∞)',o:'s'}],t:'Muy variable. Las flores minúsculas van sobre una espiga gruesa (espádice) rodeada de una espata, que es lo que parece «la flor». Pueden ser bisexuales o unisexuales según el género.'},
+ {n:'Cucurbitaceae',f:[{l:'♂',s:'✱',K:'(5)',C:'(5)',A:'(3)',G:'0'},{l:'♀',s:'✱',K:'(5)',C:'(5)',A:'0',G:'(3)',o:'i'}],t:'Flores unisexuales (en la misma planta o en plantas distintas). Zarcillos; el fruto es un pepónide.'},
+ {n:'Malvaceae',f:[{s:'✱',K:'(5)',C:'5',A:'(∞)',G:'(5–∞)',o:'s'}],t:'Estambres soldados en un tubo alrededor del estilo (androceo monadelfo). Suelen tener un calículo (brácteas bajo el cáliz).'},
+ {n:'Euphorbiaceae',f:[{l:'♂',s:'✱',P:'0–5',A:'1–∞',G:'0'},{l:'♀',s:'✱',P:'0–5',A:'0',G:'(3)',o:'s'}],t:'Flores unisexuales. En Euphorbia van reunidas en un ciatio (una falsa flor). Muchas tienen látex.'},
+ {n:'Rubiaceae',f:[{s:'✱',K:'(4–5)',C:'(4–5)',A:'4–5',G:'(2)',o:'i'}],t:'Hojas opuestas con estípulas entre los pecíolos. Corola tubular; estambres pegados a ella. Incluye al café.'},
+ {n:'Myrtaceae',f:[{s:'✱',K:'4–5',C:'4–5',A:'∞',G:'(2–5)',o:'i'}],t:'Estambres numerosos y vistosos, hojas con glándulas de aceite (puntos translúcidos). Guayaba, eucalipto, clavo.'},
+ {n:'Melastomataceae',f:[{s:'✱',K:'(4–5)',C:'4–5',A:'8–10',G:'(3–5)',o:'v'}],t:'Hojas con 3–7 nervios que corren paralelos de la base a la punta. Anteras con apéndices y poro apical; ovario ínfero o semiínfero.'},
+ {n:'Convolvulaceae',f:[{s:'✱',K:'5',C:'(5)',A:'5',G:'(2)',o:'s'}],t:'Corola en embudo, plegada en el botón. Muchas son trepadoras volubles (batata, bejuco de la mañana).'},
+ {n:'Zingiberaceae',f:[{s:'↓',K:'(3)',C:'(3)',A:'1 (+ staminodios)',G:'(3)',o:'i'}],t:'Solo un estambre fértil; los demás se vuelven pétalos vistosos (labelo). Rizomas aromáticos: jengibre, cúrcuma, cardamomo.'},
+ {n:'Bromeliaceae',f:[{s:'✱',K:'3',C:'3',A:'3+3',G:'(3)',o:'v'}],t:'Rosetas de hojas que acumulan agua. Ovario súpero en unas y ínfero en otras (la piña es una infrutescencia).'}
+];
+function florNorm(x){return String(x||'').normalize('NFD').replace(/[̀-ͯ]/g,'').trim().toLowerCase()}
+function florBuscarFam(nombre){
+ const k=florNorm(nombre);
+ if(!k)return null;
+ return FLOR_FAM.find(e=>florNorm(e.n)===k||(e.a||[]).includes(k))||null;
+}
+function florFormulaHTML(f){
+ const g=f.G==null?'':(f.o==='s'?'<u>G</u>':f.o==='i'?'<span class="ov">G</span>':'G')+esc(f.G);
+ const parts=[f.s,f.P!=null?'P'+f.P:'K'+f.K+' C'+f.C,'A'+f.A].filter(Boolean).map(esc);
+ if(g)parts.push(g);
+ return (f.l?'<span class="fllb">'+esc(f.l)+'</span>':'')+'<code>'+parts.join(' ')+'</code>';
+}
+function florFormula(sp){
+ const box=document.getElementById('flform');
+ if(!box)return;
+ const fam=sp&&sp.familia&&String(sp.familia).trim(),e=fam&&florBuscarFam(fam);
+ const clave='<details class="flkey"><summary>¿Cómo se lee una fórmula floral?</summary><p><b>✱</b> simetría radial (actinomorfa) · <b>↓</b> bilateral (cigomorfa)<br><b>K</b> cáliz (sépalos) · <b>C</b> corola (pétalos) · <b>P</b> perianto, cuando sépalos y pétalos se parecen (tépalos)<br><b>A</b> androceo (estambres) · <b>G</b> gineceo (carpelos)<br>Los números son cuántas piezas hay; <b>( )</b> significa piezas soldadas entre sí; <b>2+4</b> son dos verticilos; <b>∞</b> muchas; <b>0</b> ausente.<br>El ovario <b>súpero</b> (por encima de las demás piezas) se marca con la <u>G</u> subrayada; el <b>ínfero</b>, con una raya encima: <span class="ov">G</span>.</p></details>';
+ if(!fam){box.innerHTML='';return}
+ if(!e){box.innerHTML='<div class="flfm"><h3>🧬 Fórmula floral · '+esc(fam)+'</h3><p class="hint">Todavía no tengo la fórmula típica de esta familia. Búscala en tu libro y compárala con el esquema y con tu foto.</p>'+clave+'</div>';return}
+ const ov=e.f.some(f=>f.o==='v')?'<p class="hint">El tipo de ovario varía dentro de la familia.</p>':'';
+ box.innerHTML='<div class="flfm"><h3>🧬 Fórmula floral típica · '+esc(e.n)+(florNorm(fam)!==florNorm(e.n)?' <small>(en tu ficha: '+esc(fam)+')</small>':'')+'</h3>'
+  +e.f.map(florFormulaHTML).join('')+'<p>'+esc(e.t)+'</p>'+ov+'<p class="hint">Es la fórmula típica de la familia; algunos géneros se salen. Contrástala con tu libro.</p>'+clave+'</div>';
 }
 document.addEventListener('DOMContentLoaded',()=>{
  const d=document.getElementById('dlgflor');
