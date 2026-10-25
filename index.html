@@ -453,7 +453,7 @@ body.selmode main{padding-bottom:90px}
 #fldef h3 small{display:block;margin:2px 0 0;font-size:.78rem;font-weight:500;color:var(--mut)}
 #fldef p{margin:6px 0 0;line-height:1.4}
 #fldef p.hint{margin-top:6px}
-/* v5.4 · tu foto de la flor junto al esquema (en pantallas anchas, una al lado de la otra) */
+/* v5.5 · tu foto de la flor junto al esquema (en pantallas anchas, una al lado de la otra) */
 #dlgflor{max-width:860px}
 .flcmp{display:grid;gap:8px}
 @media (min-width:720px){.flcmp.con-foto{grid-template-columns:1fr 1fr;align-items:start}}
@@ -491,7 +491,7 @@ body.selmode main{padding-bottom:90px}
     <button id="imj">⬆ Importar fichas (JSON)</button><input type="file" id="imf" accept="application/json,.json" hidden>
     <hr>
     <button id="out" class="mout">Salir</button>
-    <div class="mfoot">Biotaxo dex · v5.4</div>
+    <div class="mfoot">Biotaxo dex · v5.5</div>
    </div>
   </div>
  </div>
@@ -592,6 +592,7 @@ body.selmode main{padding-bottom:90px}
   <div><label for="stlv">Quiero recordar…</label><select id="stlv"><option value="familia">La familia</option><option value="orden">El orden</option><option value="clase">La clase</option><option value="filo">El filo</option><option value="azar">Al azar</option></select></div>
   <div><label for="stnew">Nuevas por día</label><select id="stnew"><option value="5">5</option><option value="10">10</option><option value="20">20</option><option value="30">30</option><option value="50">50</option><option value="0">Sin límite</option></select></div>
  </div>
+ <button type="button" id="stqz" style="margin:0 0 6px;width:100%">🌸 Quiz: partes de la flor</button>
  <div id="stbody"></div>
  <div id="stbar"></div>
 </dialog>
@@ -600,6 +601,7 @@ body.selmode main{padding-bottom:90px}
  <p class="hint" id="flsub">Corte longitudinal de una flor completa (esquema general).</p>
  <div class="flcmp" id="flcmp"><div id="flfoto" hidden></div><div id="flbox"></div></div>
  <div id="flchips"></div>
+ <button type="button" id="flqz" style="margin:8px 0 0">🎯 Quiz: ¿qué parte es?</button>
  <div id="fldef"></div>
  <div id="flform"></div>
  <p class="hint" id="flpie">Es un esquema general: cada familia tiene sus variaciones (flores sin cáliz o sin corola, estambres soldados, ovario ínfero, etc.).</p>
@@ -608,6 +610,12 @@ body.selmode main{padding-bottom:90px}
  <div class="sthd"><h2 id="famtit">👪 Familia</h2><button type="button" id="famx">✕ Cerrar</button></div>
  <div id="fambody"></div>
  <div id="famgbif"></div>
+</dialog>
+<dialog id="dlgqz">
+ <div class="sthd"><h2>🎯 Quiz · partes de la flor</h2><span class="hint" id="qzcnt"></span><button type="button" data-a="x">✕ Salir</button></div>
+ <div class="qzsel"><label for="qzset">Diagrama</label><select id="qzset"></select></div>
+ <div id="qzbody"></div>
+ <div id="qzbar"></div>
 </dialog>
 <dialog id="dlgdel">
  <h2 style="margin-top:0">¿Eliminar esta especie?</h2>
@@ -634,6 +642,7 @@ body.selmode main{padding-bottom:90px}
 <script src="lista.js"></script>
 <script src="flor.js"></script>
 <script src="familia.js"></script>
+<script src="quizflor.js"></script>
 <script>
 /* El cliente de Supabase (SB) ahora se crea en supabase.js */
 const LV=['dominio','reino','filo','clase','orden','familia','genero','especie'];
@@ -1057,7 +1066,7 @@ function caracteristicasTxt(){
  };
  const o=[];
  o.push('BIOTAXO DEX · Características de las fichas');
- o.push('Generado el '+new Date().toLocaleString('es-CO')+' · v5.4');
+ o.push('Generado el '+new Date().toLocaleString('es-CO')+' · v5.5');
  o.push('Son los campos que aparecen en «Añadir especie» y en «Editar ficha». Todos son opcionales.');
  o.push('');
  o.push('1. Características universales (aplican a TODOS los reinos)');
