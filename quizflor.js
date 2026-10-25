@@ -10,9 +10,9 @@
    lsSet, esc: viven en otros archivos y solo se llaman al ejecutar.
    Se carga ANTES del <script> principal de index.html.
    ============================================================ */
-const QZ_KEY='pk_qzflor',QZ_NOM={general:'Esquema general',orchidaceae:'Orquídea (Orchidaceae)',araceae:'Arácea (Araceae)'};
+const QZ_KEY='pk_qzflor',QZ_NOM={general:'Esquema general',orchidaceae:'Orquídea (Orchidaceae)',araceae:'Arácea · inflorescencia',araceae_f:'Arácea · flor femenina',araceae_m:'Arácea · flor masculina'};
 let QZ=null;
-const qzSets=()=>Object.assign({general:FLOR_GEN},FLOR_DIAG);
+const qzSets=()=>Object.assign({general:FLOR_GEN},FLOR_DIAG,FLOR_EXTRA);
 function qzKeyOf(set){const S=qzSets();return Object.keys(S).find(k=>S[k]===set)||'general'}
 function qzLoad(){try{const o=JSON.parse(ls(QZ_KEY)||'{}');return o&&typeof o==='object'?o:{}}catch(_){return{}}}
 function qzShuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
