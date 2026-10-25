@@ -432,11 +432,27 @@ body.selmode main{padding-bottom:90px}
 #dlgflor{max-width:640px;padding:14px 16px}
 #dlgflor .sthd{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:2px}
 #dlgflor .sthd h2{margin:0;font-size:1.15rem}
-#flbox svg{display:block;width:100%;height:auto;max-height:72dvh;margin:6px auto}
+#flbox svg{display:block;width:100%;height:auto;max-height:46dvh;margin:6px auto}
 #dlgflor .fl-t{font:600 14px system-ui,sans-serif;fill:var(--ink)}
 #dlgflor .fl-s{font:500 12px system-ui,sans-serif;fill:var(--mut)}
 #dlgflor .fl-l{stroke:var(--mut);stroke-width:1.2;fill:none}
 #dlgflor .fl-d{fill:var(--mut)}
+/* v5.0 · al tocar una parte: se atenúa el resto y se resalta ella y su rótulo */
+#flbox [data-p]{cursor:pointer;transition:opacity .15s}
+#flbox svg.fl-has [data-p]{opacity:.22}
+#flbox svg.fl-has .fl-sel{opacity:1}
+#flbox .fl-f .fl-sel path,#flbox .fl-f .fl-sel ellipse,#flbox .fl-f .fl-sel rect,#flbox .fl-f .fl-sel circle{stroke:#f59e0b}
+#flbox .fl-r .fl-sel .fl-t{fill:var(--acc)}
+#flbox .fl-r .fl-sel .fl-l{stroke:var(--acc);stroke-width:2}
+#flbox .fl-r .fl-sel .fl-d{fill:var(--acc)}
+#flchips{display:flex;flex-wrap:wrap;gap:6px;margin:4px 0 8px}
+#flchips button{padding:6px 11px;font-size:.85rem;border-radius:16px}
+#flchips button.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc);font-weight:700}
+#fldef{background:var(--soft);border-radius:10px;padding:10px 12px;min-height:5.5em}
+#fldef h3{margin:0 0 4px;font-size:1.05rem}
+#fldef h3 small{display:block;margin:2px 0 0;font-size:.78rem;font-weight:500;color:var(--mut)}
+#fldef p{margin:6px 0 0;line-height:1.4}
+#fldef p.hint{margin-top:6px}
 </style>
 </head>
 <body>
@@ -462,7 +478,7 @@ body.selmode main{padding-bottom:90px}
     <button id="imj">⬆ Importar fichas (JSON)</button><input type="file" id="imf" accept="application/json,.json" hidden>
     <hr>
     <button id="out" class="mout">Salir</button>
-    <div class="mfoot">Biotaxo dex · v4.9</div>
+    <div class="mfoot">Biotaxo dex · v5.0</div>
    </div>
   </div>
  </div>
@@ -570,6 +586,8 @@ body.selmode main{padding-bottom:90px}
  <div class="sthd"><h2>🌸 Diagrama de la flor</h2><button type="button" id="flx">✕ Cerrar</button></div>
  <p class="hint">Corte longitudinal de una flor completa (esquema general).</p>
  <div id="flbox"></div>
+ <div id="flchips"></div>
+ <div id="fldef"></div>
  <p class="hint">Es un esquema general: cada familia tiene sus variaciones (flores sin cáliz o sin corola, estambres soldados, ovario ínfero, etc.).</p>
 </dialog>
 <dialog id="dlgdel">
@@ -1018,7 +1036,7 @@ function caracteristicasTxt(){
  };
  const o=[];
  o.push('BIOTAXO DEX · Características de las fichas');
- o.push('Generado el '+new Date().toLocaleString('es-CO')+' · v4.9');
+ o.push('Generado el '+new Date().toLocaleString('es-CO')+' · v5.0');
  o.push('Son los campos que aparecen en «Añadir especie» y en «Editar ficha». Todos son opcionales.');
  o.push('');
  o.push('1. Características universales (aplican a TODOS los reinos)');
