@@ -81,11 +81,95 @@ const FLOR_ORQ_PARTES={
   c:'Tras la fecundación se convierte en una cápsula con miles de semillas diminutas, casi como polvo.'}
 };
 const FLOR_ORQ_ORDEN=['sepalo_d','petalo','sepalo_l','labelo','columna','antera','estigma','ovario'];
+/* --- Paso 8: Araceae. Corte longitudinal de una inflorescencia con espata y espádice --- */
+const FLOR_ARA_SVG=`<svg id="flsvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 20 520 460" role="img" aria-label="Corte longitudinal de una inflorescencia de arácea con sus partes"><g class="fl-f" stroke-linejoin="round" stroke-linecap="round"><g data-p="pedunculo"><rect x="250" y="418" width="20" height="46" rx="4" fill="#8fbf6a" stroke="#3d6b2e" stroke-width="2"/></g><g data-p="espata" stroke="#8c4a55" stroke-width="2"><path d="M206 420 C190 380 188 300 206 244 C214 222 224 214 230 206 C214 172 206 110 258 44 C300 22 350 40 362 66 C346 112 318 172 294 206 C300 214 308 222 314 244 C332 300 330 380 314 420 Z" fill="#e6c9cb"/></g><g data-p="camara"><path d="M222 416 C208 380 206 304 220 252 C224 236 232 224 238 214 L282 214 C288 224 296 236 300 252 C314 304 312 380 298 416 Z" fill="#fbf7ec" stroke="#c9b88a" stroke-width="2" stroke-dasharray="5 4"/></g><g data-p="espadice" fill="#f3f0e3" stroke="#8a7f5a" stroke-width="2"><path d="M252 190 C250 140 246 96 260 62 C274 96 270 140 268 190 Z"/><rect x="255" y="188" width="10" height="160" rx="3"/></g><g data-p="masculina" fill="#f5e3a0" stroke="#b39a3a" stroke-width="1.8"><ellipse cx="245" cy="238" rx="8" ry="6"/><ellipse cx="260" cy="234" rx="8" ry="6"/><ellipse cx="275" cy="238" rx="8" ry="6"/><ellipse cx="245" cy="252" rx="8" ry="6"/><ellipse cx="260" cy="249" rx="8" ry="6"/><ellipse cx="275" cy="252" rx="8" ry="6"/><ellipse cx="247" cy="266" rx="8" ry="6"/><ellipse cx="260" cy="263" rx="8" ry="6"/><ellipse cx="273" cy="266" rx="8" ry="6"/></g><g data-p="olfativos" fill="#f6d9a0" stroke="#a77c25" stroke-width="1.8"><ellipse cx="238" cy="352" rx="12" ry="6" transform="rotate(-24 238 352)"/><ellipse cx="282" cy="352" rx="12" ry="6" transform="rotate(24 282 352)"/><ellipse cx="240" cy="338" rx="9" ry="5" transform="rotate(-20 240 338)"/><ellipse cx="280" cy="338" rx="9" ry="5" transform="rotate(20 280 338)"/></g><g data-p="pistilo" fill="#cfe6a0" stroke="#55822f" stroke-width="2"><ellipse cx="238" cy="394" rx="12" ry="19"/><ellipse cx="282" cy="394" rx="12" ry="19"/><ellipse cx="260" cy="396" rx="13" ry="19"/></g><g data-p="estigma" fill="#e8806a" stroke="#963e2a" stroke-width="1.8"><ellipse cx="238" cy="376" rx="10" ry="5"/><ellipse cx="282" cy="376" rx="10" ry="5"/><ellipse cx="260" cy="378" rx="11" ry="5"/></g></g><g class="fl-r"><g data-p="espata"><text class="fl-t" x="10" y="96">Espata<tspan class="fl-s" x="10" dy="15">hoja modificada</tspan></text><path class="fl-l" d="M70 92 L232 118"/><circle class="fl-d" cx="232" cy="118" r="3"/></g><g data-p="camara"><text class="fl-t" x="10" y="270">Cámara floral<tspan class="fl-s" x="10" dy="15">base de la espata</tspan></text><path class="fl-l" d="M112 266 L214 300"/><circle class="fl-d" cx="214" cy="300" r="3"/></g><g data-p="pedunculo"><text class="fl-t" x="10" y="440">Pedúnculo</text><path class="fl-l" d="M86 436 L252 440"/><circle class="fl-d" cx="252" cy="440" r="3"/></g></g><g class="fl-r" text-anchor="end"><g data-p="espadice"><text class="fl-t" x="510" y="116">Espádice estéril<tspan class="fl-s" x="510" dy="15">eje sin flores</tspan></text><path class="fl-l" d="M410 112 L268 140"/><circle class="fl-d" cx="268" cy="140" r="3"/></g><g data-p="masculina"><text class="fl-t" x="510" y="214">Flores masculinas<tspan class="fl-s" x="510" dy="15">estambres</tspan></text><path class="fl-l" d="M400 210 L283 244"/><circle class="fl-d" cx="283" cy="244" r="3"/></g><g data-p="olfativos"><text class="fl-t" x="510" y="304">Cuerpos olfativos<tspan class="fl-s" x="510" dy="15">flores estériles</tspan></text><path class="fl-l" d="M396 300 L292 344"/><circle class="fl-d" cx="292" cy="344" r="3"/></g><g data-p="estigma"><text class="fl-t" x="510" y="364">Estigma<tspan class="fl-s" x="510" dy="15">parte femenina</tspan></text><path class="fl-l" d="M440 360 L294 376"/><circle class="fl-d" cx="294" cy="376" r="3"/></g><g data-p="pistilo"><text class="fl-t" x="510" y="424">Pistilo<tspan class="fl-s" x="510" dy="15">ovario</tspan></text><path class="fl-l" d="M456 420 L294 400"/><circle class="fl-d" cx="294" cy="400" r="3"/></g></g></svg>`;
+const FLOR_ARA_PARTES={
+ espata:{n:'Espata',g:'bráctea grande (hoja modificada)',
+  d:'Hoja modificada, grande y a menudo vistosa, que envuelve al espádice. La parte baja forma un tubo o cámara y la parte alta se abre en una lámina.',
+  c:'Es lo que parece «la flor» de un anturio o un cartucho. Las flores de verdad son diminutas y están dentro, sobre el espádice.'},
+ camara:{n:'Cámara floral',g:'base de la espata',
+  d:'Espacio hueco que forma la base de la espata alrededor de las flores. En algunas aráceas retiene por un tiempo a los insectos que polinizan.',
+  c:'En una foto de corte se ve como la cavidad clara alrededor del espádice, más ancha abajo (donde están las flores femeninas) y estrecha arriba.'},
+ espadice:{n:'Espádice estéril',g:'inflorescencia · eje',
+  d:'El espádice es la espiga carnosa que lleva las flores diminutas. Aquí se resalta su parte sin flores: el eje entre las zonas florales y el apéndice del extremo.',
+  c:'En muchas aráceas termina en un apéndice estéril, a veces largo, que puede calentarse y oler para atraer insectos.'},
+ masculina:{n:'Flores masculinas',g:'androceo (parte masculina)',
+  d:'Zona del espádice con flores reducidas a estambres, sin pétalos ni sépalos, muy apretadas unas contra otras.',
+  c:'Se ven como un racimito de masas cremosas o amarillas. Suelen madurar después que las femeninas, y así se evita que la planta se polinice a sí misma.'},
+ olfativos:{n:'Cuerpos olfativos',g:'flores estériles modificadas',
+  d:'Estructuras estériles del espádice que producen olor y atraen a los polinizadores.',
+  c:'En el corte de referencia aparecen justo sobre las flores femeninas. Su posición y su forma cambian según el género.'},
+ estigma:{n:'Estigma',g:'pistilo · gineceo (parte femenina)',
+  d:'Superficie receptora del pistilo. En las aráceas suele ir directamente sobre el ovario, sin un estilo largo.',
+  c:'Se ve como un casquete o un puntito brillante sobre cada pistilo; recibe el polen que traen los insectos.'},
+ pistilo:{n:'Pistilo (flores femeninas)',g:'gineceo (parte femenina)',
+  d:'Cada flor femenina es un pistilo casi desnudo: un ovario con su estigma, a menudo sin perianto. Se agrupan en la base del espádice.',
+  c:'Tras la fecundación el ovario se convierte en una baya, y todas juntas forman la infrutescencia de frutos carnosos.'},
+ pedunculo:{n:'Pedúnculo',g:'soporte de la inflorescencia',
+  d:'Tallo que sostiene la espata y el espádice.',
+  c:'Sale entre las hojas o directamente del rizoma.'}
+};
+const FLOR_ARA_ORDEN=['espata','camara','espadice','masculina','olfativos','estigma','pistilo','pedunculo'];
+const FLOR_ARAF_SVG=`<svg id="flsvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 150 520 250" role="img" aria-label="Corte longitudinal de una flor femenina de arácea"><g class="fl-f" stroke-linejoin="round" stroke-linecap="round"><g data-p="espadice"><rect x="176" y="342" width="168" height="44" rx="6" fill="#f3f0e3" stroke="#8a7f5a" stroke-width="2"/></g><g data-p="ovario"><ellipse cx="260" cy="270" rx="62" ry="74" fill="#cfe6a0" stroke="#55822f" stroke-width="2.5"/></g><g data-p="loculo"><ellipse cx="260" cy="276" rx="44" ry="58" fill="#f7fbe9" stroke="#9bbf6a" stroke-width="2"/></g><g data-p="placenta"><path d="M236 332 C246 318 274 318 284 332 C274 338 246 338 236 332 Z" fill="#b5d58a" stroke="#55822f" stroke-width="2"/></g><g data-p="ovulo" fill="#fff0a8" stroke="#a68b1d" stroke-width="2"><ellipse cx="243" cy="296" rx="14" ry="22" transform="rotate(10 243 296)"/><ellipse cx="277" cy="296" rx="14" ry="22" transform="rotate(-10 277 296)"/><circle cx="243" cy="298" r="5" fill="#f4c542"/><circle cx="277" cy="298" r="5" fill="#f4c542"/></g><g data-p="estilo"><path d="M250 202 L270 202 L268 192 L252 192 Z" fill="#b9d98a" stroke="#55822f" stroke-width="2"/></g><g data-p="estigma"><ellipse cx="260" cy="186" rx="28" ry="9" fill="#e8806a" stroke="#963e2a" stroke-width="2"/></g></g><g class="fl-r"><g data-p="estigma"><text class="fl-t" x="10" y="184">Estigma<tspan class="fl-s" x="10" dy="15">recibe el polen</tspan></text><path class="fl-l" d="M86 180 L234 186"/><circle class="fl-d" cx="234" cy="186" r="3"/></g><g data-p="estilo"><text class="fl-t" x="10" y="238">Estilo<tspan class="fl-s" x="10" dy="15">muy corto</tspan></text><path class="fl-l" d="M64 234 L252 198"/><circle class="fl-d" cx="252" cy="198" r="3"/></g><g data-p="ovario"><text class="fl-t" x="10" y="298">Ovario<tspan class="fl-s" x="10" dy="15">pared</tspan></text><path class="fl-l" d="M64 294 L202 290"/><circle class="fl-d" cx="202" cy="290" r="3"/></g></g><g class="fl-r" text-anchor="end"><g data-p="loculo"><text class="fl-t" x="510" y="226">Lóculo<tspan class="fl-s" x="510" dy="15">cavidad</tspan></text><path class="fl-l" d="M462 222 L286 246"/><circle class="fl-d" cx="286" cy="246" r="3"/></g><g data-p="ovulo"><text class="fl-t" x="510" y="284">Óvulo<tspan class="fl-s" x="510" dy="15">futura semilla</tspan></text><path class="fl-l" d="M458 280 L290 292"/><circle class="fl-d" cx="290" cy="292" r="3"/></g><g data-p="placenta"><text class="fl-t" x="510" y="336">Placenta<tspan class="fl-s" x="510" dy="15">donde se unen</tspan></text><path class="fl-l" d="M428 332 L282 328"/><circle class="fl-d" cx="282" cy="328" r="3"/></g><g data-p="espadice"><text class="fl-t" x="510" y="382">Espádice<tspan class="fl-s" x="510" dy="15">eje</tspan></text><path class="fl-l" d="M432 378 L336 366"/><circle class="fl-d" cx="336" cy="366" r="3"/></g></g></svg>`;
+const FLOR_ARAF_PARTES={
+ estigma:{n:'Estigma',g:'pistilo · gineceo (parte femenina)',
+  d:'Superficie receptora del pistilo, donde se pega el polen. En muchas aráceas es un disco o un casquete pequeño, directamente sobre el ovario.',
+  c:'En una flor receptiva se ve húmedo y brillante.'},
+ estilo:{n:'Estilo',g:'pistilo · gineceo (parte femenina)',
+  d:'Cuello entre el estigma y el ovario. En las aráceas suele ser muy corto o faltar, y entonces el estigma queda pegado al ovario.',
+  c:'Si el estigma parece «sentado» sobre el ovario, la flor tiene estigma sésil.'},
+ ovario:{n:'Ovario',g:'pistilo · gineceo (parte femenina)',
+  d:'Pared que protege los óvulos. En muchas aráceas la flor femenina es solo un ovario con su estigma, sin sépalos ni pétalos.',
+  c:'Tras la fecundación se convierte en fruto, normalmente una baya. Según el género puede tener uno o varios lóculos.'},
+ loculo:{n:'Lóculo',g:'ovario · cavidad',
+  d:'Cavidad interior del ovario donde están los óvulos.',
+  c:'En un corte transversal (como en tu lámina) cada lóculo se ve como un espacio redondo que contiene su óvulo.'},
+ ovulo:{n:'Óvulo',g:'ovario · contiene la célula sexual femenina',
+  d:'Estructura que guarda la célula sexual femenina; tras la fecundación se convierte en la semilla. Se une a la placenta por un tallito llamado funículo.',
+  c:'El número de óvulos por lóculo cambia mucho: puede ser uno solo o muchos.'},
+ placenta:{n:'Placenta',g:'ovario · punto de unión de los óvulos',
+  d:'Zona de la pared del ovario donde se insertan los óvulos.',
+  c:'Aquí está en la base del lóculo, pero su posición cambia según el género.'},
+ espadice:{n:'Espádice',g:'inflorescencia · eje',
+  d:'Eje carnoso sobre el que se insertan todas las flores de la inflorescencia.',
+  c:'Estas flores no tienen pedicelo: nacen directamente del eje (son sésiles).'}
+};
+const FLOR_ARAF_ORDEN=['estigma','estilo','ovario','loculo','ovulo','placenta','espadice'];
+const FLOR_ARAM_SVG=`<svg id="flsvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 150 520 250" role="img" aria-label="Corte longitudinal de una flor masculina de arácea (un estambre)"><g class="fl-f" stroke-linejoin="round" stroke-linecap="round"><g data-p="espadice"><rect x="176" y="346" width="168" height="40" rx="6" fill="#f3f0e3" stroke="#8a7f5a" stroke-width="2"/></g><g data-p="filamento"><rect x="248" y="288" width="24" height="62" rx="4" fill="#e9d98a" stroke="#9a7b0c" stroke-width="2"/></g><g data-p="teca" fill="#f4c542" stroke="#9a7b0c" stroke-width="2"><ellipse cx="226" cy="252" rx="28" ry="44"/><ellipse cx="294" cy="252" rx="28" ry="44"/></g><g data-p="conectivo"><rect x="250" y="214" width="20" height="78" rx="4" fill="#d9b94a" stroke="#9a7b0c" stroke-width="2"/></g><g data-p="polen" fill="#fff4b8" stroke="#b39a3a" stroke-width="1.2"><circle cx="218" cy="236" r="5"/><circle cx="232" cy="250" r="5"/><circle cx="216" cy="264" r="5"/><circle cx="230" cy="276" r="5"/><circle cx="302" cy="236" r="5"/><circle cx="288" cy="250" r="5"/><circle cx="304" cy="264" r="5"/><circle cx="290" cy="276" r="5"/><circle cx="222" cy="190" r="4.5"/><circle cx="232" cy="178" r="4.5"/><circle cx="216" cy="174" r="4.5"/><circle cx="298" cy="190" r="4.5"/><circle cx="288" cy="178" r="4.5"/><circle cx="304" cy="174" r="4.5"/></g><g data-p="poro" fill="#6b5300" stroke="#3d2f00" stroke-width="1.6"><ellipse cx="226" cy="208" rx="9" ry="5"/><ellipse cx="294" cy="208" rx="9" ry="5"/></g></g><g class="fl-r"><g data-p="polen"><text class="fl-t" x="10" y="178">Polen<tspan class="fl-s" x="10" dy="15">granos</tspan></text><path class="fl-l" d="M60 174 L210 178"/><circle class="fl-d" cx="210" cy="178" r="3"/></g><g data-p="poro"><text class="fl-t" x="10" y="232">Poro<tspan class="fl-s" x="10" dy="15">abertura de la antera</tspan></text><path class="fl-l" d="M60 228 L218 210"/><circle class="fl-d" cx="218" cy="210" r="3"/></g><g data-p="teca"><text class="fl-t" x="10" y="298">Teca<tspan class="fl-s" x="10" dy="15">saco de polen</tspan></text><path class="fl-l" d="M60 294 L204 270"/><circle class="fl-d" cx="204" cy="270" r="3"/></g></g><g class="fl-r" text-anchor="end"><g data-p="conectivo"><text class="fl-t" x="510" y="238">Conectivo<tspan class="fl-s" x="510" dy="15">une las dos tecas</tspan></text><path class="fl-l" d="M426 234 L270 240"/><circle class="fl-d" cx="270" cy="240" r="3"/></g><g data-p="filamento"><text class="fl-t" x="510" y="304">Filamento<tspan class="fl-s" x="510" dy="15">muy corto</tspan></text><path class="fl-l" d="M420 300 L272 316"/><circle class="fl-d" cx="272" cy="316" r="3"/></g><g data-p="espadice"><text class="fl-t" x="510" y="368">Espádice<tspan class="fl-s" x="510" dy="15">eje</tspan></text><path class="fl-l" d="M432 364 L336 368"/><circle class="fl-d" cx="336" cy="368" r="3"/></g></g></svg>`;
+const FLOR_ARAM_PARTES={
+ teca:{n:'Teca',g:'antera · androceo (parte masculina)',
+  d:'Cada antera tiene dos tecas, o mitades, y dentro de cada una se forma el polen.',
+  c:'Se ven como dos lóbulos a los lados del conectivo. En las aráceas las anteras son pequeñas y están muy juntas.'},
+ conectivo:{n:'Conectivo',g:'antera · androceo (parte masculina)',
+  d:'Tejido que une las dos tecas de la antera y la conecta con el filamento.',
+  c:'Es la «bisagra» central de la antera, entre una teca y la otra.'},
+ filamento:{n:'Filamento',g:'estambre · androceo (parte masculina)',
+  d:'Tallito que sostiene la antera. En muchas aráceas es muy corto o falta, y la antera parece pegada al espádice.',
+  c:'Si no ves tallito bajo la antera, el estambre es sésil.'},
+ poro:{n:'Poro',g:'antera · abertura para liberar el polen',
+  d:'Abertura por donde sale el polen. En muchas aráceas la antera se abre por un poro o una hendidura en la punta, y no a lo largo de toda la antera.',
+  c:'Mira la punta de la antera: ahí suele verse el agujero o la rajadura.'},
+ polen:{n:'Polen',g:'células sexuales masculinas',
+  d:'Granos que contienen las células sexuales masculinas. Dentro de la antera están en las tecas, y afuera se pegan a los insectos.',
+  c:'Puede salir en hilos o en masas pegajosas, que los insectos llevan hasta las flores femeninas.'},
+ espadice:{n:'Espádice',g:'inflorescencia · eje',
+  d:'Eje carnoso sobre el que se insertan todas las flores de la inflorescencia.',
+  c:'En una flor masculina de arácea hay entre uno y varios estambres, a veces fundidos en un solo bloque (sinandrio).'}
+};
+const FLOR_ARAM_ORDEN=['polen','poro','teca','conectivo','filamento','espadice'];
+const FLOR_VISTAS_ARA=[['araceae','Inflorescencia'],['araceae_f','Flor femenina'],['araceae_m','Flor masculina']];
 /* Un diagrama por familia (clave = nombre sin tildes ni mayúsculas). Si la familia no está aquí se usa el esquema general. */
 const FLOR_GEN={qvb:'140 180 240 290',svg:FLOR_SVG,partes:FLOR_PARTES,orden:FLOR_ORDEN,sub:'Corte longitudinal de una flor completa (esquema general).',pie:'Es un esquema general: cada familia tiene sus variaciones (flores sin cáliz o sin corola, estambres soldados, ovario ínfero, etc.).'};
 const FLOR_DIAG={
+ araceae:{vistas:FLOR_VISTAS_ARA,qvb:'170 24 210 450',svg:FLOR_ARA_SVG,partes:FLOR_ARA_PARTES,orden:FLOR_ARA_ORDEN,sub:'Corte longitudinal de una inflorescencia de arácea (espata y espádice): diagrama propio de la familia Araceae.',pie:'En las aráceas lo que parece una flor es una inflorescencia. El dibujo muestra el tipo de espata con cámara y espádice con apéndice; en Anthurium, Monstera o Philodendron la espata y el espádice se ven distintos y las flores pueden ser hermafroditas.'},
  orchidaceae:{qvb:'80 40 360 360',svg:FLOR_ORQ_SVG,partes:FLOR_ORQ_PARTES,orden:FLOR_ORQ_ORDEN,sub:'Vista frontal de una orquídea (tipo Phalaenopsis): diagrama propio de la familia Orchidaceae.',pie:'Hay mucha variación entre géneros de orquídeas; por ejemplo, en Paphiopedilum el labelo forma un «zapatito» y hay dos anteras fértiles.'}
 };
+/* Vistas extra de una familia (no se eligen por la familia de la ficha, sino con los botones de vista) */
+const FLOR_EXTRA={
+ araceae_f:{vistas:FLOR_VISTAS_ARA,qvb:'160 170 200 230',svg:FLOR_ARAF_SVG,partes:FLOR_ARAF_PARTES,orden:FLOR_ARAF_ORDEN,sub:'Flor femenina de una arácea en corte longitudinal (diagrama propio).',pie:'Cada flor femenina es un pistilo casi desnudo sobre el espádice. El número de lóculos y de óvulos cambia según el género.'},
+ araceae_m:{vistas:FLOR_VISTAS_ARA,qvb:'170 160 180 240',svg:FLOR_ARAM_SVG,partes:FLOR_ARAM_PARTES,orden:FLOR_ARAM_ORDEN,sub:'Flor masculina de una arácea en corte longitudinal: un estambre (diagrama propio).',pie:'Una flor masculina puede tener de uno a varios estambres, libres o fundidos entre sí. Aquí se dibuja uno solo para ver sus partes.'}
+};
+const florPorClave=k=>FLOR_DIAG[k]||FLOR_EXTRA[k]||null;
 let florSet=FLOR_GEN,florBuilt=null;
 
 /* Resalta una parte (y su rótulo) y muestra su explicación. Tocarla otra vez la deselecciona. */
@@ -102,18 +186,30 @@ function florSel(id){
   ?'<h3>'+p.n+'<small>'+p.g+'</small></h3><p>'+p.d+'</p><p class="hint">'+p.c+'</p>'
   :'<p class="hint">Toca una parte del esquema, o uno de los botones, para ver qué es y cómo reconocerla.</p>';
 }
+function florPintar(set){
+ const b=document.getElementById('flbox');
+ if(!b)return;
+ florSet=set;florBuilt=set;
+ b.innerHTML=set.svg;
+ const ch=document.getElementById('flchips'),su=document.getElementById('flsub'),pi=document.getElementById('flpie'),vi=document.getElementById('flvistas');
+ if(ch)ch.innerHTML=set.orden.map(k=>'<button type="button" data-p="'+k+'">'+set.partes[k].n+'</button>').join('');
+ if(su)su.textContent=set.sub;
+ if(pi)pi.textContent=set.pie;
+ if(vi){
+  vi.hidden=!set.vistas;
+  vi.innerHTML=set.vistas?set.vistas.map(v=>'<button type="button" data-v="'+v[0]+'" class="'+(florPorClave(v[0])===set?'on':'')+'">'+v[1]+'</button>').join(''):'';
+ }
+ florSel('');
+}
+function florVista(k){
+ const set=florPorClave(k);
+ if(set&&set!==florBuilt)florPintar(set);
+}
 function abrirFlor(sp){
  const d=document.getElementById('dlgflor'),b=document.getElementById('flbox');
  if(!d||!b)return;
  const fam=sp&&sp.familia,set=(fam&&FLOR_DIAG[florNorm(fam)])||FLOR_GEN;
- if(florBuilt!==set){   // se dibuja al abrir por primera vez o cuando cambia el diagrama (otra familia)
-  florSet=set;florBuilt=set;
-  b.innerHTML=set.svg;
-  const ch=document.getElementById('flchips'),su=document.getElementById('flsub'),pi=document.getElementById('flpie');
-  if(ch)ch.innerHTML=set.orden.map(k=>'<button type="button" data-p="'+k+'">'+set.partes[k].n+'</button>').join('');
-  if(su)su.textContent=set.sub;
-  if(pi)pi.textContent=set.pie;
- }
+ if(florBuilt!==set)florPintar(set);   // se dibuja al abrir por primera vez o al cambiar de diagrama/vista
  florSel('');
  florSp=sp&&sp.id;
  florFormula(sp);
@@ -207,6 +303,8 @@ document.addEventListener('DOMContentLoaded',()=>{
  d.addEventListener('click',e=>{
   const f=e.target.closest&&e.target.closest('[data-fi]');
   if(f&&d.contains(f))return florElegir(+f.dataset.fi);
+  const v=e.target.closest&&e.target.closest('[data-v]');
+  if(v&&d.contains(v))return florVista(v.dataset.v);
   const t=e.target.closest&&e.target.closest('[data-p]');
   if(t&&d.contains(t))florSel(t.dataset.p);
  });
