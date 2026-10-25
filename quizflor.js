@@ -10,7 +10,7 @@
    lsSet, esc: viven en otros archivos y solo se llaman al ejecutar.
    Se carga ANTES del <script> principal de index.html.
    ============================================================ */
-const QZ_KEY='pk_qzflor',QZ_NOM={general:'Esquema general',orchidaceae:'Orquídea (Orchidaceae)'};
+const QZ_KEY='pk_qzflor',QZ_NOM={general:'Esquema general',orchidaceae:'Orquídea (Orchidaceae)',araceae:'Arácea (Araceae)'};
 let QZ=null;
 const qzSets=()=>Object.assign({general:FLOR_GEN},FLOR_DIAG);
 function qzKeyOf(set){const S=qzSets();return Object.keys(S).find(k=>S[k]===set)||'general'}
