@@ -106,7 +106,7 @@ function render(){
    +'<div class="ficha">'+galHTML(sp)
    +'<div class="finfo"><h2>'+esc(sp.comun||sci(sp))+'</h2><p class="sci">'+esc(sci(sp))+' <button type="button" id="cpsci" title="Copiar nombre científico" aria-label="Copiar nombre científico" style="padding:2px 8px;font-size:.85rem;margin-left:6px;vertical-align:middle;border-radius:8px">📋</button></p>'
    +advLine(sp)+sumHTML(sp)+'<ol class="lin deskonly">'+linHTML(sp)+'</ol>'
-   +'<div class="btns"><button id="favb">'+(fav(sp)?'★ Favorito':'☆ Favorito')+'</button><button id="destb">'+(dest(sp)?'📌 Quitar destacado':'📌 Destacar')+'</button>'+(sp.reino==='Plantae'?'<button id="florb">🌸 Diagrama de la flor</button>':'')+(sp.familia&&String(sp.familia).trim()?'<button id="famb">👪 Comparar familia</button>':'')+'<button id="shr">↗ Compartir</button><button id="edit">Editar ficha</button><button class="danger" id="del">🗑 Eliminar</button></div></div>'
+   +'<div class="btns"><button id="favb">'+(fav(sp)?'★ Favorito':'☆ Favorito')+'</button><button id="destb">'+(dest(sp)?'📌 Quitar destacado':'📌 Destacar')+'</button>'+(sp.reino==='Plantae'?'<button id="florb">🌸 Diagrama de la flor</button>':'')+'<button id="shr">↗ Compartir</button><button id="edit">Editar ficha</button><button class="danger" id="del">🗑 Eliminar</button></div></div>'
    +'<div class="ficha-car">'+distBlock(sp)+rgHTML(sp)
    +'</div></div>'
   :'';

@@ -453,7 +453,7 @@ body.selmode main{padding-bottom:90px}
 #fldef h3 small{display:block;margin:2px 0 0;font-size:.78rem;font-weight:500;color:var(--mut)}
 #fldef p{margin:6px 0 0;line-height:1.4}
 #fldef p.hint{margin-top:6px}
-/* v6.2 · tu foto de la flor junto al esquema (en pantallas anchas, una al lado de la otra) */
+/* v6.3 · tu foto de la flor junto al esquema (en pantallas anchas, una al lado de la otra) */
 #dlgflor{max-width:860px}
 .flcmp{display:grid;gap:8px}
 @media (min-width:720px){.flcmp.con-foto{grid-template-columns:1fr 1fr;align-items:start}}
@@ -492,7 +492,7 @@ body.selmode main{padding-bottom:90px}
     <button id="imj">⬆ Importar fichas (JSON)</button><input type="file" id="imf" accept="application/json,.json" hidden>
     <hr>
     <button id="out" class="mout">Salir</button>
-    <div class="mfoot">Biotaxo dex · v6.2</div>
+    <div class="mfoot">Biotaxo dex · v6.3</div>
    </div>
   </div>
  </div>
@@ -609,11 +609,6 @@ body.selmode main{padding-bottom:90px}
  <div id="flform"></div>
  <p class="hint" id="flpie">Es un esquema general: cada familia tiene sus variaciones (flores sin cáliz o sin corola, estambres soldados, ovario ínfero, etc.).</p>
 </dialog>
-<dialog id="dlgfam">
- <div class="sthd"><h2 id="famtit">👪 Familia</h2><button type="button" id="famx">✕ Cerrar</button></div>
- <div id="fambody"></div>
- <div id="famgbif"></div>
-</dialog>
 <dialog id="dlgqz">
  <div class="sthd"><h2>🎯 Quiz · partes de la flor</h2><span class="hint" id="qzcnt"></span><button type="button" data-a="x">✕ Salir</button></div>
  <div class="qzsel"><label for="qzset">Diagrama</label><select id="qzset"></select></div>
@@ -650,7 +645,6 @@ body.selmode main{padding-bottom:90px}
 <script src="ficha.js"></script>
 <script src="lista.js"></script>
 <script src="flor.js"></script>
-<script src="familia.js"></script>
 <script src="quizflor.js"></script>
 <script src="faltan.js"></script>
 <script>
@@ -780,7 +774,6 @@ $('detail').onclick=e=>{
  if(e.target.id==='shr')share(sp);
  if(e.target.id==='cpsci')copySci(sp);
  if(e.target.id==='florb')abrirFlor(sp);
- if(e.target.id==='famb')abrirFam(sp);
  if(e.target.id==='del'){
   $('delerr').textContent='';
   $('deltxt').textContent='Vas a eliminar «'+(sp.comun||sci(sp))+'» ('+sci(sp)+').';
@@ -1076,7 +1069,7 @@ function caracteristicasTxt(){
  };
  const o=[];
  o.push('BIOTAXO DEX · Características de las fichas');
- o.push('Generado el '+new Date().toLocaleString('es-CO')+' · v6.2');
+ o.push('Generado el '+new Date().toLocaleString('es-CO')+' · v6.3');
  o.push('Son los campos que aparecen en «Añadir especie» y en «Editar ficha». Todos son opcionales.');
  o.push('');
  o.push('1. Características universales (aplican a TODOS los reinos)');
