@@ -429,6 +429,83 @@ $('fcmpg').onclick=async()=>{
  await cmpGen(g,{box,btn:$('fcmpg')});
 };
 
+/* ---- v6.2 · Comparar por FAMILIA (formulario): géneros de la familia con foto, para elegir el género ----
+   Usa /v1/taxa (API pública, sin token). Los géneros que la IA sugirió para tu foto (iaCands) se marcan con 🤖. */
+let famS=null,famSeq=0;
+const famIA=()=>{const m={};(iaCands||[]).forEach(c=>{const g=String((c.t&&c.t.name)||'').split(' ')[0].toLowerCase();if(g&&(!m[g]||c.s>m[g]))m[g]=c.s});return m};
+function famGrid(){
+ const S=famS,g=document.getElementById('famgrid');if(!S||!g)return;
+ const q=norm(S.q||''),ia=famIA();
+ let L=S.list.filter(x=>!q||norm(x.name).includes(q)||norm(x.com).includes(q));
+ L=L.map((x,i)=>Object.assign({ia:ia[x.name.toLowerCase()]},x)).sort((a,b)=>(b.ia!=null)-(a.ia!=null));   // sugeridos por la IA primero (el sort es estable)
+ const card='display:flex;flex-direction:column;gap:6px;padding:8px;border:1px solid var(--line);border-radius:12px;background:var(--panel);min-width:0';
+ g.innerHTML=L.length?L.map(c=>'<div style="'+card+'">'
+  +'<div style="aspect-ratio:1/1;border-radius:10px;overflow:hidden;background:var(--soft);display:grid;place-items:center;font-size:2rem">'
+  +(c.th?'<img src="'+esc(c.th)+'" alt="Foto de referencia de '+esc(c.name)+'" loading="lazy" style="width:100%;height:100%;object-fit:cover;display:block">':'<span aria-hidden="true">🌿</span>')+'</div>'
+  +'<div><b><i>'+esc(c.name)+'</i></b><br><span>'+esc(c.com||'sin nombre común')+'</span>'
+  +(c.n?'<div class="pc">'+c.n.toLocaleString('es')+' observaciones</div>':'')
+  +(c.ia!=null?'<div class="pc">🤖 La IA sugirió este género ('+Math.round(c.ia)+'%)</div>':'')
+  +(c.at?'<div class="pc">📷 '+esc(c.at)+'</div>':'')
+  +'<a class="pc" href="https://www.inaturalist.org/taxa/'+encodeURIComponent(c.id)+'" target="_blank" rel="noopener" style="color:var(--lnk)">Ver en iNaturalist ↗</a></div>'
+  +'<button type="button" class="primary" data-a="el" data-g="'+esc(c.name)+'" style="min-height:40px">✓ Elegir este género</button></div>').join('')
+  :'<p class="note" style="grid-column:1/-1">Ningún género cargado coincide'+(S.list.length<S.total?'. Prueba «Mostrar más géneros».':'.')+'</p>';
+ const mas=document.getElementById('fammas');
+ if(mas){mas.hidden=S.list.length>=S.total;mas.disabled=false;mas.textContent='Mostrar más géneros ('+S.list.length+' de '+S.total+')'}
+}
+async function famMas(S){
+ const r=await fetch(INAT+'taxa?taxon_id='+encodeURIComponent(S.id)+'&rank=genus&is_active=true&order_by=observations_count&order=desc&per_page=24&page='+(S.page+1)+'&locale=es');
+ if(!r.ok)throw new Error('HTTP '+r.status);
+ const j=await r.json();
+ if(famS!==S)return;
+ S.page++;S.total=j.total_results||S.total;
+ (j.results||[]).filter(x=>x&&x.name&&(!x.rank||x.rank==='genus')).forEach(x=>{
+  const dp=x.default_photo||{};
+  if(S.list.some(y=>y.id===x.id))return;
+  S.list.push({name:x.name,com:x.preferred_common_name||'',id:x.id,n:x.observations_count||0,th:okUrl(dp.medium_url||dp.square_url||''),at:dp.attribution||''});
+ });
+}
+async function cmpFamilia(f,o){
+ const box=o.box,b=o.btn;
+ if(!navigator.onLine){box.innerHTML='<p class="note">Sin conexión: la comparación necesita internet.</p>';return}
+ b.disabled=true;b.textContent='⏳ Buscando…';box.innerHTML='';famS=null;
+ try{
+  const r=await fetch(INAT+'taxa?q='+encodeURIComponent(f)+'&rank=family&per_page=5&locale=es');
+  if(!r.ok)throw new Error('HTTP '+r.status);
+  const t=((await r.json()).results||[]).find(x=>norm(x.name)===norm(f));
+  if(!t){box.innerHTML='<p class="note">No encontré la familia «'+esc(f)+'» en iNaturalist. Revisa el nombre.</p>';return}
+  const S=famS={id:t.id,name:t.name,list:[],total:0,page:0,q:'',seq:++famSeq};
+  await famMas(S);
+  if(famS!==S)return;
+  if(!S.list.length){box.innerHTML='<p class="note">No encontré géneros de la familia «'+esc(t.name)+'» en iNaturalist.</p>';return}
+  box.innerHTML='<p class="hint">Géneros de la familia <b>'+esc(t.name)+'</b> en iNaturalist, de los más a los menos observados. Elige uno para llenar el campo «Género».</p>'
+   +'<p class="hint" id="famgmsg" role="status"></p>'
+   +'<input type="search" id="famq" placeholder="Buscar género…" aria-label="Buscar género" autocomplete="off" style="width:100%;margin:4px 0 8px">'
+   +'<div id="famgrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px"></div>'
+   +'<p style="margin:10px 0 0"><button type="button" id="fammas" data-a="mas">Mostrar más géneros</button> <button type="button" id="famx" class="lnkb">Cerrar</button></p>';
+  famGrid();
+  box.oninput=e=>{if(e.target.id==='famq'&&famS===S){S.q=e.target.value;famGrid()}};
+  box.onclick=async e=>{
+   const x=e.target.closest&&e.target.closest('button');if(!x)return;
+   if(x.id==='famx'){box.innerHTML='';famS=null;return}
+   if(x.dataset.a==='el'){
+    $('f-genero').value=x.dataset.g;
+    const m=$('famgmsg');if(m)m.textContent='✓ Género «'+x.dataset.g+'» elegido. Revisa la especie.';
+   }else if(x.dataset.a==='mas'){
+    x.disabled=true;x.textContent='⏳ Cargando…';
+    try{await famMas(S);famGrid()}catch(_){x.disabled=false;x.textContent='No pude cargar más: reintentar'}
+   }
+  };
+ }catch(err){
+  box.innerHTML='<p class="note">'+(err instanceof TypeError?'No pude conectar con iNaturalist (¿sin internet?).':'Error al consultar iNaturalist ('+esc(err&&err.message||err)+').')+'</p>';
+ }finally{b.disabled=false;b.textContent='🔍 Comparar familia'}
+}
+$('fcmpf').onclick=async()=>{
+ const f=$('f-familia').value.trim(),box=$('fcmpbox');
+ if(!f){box.innerHTML='<p class="note">Escribe la familia primero.</p>';return}
+ await cmpFamilia(f,{box,btn:$('fcmpf')});
+};
+/* v6.2 fin */
+
 /* ======================================================================
    v4.1 · Completar Flor / Hoja / Fruto con fotos de iNaturalist (solo Plantae)
    Si ya etiquetaste alguna foto y falta algún órgano, el formulario sugiere buscarlo.
