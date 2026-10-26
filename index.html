@@ -453,7 +453,7 @@ body.selmode main{padding-bottom:90px}
 #fldef h3 small{display:block;margin:2px 0 0;font-size:.78rem;font-weight:500;color:var(--mut)}
 #fldef p{margin:6px 0 0;line-height:1.4}
 #fldef p.hint{margin-top:6px}
-/* v6.0 · tu foto de la flor junto al esquema (en pantallas anchas, una al lado de la otra) */
+/* v6.1 · tu foto de la flor junto al esquema (en pantallas anchas, una al lado de la otra) */
 #dlgflor{max-width:860px}
 .flcmp{display:grid;gap:8px}
 @media (min-width:720px){.flcmp.con-foto{grid-template-columns:1fr 1fr;align-items:start}}
@@ -480,6 +480,7 @@ body.selmode main{padding-bottom:90px}
     <div class="mhead"><span class="sans cl on" id="who"></span></div>
     <button id="study">🎓 Modo estudio</button>
     <button id="selb">☑ Seleccionar</button>
+    <button id="faltab" title="Familias de plantas con flor que aún no tienen diagrama">🌿 Familias sin diagrama</button>
     <hr>
     <button id="setb">⚙ Ajustes</button>
     <button id="gdb" hidden title="Conexión con tu Google Drive (donde se guardan las fotos)">☁ Drive</button>
@@ -491,7 +492,7 @@ body.selmode main{padding-bottom:90px}
     <button id="imj">⬆ Importar fichas (JSON)</button><input type="file" id="imf" accept="application/json,.json" hidden>
     <hr>
     <button id="out" class="mout">Salir</button>
-    <div class="mfoot">Biotaxo dex · v6.0</div>
+    <div class="mfoot">Biotaxo dex · v6.1</div>
    </div>
   </div>
  </div>
@@ -618,6 +619,12 @@ body.selmode main{padding-bottom:90px}
  <div id="qzbody"></div>
  <div id="qzbar"></div>
 </dialog>
+<dialog id="dlgfalta">
+ <div class="sthd"><h2>🌿 Familias sin diagrama</h2><button type="button" id="faltax">✕ Cerrar</button></div>
+ <input type="search" id="faltaq" placeholder="Buscar familia o ejemplo…" aria-label="Buscar familia" autocomplete="off">
+ <div class="faltacp"><button type="button" id="faltacp">📋 Copiar mis familias que faltan</button><span class="hint" id="faltamsg" role="status"></span></div>
+ <div id="faltabody"></div>
+</dialog>
 <dialog id="dlgdel">
  <h2 style="margin-top:0">¿Eliminar esta especie?</h2>
  <p id="deltxt"></p>
@@ -644,6 +651,7 @@ body.selmode main{padding-bottom:90px}
 <script src="flor.js"></script>
 <script src="familia.js"></script>
 <script src="quizflor.js"></script>
+<script src="faltan.js"></script>
 <script>
 /* El cliente de Supabase (SB) ahora se crea en supabase.js */
 const LV=['dominio','reino','filo','clase','orden','familia','genero','especie'];
@@ -1067,7 +1075,7 @@ function caracteristicasTxt(){
  };
  const o=[];
  o.push('BIOTAXO DEX · Características de las fichas');
- o.push('Generado el '+new Date().toLocaleString('es-CO')+' · v6.0');
+ o.push('Generado el '+new Date().toLocaleString('es-CO')+' · v6.1');
  o.push('Son los campos que aparecen en «Añadir especie» y en «Editar ficha». Todos son opcionales.');
  o.push('');
  o.push('1. Características universales (aplican a TODOS los reinos)');
