@@ -497,7 +497,41 @@ const FLOR_MAL2_PARTES={
   c:'El ovario es súpero.'}
 };
 const FLOR_MAL2_ORDEN=['eje','caliculo','caliz','petalo','tubo','antera','gineceo'];
-const FLOR_VISTAS_MAL=[['malvaceae','Flor (corte)'],['malvaceae_d','Diagrama floral']];
+const FLOR_VISTAS_MAL=[['malvaceae','Hibisco · corte'],['malvaceae_d','Hibisco · diagrama'],['malvaceae_balso','Balso']];
+/* ---- Malvaceae: otras subfamilias (balso, ceiba, cacao, tilo) ---- */
+const FLOR_BAL_SVG=`<svg id="flsvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 80 520 410" role="img" aria-label="Corte longitudinal de una flor de balso (Ochroma pyramidale)"><g class="fl-f" stroke-linejoin="round" stroke-linecap="round"><g data-p="petalo" fill="#fff4e4" stroke="#9c8366" stroke-width="2"><path d="M240 340 C236 306 196 276 156 240 C124 212 112 178 128 158 C158 156 194 180 218 214 C240 246 252 298 254 340 Z"/><path d="M 280 340 C 284 306 324 276 364 240 C 396 212 408 178 392 158 C 362 156 326 180 302 214 C 280 246 268 298 266 340 Z"/></g><g data-p="caliz" fill="#7fb069" stroke="#3d6b2e" stroke-width="2.2"><path d="M240 434 C208 420 188 384 182 336 L176 316 L202 330 L214 316 C220 352 238 388 258 402 Z"/><path d="M 280 434 C 312 420 332 384 338 336 L 344 316 L 318 330 L 306 316 C 300 352 282 388 262 402 Z"/></g><g data-p="columna"><path d="M246 362 L246 176 L250 160 L254 176 L258 164 L262 176 L266 160 L270 176 L274 362 Z" fill="#f3dca5" stroke="#a8841c" stroke-width="2"/><rect x="254" y="184" width="12" height="176" fill="#fff" stroke="#c9b06a" stroke-width="1.2"/></g><g data-p="ovario"><path d="M230 396 C230 364 244 356 260 356 C276 356 290 364 290 396 C290 420 276 428 260 428 C244 428 230 420 230 396 Z" fill="#cfe6a0" stroke="#55822f" stroke-width="2.4"/><rect x="258" y="362" width="4" height="60" fill="#a8cc7a" stroke="#55822f" stroke-width="1"/><ellipse cx="244" cy="394" rx="10" ry="26" fill="#f6fbe6" stroke="#55822f" stroke-width="1.4"/><ellipse cx="276" cy="394" rx="10" ry="26" fill="#f6fbe6" stroke="#55822f" stroke-width="1.4"/></g><g data-p="ovulo" fill="#fff0a8" stroke="#a68b1d" stroke-width="1.5"><ellipse cx="244" cy="378" rx="4" ry="5"/><ellipse cx="244" cy="392" rx="4" ry="5"/><ellipse cx="244" cy="406" rx="4" ry="5"/><ellipse cx="276" cy="378" rx="4" ry="5"/><ellipse cx="276" cy="392" rx="4" ry="5"/><ellipse cx="276" cy="406" rx="4" ry="5"/></g><g data-p="estilo"><path d="M260 358 L260 134" stroke="#55822f" stroke-width="3.6" fill="none"/></g><g data-p="estigma" fill="#d63a4a" stroke="#7d1624" stroke-width="1.6"><ellipse cx="251" cy="132" rx="3.6" ry="6.5" transform="rotate(-36 251 132)"/><ellipse cx="255" cy="122" rx="3.6" ry="6.5" transform="rotate(-20 255 122)"/><ellipse cx="260" cy="117" rx="3.6" ry="6.5" transform="rotate(0 260 117)"/><ellipse cx="265" cy="122" rx="3.6" ry="6.5" transform="rotate(20 265 122)"/><ellipse cx="269" cy="132" rx="3.6" ry="6.5" transform="rotate(36 269 132)"/></g><g data-p="antera" fill="#f6c93a" stroke="#8a6a00" stroke-width="1.6"><ellipse cx="238" cy="188" rx="9" ry="4.2" transform="rotate(-28 238 188)"/><ellipse cx="260" cy="200" rx="11" ry="4.2" transform="rotate(8 260 200)"/><ellipse cx="282" cy="212" rx="9" ry="4.2" transform="rotate(28 282 212)"/><ellipse cx="260" cy="224" rx="11" ry="4.2" transform="rotate(-8 260 224)"/><ellipse cx="238" cy="236" rx="9" ry="4.2" transform="rotate(-28 238 236)"/><ellipse cx="260" cy="248" rx="11" ry="4.2" transform="rotate(8 260 248)"/><ellipse cx="282" cy="260" rx="9" ry="4.2" transform="rotate(28 282 260)"/><ellipse cx="260" cy="272" rx="11" ry="4.2" transform="rotate(-8 260 272)"/><ellipse cx="238" cy="284" rx="9" ry="4.2" transform="rotate(-28 238 284)"/><ellipse cx="260" cy="296" rx="11" ry="4.2" transform="rotate(8 260 296)"/><ellipse cx="282" cy="308" rx="9" ry="4.2" transform="rotate(28 282 308)"/></g><g data-p="pedicelo"><rect x="252" y="430" width="16" height="42" rx="3" fill="#8fbf6a" stroke="#3d6b2e" stroke-width="2"/></g></g><g class="fl-r"><g data-p="petalo"><text class="fl-t" x="10" y="150">Pétalos<tspan class="fl-s" x="10" dy="15">5 · obovados, con uña</tspan></text><path class="fl-l" d="M137 146 L134 176"/><circle class="fl-d" cx="134" cy="176" r="3"/></g><g data-p="caliz"><text class="fl-t" x="10" y="330">Cáliz<tspan class="fl-s" x="10" dy="15">grande, obcónico</tspan></text><path class="fl-l" d="M110 326 L194 342"/><circle class="fl-d" cx="194" cy="342" r="3"/></g><g data-p="pedicelo"><text class="fl-t" x="10" y="466">Pedicelo</text><path class="fl-l" d="M85 462 L254 454"/><circle class="fl-d" cx="254" cy="454" r="3"/></g></g><g class="fl-r" text-anchor="end"><g data-p="estigma"><text class="fl-t" x="510" y="112">Estigmas<tspan class="fl-s" x="510" dy="15">5</tspan></text><path class="fl-l" d="M435 108 L272 124"/><circle class="fl-d" cx="272" cy="124" r="3"/></g><g data-p="columna"><text class="fl-t" x="510" y="176">Columna estaminal<tspan class="fl-s" x="510" dy="15">termina en 5 dientes</tspan></text><path class="fl-l" d="M367 172 L271 166"/><circle class="fl-d" cx="271" cy="166" r="3"/></g><g data-p="antera"><text class="fl-t" x="510" y="246">Anteras<tspan class="fl-s" x="510" dy="15">muchas · en espiral</tspan></text><path class="fl-l" d="M393 242 L282 260"/><circle class="fl-d" cx="282" cy="260" r="3"/></g><g data-p="estilo"><text class="fl-t" x="510" y="312">Estilo</text><path class="fl-l" d="M450 308 L260 320"/><circle class="fl-d" cx="260" cy="320" r="3"/></g><g data-p="ovario"><text class="fl-t" x="510" y="384">Ovario súpero<tspan class="fl-s" x="510" dy="15">5 lóculos</tspan></text><path class="fl-l" d="M397 380 L290 396"/><circle class="fl-d" cx="290" cy="396" r="3"/></g><g data-p="ovulo"><text class="fl-t" x="510" y="440">Óvulos<tspan class="fl-s" x="510" dy="15">muchos por lóculo</tspan></text><path class="fl-l" d="M404 436 L278 406"/><circle class="fl-d" cx="278" cy="406" r="3"/></g></g></svg>`;
+const FLOR_BAL_PARTES={
+ estigma:{n:'Estigmas',g:'pistilo · gineceo (parte femenina)',
+  d:'Cinco, en la punta del estilo, por encima de los dientes de la columna.',
+  c:'Su número coincide con el de carpelos.'},
+ estilo:{n:'Estilo',g:'pistilo · gineceo (parte femenina)',
+  d:'Columna delgada, acanalada en su parte superior, que atraviesa la columna estaminal y sale por encima de ella.',
+  c:'Va protegido dentro de la columna.'},
+ columna:{n:'Columna estaminal',g:'filamentos soldados · androceo',
+  d:'Los filamentos forman una columna que rodea al estilo y termina arriba en cinco dientes.',
+  c:'Como en el hibisco, el androceo es una columna; aquí la flor es mucho más grande.'},
+ antera:{n:'Anteras',g:'estambres · androceo (parte masculina)',
+  d:'Numerosas, dispuestas en espiral en la parte alta de la columna.',
+  c:'En el dibujo se ven algunas de frente y otras de lado para sugerir esa espiral.'},
+ petalo:{n:'Pétalos',g:'corola · perianto',
+  d:'Cinco pétalos casi blancos, obovados (más anchos arriba) y con uña (base angosta), de unos 10 cm y finamente peludos.',
+  c:'En el dibujo se ven dos de los cinco, en corte.'},
+ caliz:{n:'Cáliz',g:'perianto · sépalos',
+  d:'Grande, obcónico (en forma de cono invertido), de unos 6 a 8 cm, finamente aterciopelado y con cinco lóbulos.',
+  c:'Aquí no se dibuja calículo.'},
+ ovario:{n:'Ovario súpero',g:'pistilo · gineceo (parte femenina)',
+  d:'Tiene cinco lóculos con muchos óvulos cada uno.',
+  c:'El fruto es una cápsula larga y angulosa, muy lanosa por dentro, que se abre en cinco valvas.'},
+ ovulo:{n:'Óvulos',g:'ovario · contienen la célula sexual femenina',
+  d:'Muchos por lóculo, unidos al eje central. Las semillas quedan entre la lana del fruto.',
+  c:'En el dibujo se ven dos de los cinco lóculos del corte.'},
+ pedicelo:{n:'Pedicelo',g:'soporte de la flor',
+  d:'Tallito que une la flor con la rama.',
+  c:'Está por debajo del cáliz.'}
+};
+const FLOR_BAL_ORDEN=['estigma','estilo','columna','antera','petalo','caliz','ovario','ovulo','pedicelo'];
+/* El género de la ficha manda sobre la familia: abre directo el diagrama de ese árbol */
+const FLOR_POR_GENERO={ochroma:'malvaceae_balso'};
 const FLOR_VISTAS_EU=[['euphorbiaceae','Flor femenina'],['euphorbiaceae_m','Flor masculina'],['euphorbiaceae_c','Ciatio (Euphorbia)'],['euphorbiaceae_df','Diagrama femenina'],['euphorbiaceae_dm','Diagrama masculina']];
 /* Un diagrama por familia (clave = nombre sin tildes ni mayúsculas). Si la familia no está aquí se usa el esquema general. */
 const FLOR_GEN={qvb:'140 180 240 290',svg:FLOR_SVG,partes:FLOR_PARTES,orden:FLOR_ORDEN,sub:'Corte longitudinal de una flor completa (esquema general).',pie:'Es un esquema general: cada familia tiene sus variaciones (flores sin cáliz o sin corola, estambres soldados, ovario ínfero, etc.).'};
@@ -522,10 +556,11 @@ const FLOR_EXTRA={
  euphorbiaceae_df:{vistas:FLOR_VISTAS_EU,qvb:'180 100 160 360',svg:FLOR_EUDF_SVG,partes:FLOR_EUDF_PARTES,orden:FLOR_EUDF_ORDEN,sub:'Diagrama floral de una flor femenina de Euphorbiaceae, visto desde arriba (diagrama propio).',pie:'Un diagrama floral es un corte transversal esquemático: eje arriba, bráctea abajo y, de fuera hacia dentro, cáliz, corola, estambres y gineceo. Fórmula típica: K3–6 C0 A0 G(3), ovario súpero. Es un tipo general; algunas especies de Croton, por ejemplo, tienen pétalos.'},
  euphorbiaceae_dm:{vistas:FLOR_VISTAS_EU,qvb:'180 100 160 360',svg:FLOR_EUDM_SVG,partes:FLOR_EUDM_PARTES,orden:FLOR_EUDM_ORDEN,sub:'Diagrama floral de una flor masculina de Euphorbiaceae, visto desde arriba (diagrama propio).',pie:'Fórmula típica: K3–6 C0 A1–∞ G0. Aquí se dibujan 30 estambres como ejemplo de «muchos»; en Croton las flores masculinas llevan además 5 pétalos, y en Euphorbia cada flor masculina es un solo estambre.'},
  malvaceae_d:{vistas:FLOR_VISTAS_MAL,qvb:'100 100 320 320',svg:FLOR_MAL2_SVG,partes:FLOR_MAL2_PARTES,orden:FLOR_MAL2_ORDEN,sub:'Diagrama floral de una flor de hibisco (Malvaceae), visto desde arriba (diagrama propio).',pie:'Un diagrama floral es un corte transversal esquemático. De fuera hacia dentro: calículo, cáliz, corola, androceo y gineceo. Fórmula típica: ⊕ ⚥ Epi3–8 K(5) C5 A(∞) G(5), con los pétalos pegados al tubo estaminal. Es el tipo del hibisco; el número de piezas varía según el género.'},
+ malvaceae_balso:{vistas:FLOR_VISTAS_MAL,qvb:'100 90 320 400',svg:FLOR_BAL_SVG,partes:FLOR_BAL_PARTES,orden:FLOR_BAL_ORDEN,sub:'Flor de balso (Ochroma pyramidale, Malvaceae) en corte longitudinal (diagrama propio).',pie:'El balso es de la subfamilia Bombacoideae, como la ceiba. Frente al hibisco: aquí no se dibuja calículo, el cáliz es grande y obcónico, los pétalos tienen uña y las anteras van en espiral sobre una columna con cinco dientes. Es un esquema general; contrástalo con tu libro.'},
  araceae_f:{vistas:FLOR_VISTAS_ARA,qvb:'160 170 200 230',svg:FLOR_ARAF_SVG,partes:FLOR_ARAF_PARTES,orden:FLOR_ARAF_ORDEN,sub:'Flor femenina de una arácea en corte longitudinal (diagrama propio).',pie:'Cada flor femenina es un pistilo casi desnudo sobre el espádice. El número de lóculos y de óvulos cambia según el género.'},
  araceae_m:{vistas:FLOR_VISTAS_ARA,qvb:'170 160 180 240',svg:FLOR_ARAM_SVG,partes:FLOR_ARAM_PARTES,orden:FLOR_ARAM_ORDEN,sub:'Flor masculina de una arácea en corte longitudinal: un estambre (diagrama propio).',pie:'Una flor masculina puede tener de uno a varios estambres, libres o fundidos entre sí. Aquí se dibuja uno solo para ver sus partes.'}
 };
-const FLOR_SIN={compositae:'asteraceae',heliconia:'heliconiaceae'};   // nombres antiguos de familias
+const FLOR_SIN={compositae:'asteraceae',heliconia:'heliconiaceae',bombacaceae:'malvaceae',sterculiaceae:'malvaceae',tiliaceae:'malvaceae'};   // nombres antiguos de familias
 const florClaveFam=f=>{const k=florNorm(f);return FLOR_SIN[k]||k};
 const florPorClave=k=>FLOR_DIAG[k]||FLOR_EXTRA[k]||null;
 let florSet=FLOR_GEN,florBuilt=null;
@@ -566,7 +601,7 @@ function florVista(k){
 function abrirFlor(sp){
  const d=document.getElementById('dlgflor'),b=document.getElementById('flbox');
  if(!d||!b)return;
- const fam=sp&&sp.familia,set=(fam&&FLOR_DIAG[florClaveFam(fam)])||FLOR_GEN;
+ const fam=sp&&sp.familia,gk=sp&&FLOR_POR_GENERO[florNorm(sp.genero)],set=(gk&&florPorClave(gk))||(fam&&FLOR_DIAG[florClaveFam(fam)])||FLOR_GEN;
  if(florBuilt!==set)florPintar(set);   // se dibuja al abrir por primera vez o al cambiar de diagrama/vista
  florSel('');
  florSp=sp&&sp.id;
