@@ -98,7 +98,7 @@ function gdTrashRetry(){
 async function gdTrash(ref){
  if(!isGd(ref))return;
  /* Si otra ficha todavía usa esta foto (p. ej. fichas duplicadas por importar dos veces), no se toca */
- try{if((await dbAll('especies')).some(o=>o.foto===ref||(Array.isArray(o.fotos)&&o.fotos.includes(ref)))){trashQ(ref,false);return}}catch(_){}
+ try{if((await dbAll('especies')).some(o=>o.foto===ref||(Array.isArray(o.fotos)&&o.fotos.includes(ref)))){trashQ(ref,false);return}}catch(e){console.warn('gdTrash: no se pudo comprobar uso de la foto',e)}
  try{
   const r=await gd(API+'/files/'+ref.slice(3),{method:'PATCH',headers:{'Content-Type':'application/json'},body:JSON.stringify({trashed:true})});
   if(!r.ok&&r.status!==404)throw new Error('Drive '+r.status);
@@ -184,11 +184,6 @@ async function cacheFotos(rows){
  }
  return true;
 }
-async function toDataURL(ref){
- if(!ref||/^data:/.test(ref))return ref;
- try{const b=await getBlob(ref);if(!b)return ref;return await new Promise((ok,ko)=>{const f=new FileReader();f.onload=()=>ok(f.result);f.onerror=ko;f.readAsDataURL(b)})}catch(_){return ref}
-}
-
 /* --- Botón «☁ Drive» --- */
 function gdUI(){const b=$('gdb');if(!b)return;b.hidden=!GDRIVE_ON;b.className=gdValid()?'':'off';b.textContent=gdValid()?'☁ Drive ✓':'☁ Conectar Drive'}
 setInterval(gdUI,30000);addEventListener('online',retryImgs);
