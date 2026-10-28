@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 const IA_CID='';
 
 const IA_SITE='https://www.inaturalist.org',IA_URL='https://api.inaturalist.org/v1/';
-let iaSeq=0,iaRef=null,iaCands=[],iaManualRes=null;            // iaSeq: descarta respuestas "viejas"
+let iaSeq=0,iaRef=null,iaCands=[],iaManualRes=null,iaCandsSp=[],iaGen=[],iaFung=false,iaVerEsp=false;            // iaSeq: descarta respuestas "viejas"
 const IA_RANGO={species:'especie',subspecies:'subespecie',variety:'variedad',form:'forma',hybrid:'híbrido',genus:'género'};
 // iNaturalist → tus 5 reinos
 const IA_KR={Bacteria:'Monera',Archaea:'Monera',Protozoa:'Protista',Chromista:'Protista'};
@@ -44,7 +44,7 @@ const IA_ERR={
 /* ---- Utilidades de interfaz ---- */
 function iaMsg(t,err){const m=$('iamsg');m.innerHTML=t;m.style.color=err?'var(--dng)':''}   // t = HTML ya escapado
 function iaBusy(on){const b=$('ia');b.disabled=on;b.textContent=on?'⏳ Analizando…':'🔍 Analizar con IA'}
-function iaClear(){iaSeq++;if(iaManualRes)iaManualRes('');iaCands=[];iaRef=formFotos[0]||null;$('iares').innerHTML='';iaMsg('');iaBusy(false)}
+function iaClear(){iaSeq++;if(iaManualRes)iaManualRes('');iaCands=[];iaCandsSp=[];iaGen=[];iaFung=false;iaVerEsp=false;iaRef=formFotos[0]||null;$('iares').innerHTML='';iaMsg('');iaBusy(false)}
 
 /* Si la foto de portada (la primera) cambia, o se abre/cierra el formulario, se limpia el panel.
    Se engancha con window.onDrawThumbs sin tocar el código de drawThumbs(). */
@@ -176,6 +176,48 @@ async function iaPostAuth(blob,tok){
  return r;
 }
 
+/* ---- v7.3 · Hongos: la IA se muestra por GÉNERO (la especie en hongos es poco fiable) ----
+   Reino Fungi = iconic_taxon_name 'Fungi' o ancestor_ids con 47170. Se agrupan todos los resultados por género
+   (suma de puntajes, tope 100). «Usar este género» rellena hasta el género y deja la especie vacía. */
+const iaEsHongo=t=>!!t&&(t.iconic_taxon_name==='Fungi'||(Array.isArray(t.ancestor_ids)&&t.ancestor_ids.includes(47170)));
+function iaGeneros(rs){
+ const m=new Map();
+ rs.forEach(x=>{
+  const t=x&&x.taxon;if(!t)return;
+  const sc=Number(x.combined_score!=null?x.combined_score:x.vision_score)||0;
+  const g=/^(species|subspecies|variety|form|hybrid|genus)$/.test(t.rank)?String(t.name||'').split(' ')[0]:'';
+  if(!g)return;
+  const e=m.get(g)||{g:g,s:0,n:0,t:null,ts:-1};
+  e.s+=sc;e.n++;if(sc>e.ts){e.ts=sc;e.t=t}
+  m.set(g,e);
+ });
+ return [...m.values()].map(e=>({t:e.t,s:Math.min(100,e.s),gen:e.g,n:e.n})).sort((a,b)=>b.s-a.s).slice(0,4);
+}
+function iaCard(c,i){
+ // Foto de referencia de iNaturalist (solo https) y enlace a la ficha del taxón para ver más fotos
+ const dp=c.t.default_photo||{},pu=/^https:\/\//.test(dp.medium_url||dp.square_url||'')?(dp.medium_url||dp.square_url):'';
+ const tx='https://www.inaturalist.org/taxa/'+encodeURIComponent(c.t.id);
+ const gen=!!c.gen;
+ return '<div class="iac">'
+  +'<a href="'+tx+'" target="_blank" rel="noopener" class="iaph" title="Ver más fotos en iNaturalist">'
+  +(pu?'<img src="'+esc(pu)+'" alt="Foto de referencia de '+esc(gen?c.gen:c.t.name)+'" loading="lazy" onerror="this.replaceWith(document.createTextNode(\'🌿\'))">':'🌿')+'</a>'
+  +'<div class="it"><b>'+esc(gen?c.gen:c.t.name)+'</b><br><span>'+(gen?'Género · '+c.n+(c.n===1?' sugerencia':' sugerencias'):esc(c.t.preferred_common_name||'sin nombre común'))+'</span>'
+  +'<div class="pc">'+Math.round(c.s)+'% de confianza'+(gen?'':' · '+esc(IA_RANGO[c.t.rank]||c.t.rank||''))+'</div>'
+  +'<a class="pc" href="'+tx+'" target="_blank" rel="noopener" style="color:var(--lnk,var(--acc))">'+(gen?'Ver una foto de ejemplo ↗':'Ver más fotos ↗')+'</a>'
+  +(dp.attribution?'<div class="pc" style="font-size:.7rem">📷 '+esc(dp.attribution)+'</div>':'')+'</div>'
+  +'<button type="button" class="primary" data-i="'+i+'">'+(gen?'Usar este género':'Usar este')+'</button></div>';
+}
+function iaShow(){
+ const gen=iaFung&&!iaVerEsp;
+ iaCands=gen?iaGen:iaCandsSp;
+ $('iares').innerHTML='<div class="ia">'+iaCands.map(iaCard).join('')
+  +(gen?'<p class="hint">Para hongos la IA acierta mejor el género que la especie, y algunos géneros muy fotografiados (como Amanita) aparecen con mucha frecuencia: compara con las fotos o usa «Comparar familia». La IA puede equivocarse. Esto no sirve para saber si un hongo se puede comer.</p>'
+   +'<p style="margin:6px 0 0"><button type="button" id="iatog">Ver especies sugeridas (poco fiables)</button></p>'
+   :'<p class="hint">Compara con tu foto: toca la imagen para ver más fotos de esa especie. La IA puede equivocarse: revisa siempre el resultado.</p>'
+    +(iaFung?'<p style="margin:6px 0 0"><button type="button" id="iatog">← Volver a géneros</button></p>':''))
+  +'</div>';
+}
+
 /* ---- Botón «Analizar con IA» ---- */
 $('ia').onclick=async()=>{
  const my=++iaSeq,ref=formFotos[0];
@@ -206,21 +248,13 @@ $('ia').onclick=async()=>{
   const rs=(j.results||[]).filter(x=>x&&x.taxon);
   // Preferir especie (o inferior); si no hay ninguna, aceptar también género, etc.
   const sp=rs.filter(x=>/^(species|subspecies|variety|form|hybrid)$/.test(x.taxon.rank));
-  iaCands=(sp.length?sp:rs).slice(0,3).map(x=>({t:x.taxon,s:Number(x.combined_score!=null?x.combined_score:x.vision_score)||0}));
-  if(!iaCands.length){iaMsg('No se pudo identificar con suficiente confianza. Prueba con otra foto o complétala a mano.');return}
-  $('iares').innerHTML='<div class="ia">'+iaCands.map((c,i)=>{
-   // Foto de referencia de iNaturalist (solo https) y enlace a la ficha del taxón para ver más fotos
-   const dp=c.t.default_photo||{},pu=/^https:\/\//.test(dp.medium_url||dp.square_url||'')?(dp.medium_url||dp.square_url):'';
-   const tx='https://www.inaturalist.org/taxa/'+encodeURIComponent(c.t.id);
-   return '<div class="iac">'
-    +'<a href="'+tx+'" target="_blank" rel="noopener" class="iaph" title="Ver más fotos en iNaturalist">'
-    +(pu?'<img src="'+esc(pu)+'" alt="Foto de referencia de '+esc(c.t.name)+'" loading="lazy" onerror="this.replaceWith(document.createTextNode(\'🌿\'))">':'🌿')+'</a>'
-    +'<div class="it"><b>'+esc(c.t.name)+'</b><br><span>'+esc(c.t.preferred_common_name||'sin nombre común')+'</span>'
-    +'<div class="pc">'+Math.round(c.s)+'% de confianza · '+esc(IA_RANGO[c.t.rank]||c.t.rank||'')+'</div>'
-    +'<a class="pc" href="'+tx+'" target="_blank" rel="noopener" style="color:var(--lnk,var(--acc))">Ver más fotos ↗</a>'
-    +(dp.attribution?'<div class="pc" style="font-size:.7rem">📷 '+esc(dp.attribution)+'</div>':'')+'</div>'
-    +'<button type="button" class="primary" data-i="'+i+'">Usar este</button></div>'}).join('')
-   +'<p class="hint">Compara con tu foto: toca la imagen para ver más fotos de esa especie. La IA puede equivocarse: revisa siempre el resultado.</p></div>';
+  iaCandsSp=(sp.length?sp:rs).slice(0,3).map(x=>({t:x.taxon,s:Number(x.combined_score!=null?x.combined_score:x.vision_score)||0}));
+  const top=rs.slice(0,5);
+  iaFung=top.length>0&&top.filter(x=>iaEsHongo(x.taxon)).length*2>=top.length;   // la mayoría de los primeros resultados son hongos
+  iaGen=iaFung?iaGeneros(rs):[];
+  iaVerEsp=false;
+  if(!(iaFung?iaGen:iaCandsSp).length){iaCands=[];iaMsg('No se pudo identificar con suficiente confianza. Prueba con otra foto o complétala a mano.');return}
+  iaShow();
  }catch(err){
   if(my!==iaSeq)return;
   const k=err&&err.message;
@@ -230,7 +264,9 @@ $('ia').onclick=async()=>{
 };
 
 /* ---- Botón «Usar este» ---- */
-$('iares').onclick=e=>{const b=e.target.closest&&e.target.closest('button[data-i]');if(b)iaUse(+b.dataset.i,b)};
+$('iares').onclick=e=>{
+ const t=e.target.closest&&e.target.closest('#iatog');if(t){iaVerEsp=!iaVerEsp;iaShow();return}
+ const b=e.target.closest&&e.target.closest('button[data-i]');if(b)iaUse(+b.dataset.i,b)};
 
 async function iaUse(i,btn){
  const c=iaCands[i],my=iaSeq;if(!c)return;
@@ -247,13 +283,14 @@ async function iaUse(i,btn){
   }
   if(my!==iaSeq)return;
   const m={};anc.forEach(a=>{m[a.rank]=a.name});m[c.t.rank]=c.t.name;
+  if(c.gen){m.genus=c.gen;m.species='';delete m.subspecies}   // modo hongos: solo hasta el género
   const kg=m.kingdom;
   if(!kg)return fail('iNaturalist no devolvió el reino de este taxón; complétalo a mano.');
   const reino=IA_KR[kg]||kg;
   if(![...$('f-reino').options].some(o=>o.value===reino))return fail('iNaturalist lo clasifica como «'+esc(kg)+'», que tu app no tiene como reino.');
   const dom=kg==='Archaea'?'Archaea':kg==='Bacteria'?'Bacteria':'Eukarya';
   const T={filo:m.phylum,clase:m.class,orden:m.order,familia:m.family,genero:m.genus,especie:(m.species||'').split(' ')[1]||''};
-  const cm=com?com.charAt(0).toUpperCase()+com.slice(1):'';
+  const cm=com&&!c.gen?com.charAt(0).toUpperCase()+com.slice(1):'';   // el nombre común es de la especie, no del género
   // [id del campo, etiqueta, valor nuevo]; solo los que existen y traen valor
   const F=LV.slice(2).map(k=>['f-'+k,LN[LV.indexOf(k)],T[k]])
    .concat([['f-comun','Nombre común',cm],['r-subphylum','Subphylum',reino==='Plantae'?'':m.subphylum],['r-suborden','Suborden',m.suborder]])
@@ -270,6 +307,7 @@ async function iaUse(i,btn){
     +dif.map(f=>'· '+f[1]+': '+$(f[0]).value.trim()+' → '+f[2]).join('\n')
     +'\n\nAceptar = sobrescribir todo\nCancelar = rellenar solo los campos vacíos');
   }
+  const prevGen=($('f-genero')&&$('f-genero').value||'').trim().toLowerCase();
   // Reino/dominio (selects)
   if(pisar||!cambiaSel){
    $('f-reino').value=reino;
@@ -280,9 +318,11 @@ async function iaUse(i,btn){
   const keep=[];
   F.forEach(f=>{const el=$(f[0]);if(!el.value.trim()||pisar)el.value=f[2];else if(el.value.trim().toLowerCase()!==f[2].toLowerCase())keep.push(f[1])});
 
+  if(c.gen&&pisar&&prevGen&&prevGen!==c.gen.toLowerCase()&&$('f-especie'))$('f-especie').value='';   // género distinto: la especie vieja ya no corresponde
   // Cerrar panel y avisar
-  $('iares').innerHTML='';iaCands=[];
-  iaMsg('✓ Rellenado con <i>'+esc(c.t.name)+'</i> ('+Math.round(c.s)+'% de confianza). La IA puede equivocarse: revisa los datos.'
+  $('iares').innerHTML='';iaCands=[];iaCandsSp=[];iaGen=[];
+  iaMsg(c.gen?'✓ Rellenado hasta el género <i>'+esc(c.gen)+'</i> ('+Math.round(c.s)+'% de confianza). La especie la decides tú. La IA puede equivocarse: revisa los datos. Esto no sirve para saber si un hongo se puede comer.'
+   :'✓ Rellenado con <i>'+esc(c.t.name)+'</i> ('+Math.round(c.s)+'% de confianza). La IA puede equivocarse: revisa los datos.'
    +(keep.length?' Se mantuvieron tus valores en: '+esc(keep.join(', '))+'.':''));
   txSync();
  }catch(err){
