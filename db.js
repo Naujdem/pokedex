@@ -56,7 +56,9 @@ async function flush(){
  if(flush.again){flush.again=false;return flush()}
 }
 async function reconcile(rows,prune){
- const loc=Object.fromEntries((await dbAll('especies')).map(x=>[x.id,x])),q=new Set((await dbAll('cola')).map(j=>j.id)),seen=new Set();
- for(const r of rows){seen.add(r.id);if(q.has(r.id))continue;const o=fromRow(r),l=loc[r.id];if(l&&l.fotos&&o.fotos===undefined&&l.foto===o.foto)o.fotos=l.fotos;await dbPut('especies',o)}
- if(prune)for(const id in loc)if(!seen.has(id)&&!q.has(id))await dbDel('especies',id);
+ const loc=Object.fromEntries((await dbAll('especies')).map(x=>[x.id,x])),seen=new Set();
+ /* La cola se vuelve a leer antes de cada escritura: si guardas una ficha mientras se sincroniza, el servidor no la pisa. */
+ const pend=async id=>(await dbAll('cola')).some(j=>j.id===id);
+ for(const r of rows){seen.add(r.id);if(await pend(r.id))continue;const o=fromRow(r),l=(await dbGet('especies',r.id))||loc[r.id];if(l&&l.fotos&&o.fotos===undefined&&l.foto===o.foto)o.fotos=l.fotos;if(await pend(r.id))continue;await dbPut('especies',o)}
+ if(prune)for(const id in loc)if(!seen.has(id)&&!(await pend(id))&&!(await dbGet('especies',id)||{}).pend)await dbDel('especies',id);
 }

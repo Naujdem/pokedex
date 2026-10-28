@@ -53,7 +53,7 @@ async function avSync(uid,warn){
   const c=r.data.foto||'none';
   await dbPut('meta',c,'avatar_'+uid);
   prof.foto=c==='none'?'':c;drawWho();
- }catch(_){}
+ }catch(e){console.warn("avatar: no se pudo sincronizar",e)}
 }
 addEventListener('online',()=>{if(prof.uid)avSync(prof.uid)});
 function setPrev(){$('set-av').outerHTML=avHTML(setFoto===null?prof.foto:setFoto,$('set-name').value,1).replace('class="av big"','class="av big" id="set-av"')}
