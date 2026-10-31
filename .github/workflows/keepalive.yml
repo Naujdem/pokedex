@@ -1,11 +1,14 @@
 # Mantiene activo el proyecto de Supabase (el plan gratuito lo pausa tras ~7 días sin actividad).
-# Hace una consulta de solo lectura cada 3 días. Usa la clave publicable, que ya es pública en supabase.js.
+# Una vez al día llama a la función keepalive_ping(), que ESCRIBE la fecha en la tabla
+# public.keepalive (y borra registros de más de 30 días). Una escritura real cuenta como
+# actividad; la consulta de solo lectura anterior devolvía [] por RLS y Supabase no la contaba.
+# Usa la clave publicable, que ya es pública en supabase.js.
 name: Supabase keep-alive
 
 on:
   schedule:
-    - cron: '17 9 */3 * *'   # 09:17 UTC, cada 3 días
-  workflow_dispatch:          # también se puede lanzar a mano desde la pestaña Actions
+    - cron: '17 9 * * *'   # 09:17 UTC (04:17 Colombia), todos los días
+  workflow_dispatch:        # también se puede lanzar a mano desde la pestaña Actions
 
 permissions: {}
 
@@ -14,9 +17,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Consulta a Supabase
+      - name: Escribir ping en Supabase
         run: |
           curl --fail --silent --show-error --retry 3 --retry-delay 10 \
+            -X POST \
             -H "apikey: sb_publishable_DVidqeawdNUHxd46TWgfbg_xfDGda_z" \
-            "https://amybwsnzxmfdvaomkopm.supabase.co/rest/v1/especies?select=id&limit=1"
+            -H "Content-Type: application/json" \
+            -d '{}' \
+            "https://amybwsnzxmfdvaomkopm.supabase.co/rest/v1/rpc/keepalive_ping"
           echo
