@@ -258,7 +258,7 @@ async function openEdit(sp){
  const fl=await ensureFotos(sp);
  if(sp.fotos===undefined){alert('No se pudieron cargar todas las fotos de esta ficha (¿sin conexión?). Conéctate o pulsa «⬇ Sincronizar» antes de editarla, para no perder fotos.');return}
  editId=sp.id;legOn=!!(sp.rasgos&&sp.rasgos.pl_tolerancia);distLoad(sp.dist);
- $('fcmpb').style.display='';$('fcmpbox').innerHTML='';
+ $('fcmpb').style.display='';$('fcmpbox').innerHTML='';$('wkres').innerHTML='';
  formFotos=fl.slice();formOrig=formFotos.slice();formNew=new Set();formSaved=false;formOrg=orgLoad(sp,formFotos);formCred=credLoad(sp,formFotos);drawThumbs();
  $('dtitle').textContent='Editar especie';$('save').textContent='Guardar cambios';
  $('err').textContent='';$('f-foto').value='';$('f-comun').value=sp.comun;$('f-car').value=sp.car;
@@ -452,7 +452,7 @@ $('f-reino').onchange=()=>{
 
 $('add').onclick=()=>{
  editId=null;legOn=false;distLoad(null);
- $('fcmpb').style.display='';$('fcmpbox').innerHTML='';
+ $('fcmpb').style.display='';$('fcmpbox').innerHTML='';$('wkres').innerHTML='';
  $('dtitle').textContent='Añadir especie';$('save').textContent='Guardar especie';
  formFotos=[];formOrig=[];formNew=new Set();formSaved=false;formOrg={};formCred={};drawThumbs();
  $('err').textContent='';$('f-foto').value='';$('f-comun').value='';$('f-car').value='';
