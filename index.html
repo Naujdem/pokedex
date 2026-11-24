@@ -132,6 +132,7 @@ body.ficha-abierta .tools{display:none}
 .sk .ph,.sk b,.sk small,.galw.ld .slide{background:linear-gradient(90deg,var(--soft),var(--line),var(--soft));background-size:200% 100%;animation:sh 1.2s infinite;color:transparent;border-radius:6px}
 @keyframes sh{to{background-position:-200% 0}}@media (prefers-reduced-motion:reduce){.sk *,.galw.ld .slide{animation:none}}
 .lin li.ans{font-weight:700;background:var(--soft)}
+.wks{margin-top:6px;border:1px solid var(--line,#444);border-radius:8px;padding:4px 8px}.wks summary{cursor:pointer;font-weight:600}.wks p{white-space:normal;margin:6px 0;color:inherit}
 .gbl{list-style:none;padding:0;margin:6px 0 0}.gbl li.ok{color:#3fb97a}.gbl li.no{color:var(--dng)}.gbl span{display:inline-block;min-width:80px;color:var(--mut)}
 .ia{margin:8px 0 0}
 .iac{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:8px 0;padding:12px;border:1px solid var(--line);background:var(--panel);border-radius:12px}
@@ -492,7 +493,7 @@ body.selmode main{padding-bottom:90px}
     <button id="imj">⬆ Importar fichas (JSON)</button><input type="file" id="imf" accept="application/json,.json" hidden>
     <hr>
     <button id="out" class="mout">Salir</button>
-    <div class="mfoot">Biotaxo dex · v7.4</div>
+    <div class="mfoot">Biotaxo dex · v7.5</div>
    </div>
   </div>
  </div>
@@ -544,6 +545,7 @@ body.selmode main{padding-bottom:90px}
 
  <div class="g2" id="fields"></div>
  <button type="button" id="gb" style="margin-top:10px">🔎 Verificar en GBIF</button><div class="note" id="gbres" role="status"></div>
+ <button type="button" id="wk" style="margin-top:10px">📖 Traer de Wikipedia</button><div class="note" id="wkres" role="status"></div>
  <label for="f-comun">Nombre común</label><input id="f-comun" placeholder="Jaguar">
 
  <details>
@@ -1366,5 +1368,6 @@ $('gb').onclick=async()=>{
  netUI();flush();
 })();
 </script>
+<script src="wiki.js"></script>
 </body>
 </html>
