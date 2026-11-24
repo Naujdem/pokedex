@@ -1,5 +1,7 @@
-# Mantiene activo el proyecto de Supabase (el plan gratuito lo pausa tras ~7 días sin actividad).
-# Una vez al día llama a la función keepalive_ping(), que ESCRIBE la fecha en la tabla
+# Mantiene activo el proyecto de Supabase. Desde oct-2026 Supabase pausa los proyectos gratis con
+# "muy poca actividad" en la semana (umbral no publicado); un ping diario ya no bastó (pausa del 18-nov).
+# Ahora corre cada 3 horas y en cada corrida hace varias consultas reales.
+# Llama a la función keepalive_ping(), que ESCRIBE la fecha en la tabla
 # public.keepalive (y borra registros de más de 30 días). Una escritura real cuenta como
 # actividad; la consulta de solo lectura anterior devolvía [] por RLS y Supabase no la contaba.
 # Usa la clave publicable, que ya es pública en supabase.js.
@@ -7,7 +9,7 @@ name: Supabase keep-alive
 
 on:
   schedule:
-    - cron: '17 9 * * *'   # 09:17 UTC (04:17 Colombia), todos los días
+    - cron: '17 */3 * * *'   # cada 3 horas (minuto 17)
   workflow_dispatch:        # también se puede lanzar a mano desde la pestaña Actions
 
 permissions: {}
@@ -17,12 +19,19 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Escribir ping en Supabase
+      - name: Escribir ping y consultar tablas en Supabase
         run: |
+          KEY="sb_publishable_DVidqeawdNUHxd46TWgfbg_xfDGda_z"
+          URL="https://amybwsnzxmfdvaomkopm.supabase.co"
           curl --fail --silent --show-error --retry 3 --retry-delay 10 \
             -X POST \
-            -H "apikey: sb_publishable_DVidqeawdNUHxd46TWgfbg_xfDGda_z" \
+            -H "apikey: $KEY" \
             -H "Content-Type: application/json" \
             -d '{}' \
-            "https://amybwsnzxmfdvaomkopm.supabase.co/rest/v1/rpc/keepalive_ping"
+            "$URL/rest/v1/rpc/keepalive_ping"
           echo
+          # Consultas de lectura extra (cuentan como actividad aunque RLS devuelva [])
+          for t in keepalive especies; do
+            curl --silent --show-error --retry 2 --retry-delay 5 -o /dev/null -w "$t: %{http_code}\n" \
+              -H "apikey: $KEY" "$URL/rest/v1/$t?select=*&limit=5"
+          done
